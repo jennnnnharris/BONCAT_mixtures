@@ -22,14 +22,15 @@
 ## 6. Assign taxonomy. 
 
 
-##### install software ########################################
+##### install qiime ########################################
 ##qiime
-conda create -n qiime2-env -y
 module load anaconda3
-conda install wget
-wget https://data.qiime2.org/distro/core/qiime2-2022.2-py38-linux-conda.yml
-conda env create -n qiime2-env --file qiime2-2022.2-py38-linux-conda.yml
-##atria
+conda env create -n qiime2-amplicon-2024.10 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
+conda activate qiime2-amplicon-2024.10
+
+
+
+##### install atria ###################################################
 conda create -n magicblast -y
 conda install pbzip2     
 conda install pigz
@@ -76,27 +77,35 @@ atria --detect-adapter -r BCAT_10_S21_R1_001.fastq.gz  -R BCAT_10_S21_R2_001.fas
 
 ## adapter 1 CTGTCTCTATACA
 ## adapter 2 CTGTCTCTATAA
+## force to run all samples
 ## R1 adapter start position 292.
-##
 ### adater, length, and quality 20, then trim 5' -10  # 1,297,773 Seqs, 170.2 mb 
 ### Best compromise for quality and length but we get flagged on %GC content at the 5' end
 ### -C --clip-after INT first 10 bases
 ### -c --clip5 INT cut lsat 10 bases.
 
+##test
+atria -r BCAT_10_S21_R1_001.fastq.gz -R BCAT_10_S21_R2_001.fastq.gz \
+  --adapter1 CTGTCTCTATACA \
+  --adapter2 CTGTCTCTATAA \
+  --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/16S_seqs/trimmed
+
+
+echo "done"
+
 
 
 atria -r *R1_001.fastq.gz -R *R2_001.fastq.gz \
   --adapter1 CTGTCTCTATACA\
-  --adapter2 CTGTCTCTATAA \
-  -f  -e 10 \
-  --clip-after-r2 140 \
-  -q 20 -n -1 \
-  --length-range 35:151 \
+  --adapter2 CTGTCTCTATAA\
+  -f \
+  #-e 10 \ # remove the first 10 bases
+  #--clip-after-r2 292 \ # remove bases after 292
+  -q 20 \ # cut where quality is lower than 20 phred score
   --threads 8 \
-  --output-dir /storage/home/jeh6121/burghardt/
+  --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/16S_seqs/trimmed
 
 
-echo "done Fall 2020"
 echo "done"
 
 
