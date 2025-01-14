@@ -1,0 +1,1 @@
+scp /home/harris/linux_mixtures_BONCAT/qiime_mapping_rep123.txt jeh6121@submit.hpc.psu.edu:/storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT

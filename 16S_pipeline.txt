@@ -1,18 +1,13 @@
 #bioinformatics pipeline for 16s microbiome data
-
 #you will need
 ## 16s sequences
 ## Qiime2
 ## atria
-
 ##Required software in magicblast env
     # atria
     # seqkit
-
 ##Required software in qiime2-env
     # qiime2
-
-
 #step are
 ## 1. install software if you haven't already
 ## 2. trim reads
@@ -22,15 +17,12 @@
 ## 6. Assign taxonomy. 
 
 
-##### install qiime ########################################
+##### install qiime ##############################################################
 ##qiime
 module load anaconda3
 conda env create -n qiime2-amplicon-2024.10 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
 conda activate qiime2-amplicon-2024.10
-
-
-
-##### install atria ###################################################
+###### install atria ###################################################
 conda create -n magicblast -y
 conda install pbzip2     
 conda install pigz
@@ -44,7 +36,7 @@ julia build_atria.jl
 ln -s /storage/home/jeh6121/Atria/atria-4.0.3/bin/atria /storage/home/jeh6121/.local/bin
 #check what conda environments you already have
 cd /storage/home/jeh6121/.conda/envs
-##############################################################
+#####################################################################################
 
 
 
@@ -53,7 +45,7 @@ cd /storage/home/jeh6121/.conda/envs
 ###logon to PSU roar collab
 ssh jeh6121@submit.hpc.psu.edu # change to your username
 ###start interactive job
-salloc -N 1 -n 4 --mem-per-cpu=1024 -t 2:00:00
+salloc -N 1 -n 4 --mem-per-cpu=100 -t 2:00:00
 ###go to work directory
 /storage/group/ltb5167/default/JennHarris/Mixtures_BONCAT
 ####start conda
@@ -68,12 +60,10 @@ source activate qiime2-env
 
 ##################### trimming #################################################################
 
-
 #atria_trimming.sh contains:
 #detect adapter 2024 16s run
 cd /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/16S_seqs/fastq
 atria --detect-adapter -r BCAT_10_S21_R1_001.fastq.gz  -R BCAT_10_S21_R2_001.fastq.gz  --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT
-
 
 ## adapter 1 CTGTCTCTATACA
 ## adapter 2 CTGTCTCTATAA
@@ -90,10 +80,7 @@ atria -r BCAT_10_S21_R1_001.fastq.gz -R BCAT_10_S21_R2_001.fastq.gz \
   --adapter2 CTGTCTCTATAA \
   --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/16S_seqs/trimmed
 
-
 echo "done"
-
-
 
 atria -r *R1_001.fastq.gz -R *R2_001.fastq.gz \
   --adapter1 CTGTCTCTATACA\
@@ -105,19 +92,50 @@ atria -r *R1_001.fastq.gz -R *R2_001.fastq.gz \
   --threads 8 \
   --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/16S_seqs/trimmed
 
-
 echo "done"
 
 
+################## dada2 in R ################################################################
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################### Qimme2 ###################################################################
+module load anaconda3
+conda activate qiime2-amplicon-2024.10
 
 ####### Make qiime mapping file ##########
 # see example file for format
 # upload to cluster
 
-###### importing Sequences into Qiime
-##### you will need a qiime mappping file for this.
-
+###### importing Sequences into Qiime ######
 qiime tools import \
   --type 'SampleData[PairedEndSequencesWithQuality]' \
   --input-path qiime_mapping.txt \
@@ -234,6 +252,13 @@ qiime metadata tabulate \
   --m-input-file taxonomy.qza \
   --o-visualization taxonomy.qzv
 
+#output taxomny file
+
+qiime tools export \
+  --input-path taxonomy.pretrained.gg2.qza \
+  --output-path ./
+
+############### green genes classification #############################
 # if classifying with silva didn't work i'll just use the naive bayes trained on greenhenes sequences
 # https://docs.qiime2.org/2022.2/tutorials/moving-pictures/index.html
 wget \
@@ -249,13 +274,6 @@ qiime metadata tabulate \
   --m-input-file taxonomy.qza \
   --o-visualization taxonomy.qzv
 
-#output taxomny file
-
-qiime tools export \
-  --input-path taxonomy.pretrained.gg2.qza \
-  --output-path ./
-
-############### green genes classification #############################
 
 pip install q2-greengenes2
 wget http://ftp.microbio.me/greengenes_release/2022.10/2022.10.taxonomy.asv.nwk.qza

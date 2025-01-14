@@ -1,0 +1,16 @@
+################## dada2 in R #################################################################
+
+module load r/4.4.0 gcc/13.2.0
+R
+library(BiocManager)
+BiocManager::install("dada2", lib = "/storage/home/jeh6121/R/x86_64-pc-linux-gnu-library/4.4")
+
+
+library("devtools")
+devtools::install_github("benjjneb/dada2", ref="v1.16") # change the ref argument to get other versions
+
+myPaths <- .libPaths()   # get the paths
+myPaths <- c(myPaths[2], myPaths[1])  # switch them
+.libPaths(myPaths)  # reassign them
+
+
