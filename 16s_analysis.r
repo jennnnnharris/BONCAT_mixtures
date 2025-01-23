@@ -1,6 +1,7 @@
 # 16S analysis
 # Jennifer Harris
-# Last updated: May 7 2024
+# Jan 7 2025
+# Last Updated: Jan 23 2025
 
 ### 1. Initial Setup ###
 
@@ -21,42 +22,40 @@ rm(list=ls())
 #basic
 library(tidyverse)
 library(vegan)
-library(reshape2)
-library(scales)
-library(data.table)
+#library(reshape2)
+#library(scales)
+#library(data.table)
 
 
 #Phyloseq and mbiome
 library(phyloseq)
-library(microbiome)
-library(MicEco)
-library(DT)
-options(DT.options = list(
-  initComplete = JS("function(settings, json) {",
-                    "$(this.api().table().header()).css({'background-color': 
-  '#000', 'color': '#fff'});","}")))
+#library(microbiome)
+#library(MicEco)
+#library(DT)
+#options(DT.options = list(
+#  initComplete = JS("function(settings, json) {",
+#                    "$(this.api().table().header()).css({'background-color': 
+#  '#000', 'color': '#fff'});","}")))
 
 #colors and patterns
-library(RColorBrewer)
+#library(RColorBrewer)
 
 #tree
-library(Heatplus)
-library(ade4)
-library(ape)
-library('TreeTools')
-library(ggtree)
+#library(Heatplus)
+#library(ade4)
+#library(ape)
+#library('TreeTools')
+#library(ggtree)
 
 # heatmaps 
-library(gplots)
+#library(gplots)
 
 # venn diagrams
-library(ggvenn)
-library(ggplot2)
-library(dplyr)
-library(grid)
+#library(ggvenn)
+#library(grid)
 
 #Ancom
-library(ANCOMBC)
+#library(ANCOMBC)
 
 ## if trouble loading phyloseq, see: http://joey711.github.io/phyloseq/install
 #source("http://bioconductor.org/biocLite.R")
@@ -68,32 +67,24 @@ library(ANCOMBC)
 
 #####Import data#####
 ## Set the working directory; ###
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_gradients/Data/16s/")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 
-taxon <- read.table("asv_level_output/greengenes/taxonomy.txt", sep="\t", header=T, row.names=1)
-asvs.raw <- read.table("asv_level_output/greengenes/feature-table.tsv", sep="\t", header=T, row.names = 1 )
-metadat <- read.delim("metadata.txt", sep="\t", header = T, check.names=FALSE)
+taxon <- read.table("rep1/taxonomy.tsv", sep="\t", header=T, row.names = 1)
+asvs.raw <- read.table("rep1/feature-table.tsv", sep="\t", header=T, row.names = 1)
+metadat <- read.csv("rep1/metadata.csv", header = T, check.names=FALSE)
 
 ## Transpose ASVS table ##
-asvs.t <- t(asvs.raw)
+colnames(asvs.raw)  
+head(asvs.raw)
+asvs.phyloseq <- t(asvs.raw)
+row.names(asvs.phyloseq)
+#taxa are columns
+
 ## order metadata
 metadat<-metadat[order(metadat$SampleID),]
-## order asvs table
-asvs.t<-asvs.t[order(row.names(asvs.t)),]
+row.names(metadat) <- metadat$SampleID
+metadat
 
-###--- recode metadata----- #
-metadat<-metadat%>% mutate(Compartment=recode(Fraction, 'Bulk'='Bulk_Soil', 'Rhizo'='Rhizosphere','Endo'='Roots', 'Nod'='Nodule'))
-metadat<-metadat[, c(1,3:6)]
-metadat<-metadat%>% mutate(Fraction=recode(BONCAT, 'DNA'= 'Total_DNA', 'SYBR'= 'Viable_Cell', 'POS'='Active_Cell', 'ctl'= 'ctl'))
-metadat<-mutate(metadat, compartment_BCAT = paste0(metadat$Compartment, metadat$Fraction))
-
-##------make phyloseq object with percent data -------#
-asvs.phyloseq<- (asvs.t)
-taxon<-taxon[,1:7]
-metadat<-as.matrix(metadat)
-y<-colnames(asvs.raw)
-rownames(metadat) <- y
-metadat<-as.data.frame(metadat)
 
 # import it phyloseq
 Workshop_OTU <- otu_table(as.matrix(asvs.phyloseq), taxa_are_rows = FALSE)
@@ -101,50 +92,13 @@ Workshop_metadat <- sample_data(metadat)
 Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
 ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
 ps
-# 12855 taxa 
+# 53707 taxa taxa 
 
 
 #####remove plant contamination  ########
-# NOTE: 
-# we assigned taxonomy with the greengenes2 database
-# greengenes2 doesn't have great taxonomy of chloroplast and mitchondria. 
-# We selected taxa that were unassigned to any phyla in the the root or nodule.
-# the taxonomy of these ASVS was determined with SILVA. 
-# we used BLAST to identify any ASVS that were not idenitfied with SILVA
-# we removed 48 ASVS that where mitochondria or chloroplasts. 
-
 # Select unassigned Asvs that the only in the the roots and nodules
-df<-subset_taxa(ps, Phyla=="" | Phyla == " p__")
-df<-as.data.frame(t(otu_table(df)))
-df<-select(df, contains ("E"))
-df1<-as.data.frame(rowSums(df))
-colnames(df1) <- "sum"
-df1<-filter(df1, sum!=0)
+ps<-subset_taxa(ps, Phyla=="" | Phyla == " p__")
 
-df<-subset_samples(ps, Compartment=="Roots" | Compartment=="Nodule" )
-df<-prune_taxa(taxa_sums(df) > 0, df)
-remove<-subset_taxa(df, Domain=="Unassigned" |  Phyla=="" | Phyla==" p__"  ) 
-remove
-
-### These 5 ASVS were not mitochondria or chloroplasts, the remain 48 were
-kp<-c("a49a51f3a3e3ea140206b10c5665cc13", "55c30bcbeacfedffa7aeb332600548b2" , "cfeae1df224b7e426ea125ab2bb824fc", "b260024f11a7d77d4f03e5ca2e239860", "f5211207035c7ea5b6f2ecfdad3765e1")
-badtaxa<-taxa_names(remove)
-badtaxa <- badtaxa[!(badtaxa %in% kp)]
-length(badtaxa)
-
-########## remove these ASVs 
-alltaxa<-taxa_names(ps)
-mytaxa <- alltaxa[!(alltaxa %in% badtaxa)]
-ps<-prune_taxa(mytaxa, ps )
-ps<-prune_taxa(taxa_sums(ps) > 0, ps)
-ps
-# 12807 taxa
-#### quick checks
-# how many reads per samples after QC
-n<-rowSums(otu_table(ps))
-# number of ASVS per sample after QC
-n<-otu_table(ps)
-n<-rowSums(ifelse(n[]>0,1,0))
 
 ####PERCENT abundance figure: SUPPLEMENT####
 # grab data
@@ -228,16 +182,10 @@ rich<-estimate_richness(ps, measures = c("Observed", "Shannon", "Simpson", "InvS
 # Data wrangling fo rdiversity of active microbes in each fraction
 rich<-cbind(rich, metadat)
 rich<-as.data.frame(rich)
-rich$Compartment<-factor(rich$Compartment, levels = c("Bulk_Soil", "Rhizosphere", "Roots", "Nodule"))
 rich %>%
 arrange( -Observed)
 
-rich<- rich %>%  filter(Plant!="NOPLANT", Fraction!="ctl")
-rich$compartment_BCAT <-factor(rich$compartment_BCAT, levels = c("Bulk_SoilTotal_DNA", "RhizosphereTotal_DNA", "RhizosphereViable_Cell", "RhizosphereActive_Cell",
-                                                                 "RootsViable_Cell"   ,  "RootsActive_Cell" , "NoduleViable_Cell" ,  "NoduleActive_Cell" ))          
-rich$Fraction <-factor(rich$Fraction, levels = c("Total_DNA", "Viable_Cell", "Active_Cell"))
-rich %>% group_by(rich$compartment_BCAT) %>% summarise(mean(Observed), sd(Observed))
-rich %>% group_by(rich$Compartment) %>% summarise(mean(Observed), sd(Observed))
+rich %>% group_by(metadat$Fraction) %>% summarise(mean(Observed), sd(Observed))
 
 mycols3 <- c("#bcd3e8",  "#282c55", "#fc8449")
 #shannon
@@ -261,7 +209,7 @@ p1<-rich %>%
 
 #n asvs
 p2<-rich %>%
-  ggplot(aes(x=Compartment, y=Observed,  col= Fraction, fill=Fraction))+
+  ggplot(aes(x=Fraction, y=Observed,  col= Fraction, fill=Fraction))+
   geom_boxplot(alpha=.5) +
   scale_color_manual(values=mycols3) +
   scale_fill_manual(values=mycols3) +
@@ -275,14 +223,14 @@ p2<-rich %>%
   scale_x_discrete(drop = TRUE) +
   ylab("Numbers of ASVs")+
   xlab("")
-
+p2
  
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_gradients/Manuscript/figures")
-svg(file="diversity.svg",width = 8, height=7)
+
+#svg(file="diversity.svg",width = 8, height=7)
 #windows(8,7)
-require(gridExtra)
-grid.arrange(p1, p2, ncol=1)
-dev.off()
+#require(gridExtra)
+#grid.arrange(p1, p2, ncol=1)
+#dev.off()
 
 # summary table
 rich %>% group_by(compartment_BCAT) %>% summarise(mean(Shannon))

@@ -52,9 +52,6 @@ salloc -N 1 -n 4 --mem-per-cpu=100 -t 2:00:00
 module load anaconda3
 module load blast
 conda activate magicblast
-###OR###
-module load anaconda3
-source activate qiime2-env
 
 
 
@@ -179,45 +176,31 @@ qiime dada2 denoise-paired \
     --o-representative-sequences ./asvs/rep.seqs.dada2.qza \
     --o-denoising-stats ./asvs/stats.dada2.qza
 
-# Stats on how DADA2 went
 
+#########################################export ################################################
+### Stats on how DADA2 went ####
 qiime tools export \
-   --input-path ./asvs/stats.dada2.qza \
-   --output-path ./asvs/stats.dada2.qzv
+   --input-path ./stats.dada2.rep123.qza \
+   --output-path ./rep123/
 
-# most samples had low chimeras, 80% to 90% of sequences were non chimeric
-# for some samples (C1B DNA, C2B DNA, C2R DNA, C5B DNA) about 50% of sequences where chimeras
-# this is not great but I'm going to keep moving forward the pipeline
 
-#### summerize and export
-
+#### summerize and export feature table ####
 qiime tools export \
-  --input-path  table-dada2.qza\
-  --output-path asvs/asv_table
+  --input-path  feature.table.dada2.rep123.qza\
+  --output-path ./rep123/
 
-biom convert -i feature-table.biom -o feature-table.tsv --to-tsv
+biom convert -i ./rep123/feature-table.biom -o ./rep123/feature-table.tsv --to-tsv
 
-# export representative sequences 
-# 
+#### export representative sequences ####
 qiime tools export \
-  --input-path ./asvs/trimmed.dada2.qza\
-  --output-path asvs
+  --input-path rep.seqs.dada2.rep123.qza\
+  --output-path ./rep123/
 
-# tablulate and export feature table
+# tablulate and export rep seqs ####
 qiime feature-table tabulate-seqs \
-  --i-data  ./asvs/trimmed.dada2.qza \
-  --o-visualization rep-seqs.qzv
+  --i-data  ./rep.seqs.dada2.rep123.qza\
+  --o-visualization ./rep123/rep-seqs.qzv
 
-#export with metadata
-qiime feature-table summarize \
-  --i-table table-dada2.qza \
-  --o-visualization asvs/table-dada2.qzv \
-  --m-sample-metadata-file metadata.tls
-xt
-
-qiime tools export \
-  --input-path rep.seqs.dada2.qza\
-  --output-path ./
 
 
 ######################## silva classification ############################
