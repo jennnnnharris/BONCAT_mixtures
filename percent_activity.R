@@ -3,6 +3,8 @@
 # last edited: Jan 2025
 #Jennifer Harris
 
+
+rm(list=ls())
 library(readxl)
 library(tidyverse)
 library(lubridate)
@@ -38,15 +40,158 @@ df%>% # filter(Species1!="Soil") %>%
   theme(axis.text.x = element_text(angle=60, hjust=1))
 
 # increasing species line
-df%>% #filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=2 )+
-  theme_bw(base_size = 18, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))+
-  stat_summary(geom = "line", fun = mean)
+#df%>% filter(Species1!="Soil") %>%
+#  ggplot(aes(x=n_species, y=BONCAT_freq)) +
+#  geom_jitter(width = .2, size=2 )+
+#  theme_bw(base_size = 18, )+
+#  theme(axis.text.x = element_text(angle=60, hjust=1))+
+#  stat_summary(geom = "line", fun = mean)
 
+#df%>% filter(Species1!="Soil") %>%
+#  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Date))) +
+#  geom_jitter(width = .2, size=2 )+
+#  theme_bw(base_size = 18, )+
+#  stat_summary(geom = "line", fun = mean)
+
+#ggplot(df, aes(y = BONCAT_freq, x = n_species)) +
+#  geom_point() +
+#  theme_classic(base_size = 15) +
+#  stat_smooth(method = "lm", formula = 'y ~ x', se=F,fullrange = T) +
+#  facet_wrap(~Rep)
+
+#ggplot(df, aes(y = BONCAT_freq, x = Treatment)) +
+#  geom_point() +
+#  theme_classic(base_size = 15) +
+#  stat_smooth(method = "lm", formula = 'y ~ x', se=F,fullrange = T) +
+#  facet_wrap(~Rep)
+
+################we need normalize by the day/rep  #################3
+df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+### simple linear model
+# in simple lm LB and LG are higher than soil.
+m1<-lm(BONCAT_freq  ~Treatment, data=df)
+summary(m1)
+
+library(lme4)
+lm<-lme4::lmer(data=df, BONCAT_freq~Treatment + (1|Date_sorted))
+lm
+coef(lm)
+summary(lm)
+anova(lm)
+
+library(lmerTest)
+lm<-lmer(data=df, BONCAT_freq~Treatment + (1|Date_sorted))
+s<-summary(lm)
+anova(lm)
+# grab effect size
+effectsize<-s$coefficients
+effectsize<-data.frame(effectsize)
+colnames(effectsize) <- c("effect.size", "std.error", "df", "tvalue", "pvalue") 
+head(effectsize)
+
+###### treatment effect ###########
+
+df %>% #filter(Species1!= "Soil")  %>%
+  ggplot(aes(x=Treatment, y=BONCAT_freq)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 22, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+ 
+#make summary table
+avg <-df %>% group_by(Treatment) %>%
+summarise(mean.activity = mean(BONCAT_freq), sd.activity = sd(BONCAT_freq))
+table<-cbind(effectsize, avg)
+head(table)
+
+#expectations
+# G + B
+gb<- table[which(table$Treatment == "Soil"), 1]+ table[which(table$Treatment == "B"), 1] + table[which(table$Treatment == "G"), 1] # mean
+gbe<-sqrt(table[which(table$Treatment == "Soil"), 2]+ table[which(table$Treatment == "B"), 2] + table[which(table$Treatment == "G"), 2])# standard dev 
+# 15.0 + or  - 2.67 
+#actually
+#table[which(table$Treatment == "GB"), 1] 
+# 6.7 + or - 5.3
+
+
+# L + B
+lb<- table[which(table$Treatment == "Soil"), 1]+ table[which(table$Treatment == "B"), 1] + table[which(table$Treatment == "L"), 1] #mean
+lbe<-sqrt(table[which(table$Treatment == "Soil"), 2]+table[which(table$Treatment == "B"), 2] + table[which(table$Treatment == "G"), 2]) #stdev
+# expectation:  12.2 +/- # 3.06
+#table[which(table$Treatment == "LB"), 2] #mean
+#table[which(table$Treatment == "LB"), 3]  #stdev
+# actual : 10.5 +/- 7
+
+
+# L + G
+lg<-table[which(table$Treatment == "Soil"), 1]+  table[which(table$Treatment == "G"), 1] + table[which(table$Treatment == "L"), 1] #mean
+lge<-sqrt(table[which(table$Treatment == "Soil"), 2]+table[which(table$Treatment == "L"), 2] + table[which(table$Treatment == "G"), 2]) #stdev
+# expectation:  8.6 +/- # 2.5
+#table[which(table$Treatment == "LG"), 2] #mean
+#table[which(table$Treatment == "LG"), 3]  #stdev
+# actual : 12.8 +/- 8.5
+
+# L + G + B
+lgb<- table[which(table$Treatment == "Soil"), 1]+ table[which(table$Treatment == "G"), 1] + table[which(table$Treatment == "L"), 1] + table[which(table$Treatment == "B"), 1] #mean
+lgbe<-sqrt(table[which(table$Treatment == "Soil"), 2]+table[which(table$Treatment == "L"), 2] + table[which(table$Treatment == "G"), 2] +  table[which(table$Treatment == "B"), 2] )#stdev
+# expectation:  16.6 +/- 3.5
+#table[which(table$Treatment == "LGB"), 2] #mean
+#table[which(table$Treatment == "LGB"), 3]  #stdev
+# actual : 7.8 +/- 7.8
+
+
+###predictors verse actual
+head(table)
+prediction<-c(NA,NA, NA,NA, gb, lb, lg, lgb)
+prediction.error <- c(NA, NA, NA,NA, gbe, lbe, lge, lgbe)
+table<-cbind(table, prediction)
+table <- cbind(table, prediction.error)
+head(table)
+table$color <- c(0, 0,0, 0, 1, 1, 1 ,1)
+
+table %>% ggplot(aes(x=Treatment, y=prediction, col="red")) +
+            geom_boxplot()+
+            geom_point(aes(x=Treatment, y=mean.activity, col="black")) 
+
+####plot
+
+  #ggplot(data=df, aes(Treatment, BONCAT_freq)) +
+  #geom_jitter(width = .2, size=1 )+
+  #geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  #theme_bw(base_size = 22, )+
+  #theme(axis.text.x = element_text(angle=60, hjust=1)) +
+  #geom_point(data= table, aes(Treatment, y= prediction, col="black")) +
+  #geom_point(data= table, aes(Treatment, y= mean.activity, col="red")) 
+
+
+mycols <- ("black", "red")
+
+mycols<-c(rep("black",4), rep("red", 4))
+  plot(
+    x = table$Treatment,
+    y = table$mean.activity,
+    xlab = "Treatment",
+    ylab = "Microbial Activity",
+    pch = 20, # solid dots increase the readability of this data plot
+    col = mycols,
+    fill = mycols
+  )
+  
+
+
+legend(
+  x ="topleft",
+  legend = paste("Color", levels(diamonds$color)), # for readability of legend
+  col = diamond_color_colors,
+  pch = 19, # same as pch=20, just smaller
+  cex = .7 # scale the legend to look attractively sized
+)
+
+
+##############################################
 # increasing species line w/o brasssisae 
-df%>% #filter(Species1!="Soil") %>%
+df%>% filter(Species1!="Soil") %>%
   ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Brassicae))) +
   geom_jitter(width = .2, size=2 )+
   theme_bw(base_size = 18, )+
@@ -67,100 +212,9 @@ df%>% filter(Species1!="Soil") %>%
   theme_bw(base_size = 18, )+
   stat_summary(geom = "line", fun = mean)
 
-df%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Rep))) +
-  geom_jitter(width = .2, size=2 )+
-  theme_bw(base_size = 18, )+
-  stat_summary(geom = "line", fun = mean)
-
-
-# Binvary plots #######################################Binvary plots ###########################################
-# not a clear pattern on any.
-# Brassicae
-df1%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=as.factor(Brassicae), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
-  #scale_y_log10()+
-  #xlab("method")
-
-df1%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=as.factor(Grass), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
-#scale_y_log10()+
-#xlab("method")
- 
-df1%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=as.factor(Legume), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
-#scale_y_log10()+
-#xlab("method")
 
 
 
-############################################treatment ###########
-
-df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-df %>% #filter(Species1!= "Soil")  %>%
-  ggplot(aes(x=Treatment, y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
- 
-
-### model
-# in simple lm LB and LG are higher than soil.
-m1<-lm(BONCAT_freq  ~Treatment, data=df)
-summary(m1)
-
-#make summary table
-avgs<-df %>% group_by(Treatment) %>%
-summarise(mean = mean(BONCAT_freq), sd = sd(BONCAT_freq))
-
-#expectations
-# G + B
-avgs[which(avgs$Treatment == "B"), 2] + avgs[which(avgs$Treatment == "G"), 2] # mean
-sqrt(avgs[which(avgs$Treatment == "B"), 3] + avgs[which(avgs$Treatment == "G"), 3])# standard dev 
-# 12.4 + or  - 3.03 
-#actually
-avgs[which(avgs$Treatment == "GB"), 2] 
-# 6.7 + or - 5.3
-
-
-# L + B
-avgs[which(avgs$Treatment == "B"), 2] + avgs[which(avgs$Treatment == "L"), 2] #mean
-sqrt(avgs[which(avgs$Treatment == "B"), 3] + avgs[which(avgs$Treatment == "G"), 3]) #stdev
-# expectation:  12.2 +/- # 3.06
-avgs[which(avgs$Treatment == "LB"), 2] #mean
-avgs[which(avgs$Treatment == "LB"), 3]  #stdev
-# actual : 10.5 +/- 7
-
-
-# L + G
-avgs[which(avgs$Treatment == "G"), 2] + avgs[which(avgs$Treatment == "L"), 2] #mean
-sqrt(avgs[which(avgs$Treatment == "L"), 3] + avgs[which(avgs$Treatment == "G"), 3]) #stdev
-# expectation:  8.6 +/- # 2.5
-avgs[which(avgs$Treatment == "LG"), 2] #mean
-avgs[which(avgs$Treatment == "LG"), 3]  #stdev
-# actual : 12.8 +/- 8.5
-
-# L + G + B
-avgs[which(avgs$Treatment == "G"), 2] + avgs[which(avgs$Treatment == "L"), 2] + avgs[which(avgs$Treatment == "B"), 2] #mean
-sqrt(avgs[which(avgs$Treatment == "L"), 3] + avgs[which(avgs$Treatment == "G"), 3] +  avgs[which(avgs$Treatment == "B"), 3] )#stdev
-# expectation:  16.6 +/- 3.5
-avgs[which(avgs$Treatment == "LGB"), 2] #mean
-avgs[which(avgs$Treatment == "LGB"), 3]  #stdev
-# actual : 7.8 +/- 7.8
 
 
 df%>% filter(Treatment!="ctl") %>%
@@ -219,4 +273,59 @@ df%>% filter(Treatment!="ctl") %>%
   scale_y_log10()+
   xlab("")
 
+
+
+
+#####################colored line plots#########################
+# increasing species line w/o brasssisae 
+df%>% filter(Species1!="Soil") %>%
+  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Brassicae))) +
+  geom_jitter(width = .2, size=2 )+
+  theme_bw(base_size = 18, )+
+  stat_summary(geom = "line", fun = mean)
+
+# increasing species line w/o grass
+df%>% filter(Species1!="Soil") %>%
+  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Grass))) +
+  geom_jitter(width = .2, size=2 )+
+  theme_bw(base_size = 18, )+
+  stat_summary(geom = "line", fun = mean)
+
+
+# increasing species line w/o legume
+df%>% filter(Species1!="Soil") %>%
+  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Legume))) +
+  geom_jitter(width = .2, size=2 )+
+  theme_bw(base_size = 18, )+
+  stat_summary(geom = "line", fun = mean)
+
+# Binvary plots #######################################Binvary plots ###########################################
+# not a clear pattern on any.
+# Brassicae
+df1%>% filter(Species1!="Soil") %>%
+  ggplot(aes(x=as.factor(Brassicae), y=BONCAT_freq)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 22, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+  #scale_y_log10()+
+  #xlab("method")
+
+df1%>% filter(Species1!="Soil") %>%
+  ggplot(aes(x=as.factor(Grass), y=BONCAT_freq)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 22, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+#scale_y_log10()+
+#xlab("method")
+ 
+df1%>% filter(Species1!="Soil") %>%
+  ggplot(aes(x=as.factor(Legume), y=BONCAT_freq)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 22, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+#scale_y_log10()+
+#xlab("method")
 

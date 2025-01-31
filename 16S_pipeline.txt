@@ -43,27 +43,39 @@ cd /storage/home/jeh6121/.conda/envs
 
 ################ logging on and starting software ############
 ###logon to PSU roar collab
-ssh jeh6121@submit.hpc.psu.edu # change to your username
+ssh jeh6121@submit.hpc.psu.edu 
+# change to your username
 ###start interactive job
-salloc -N 1 -n 4 --mem-per-cpu=100 -t 2:00:00
+salloc -N 1 -n 8 --mem 100 -t 2:00:00
 ###go to work directory
 /storage/group/ltb5167/default/JennHarris/Mixtures_BONCAT
-####start conda
-module load anaconda3
-module load blast
-conda activate magicblast
+
 
 
 
 ##################### trimming #################################################################
+####start conda
+module load anaconda3
+module load blast
+module load julia
+conda activate magicblast
 
 #atria_trimming.sh contains:
 #detect adapter 2024 16s run
 cd /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/16S_seqs/fastq
-atria --detect-adapter -r BCAT_10_S21_R1_001.fastq.gz  -R BCAT_10_S21_R2_001.fastq.gz  --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT
+atria --detect-adapter -r BCAT_10_S21_R1_001.fastq.gz  -R BCAT_10_S21_R2_001.fastq.gz  --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/
 
-## adapter 1 CTGTCTCTATACA
-## adapter 2 CTGTCTCTATAA
+
+# detect adapter reports:
+R1 CTGTCTCTATACA
+R2  CTGTCTCTATAA
+
+
+### 16s primers
+Updated sequences: 515F (Parada)–806R (Apprill), forward-barcoded:
+FWD: GTGYCAGCMGCCGCGGTAA; REV:GGACTACNVGGGTWTCTAAT
+top of sequence GTGTCAGC
+
 ## force to run all samples
 ## R1 adapter start position 292.
 ### adater, length, and quality 20, then trim 5' -10  # 1,297,773 Seqs, 170.2 mb 
@@ -73,14 +85,26 @@ atria --detect-adapter -r BCAT_10_S21_R1_001.fastq.gz  -R BCAT_10_S21_R2_001.fas
 
 ##test
 atria -r BCAT_10_S21_R1_001.fastq.gz -R BCAT_10_S21_R2_001.fastq.gz \
-  --adapter1 CTGTCTCTATACA \
-  --adapter2 CTGTCTCTATAA \
+  --adapter1 GTGYCAGCMGCCGCGGTAA \
+  --adapter2 GGACTACNVGGGTWTCTAAT \
+  --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/test/trimmed
+
+echo "done"
+
+atria -r *R1_001.fastq.gz -R *R2_001.fastq.gz \
+  --adapter1 GTGYCAGCMGCCGCGGTAA \
+  --adapter2 GGACTACNVGGGTWTCTAAT \
+  -f \
+
+  -q 20 \ # cut where quality is lower than 20 phred score
+  --threads 8 \
   --output-dir /storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT/16S_seqs/trimmed
 
 echo "done"
 
 atria -r *R1_001.fastq.gz -R *R2_001.fastq.gz \
-  --adapter1 CTGTCTCTATACA\
+  --adapter1 CCACCAGGCA \
+  --adapter2 GTAGTCC
   --adapter2 CTGTCTCTATAA\
   -f \
   #-e 10 \ # remove the first 10 bases
@@ -91,36 +115,18 @@ atria -r *R1_001.fastq.gz -R *R2_001.fastq.gz \
 
 echo "done"
 
-
-################## dada2 in R ################################################################
-
+#check length of sequences in
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+qiime cutadapt trim-paired \
+  --p-cores 6 \
+  --i-demultiplexed-sequences 16Strimmed.qza \
+  --p-adapter-f GTGYCAGCMGCCGCGGTAA...GGACTACNVGGGTWTCTAA \
+  --p-adapter-r GGACTACNVGGGTWTCTAA...TTAGAWCCCNGTAGTCC \
+  --p-error-rate 0.1 \
+  --o-trimmed-sequences 16S.trimmed.primer.qza
 
 
 
@@ -180,28 +186,34 @@ qiime dada2 denoise-paired \
 #########################################export ################################################
 ### Stats on how DADA2 went ####
 qiime tools export \
-   --input-path ./stats.dada2.rep123.qza \
-   --output-path ./rep123/
+   --input-path ./stats.filt.rep123.qza \
+   --output-path ./output.filt.rep123/
 
 
 #### summerize and export feature table ####
 qiime tools export \
-  --input-path  feature.table.dada2.rep123.qza\
-  --output-path ./rep123/
+  --input-path  feature.table.filt.rep123.qza\
+  --output-path ./output.filt.rep123/
 
-biom convert -i ./rep123/feature-table.biom -o ./rep123/feature-table.tsv --to-tsv
+biom convert -i ./output.filt.rep123/feature-table.biom -o ./output.filt.rep123/feature-table.tsv --to-tsv
 
 #### export representative sequences ####
 qiime tools export \
-  --input-path rep.seqs.dada2.rep123.qza\
-  --output-path ./rep123/
+  --input-path rep.seqs.filt.rep123.qza\
+  --output-path ./output.filt.rep123/
 
 # tablulate and export rep seqs ####
 qiime feature-table tabulate-seqs \
-  --i-data  ./rep.seqs.dada2.rep123.qza\
-  --o-visualization ./rep123/rep-seqs.qzv
+  --i-data  ./rep.seqs.filt.rep123.qza\
+  --o-visualization ./output.filt.rep123/rep-seqs.qzv
+
+qiime tools export \
+  --input-path taxonomy.rep123.qza \
+  --output-path ./output.filt.rep123/
 
 
+#????? maybe try
+qiime feature-table filter-features
 
 ######################## silva classification ############################
 
