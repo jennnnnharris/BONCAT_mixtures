@@ -68,8 +68,8 @@ library(phyloseq)
 ## Set the working directory; ###
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 
-taxon <- read.table("filt.rep123/taxonomy.tsv", sep="\t", header=T, row.names = 1)
-asvs.raw <- read.table("filt.rep123/feature-table.tsv", sep="\t", header=T, row.names = 1)
+taxon <- read.table("rep123/taxonomy.txt", sep="\t", header=T, row.names = 1)
+asvs.raw <- read.table("rep123/feature.table.rep123.tsv", sep="\t", header=T, row.names = 1)
 #metadat <- read.excel("/metadata.csv", header = T, check.names=FALSE)
 metadat<-read_excel("metadata.xlsx", sheet = 2)
 
@@ -105,8 +105,10 @@ ps
 
 #####remove plant contamination  ########
 # Select unassigned Asvs that the only in the the roots and nodules
-#ps<-subset_taxa(ps, Phyla=="" | Phyla == " p__")
 
+ps<-subset_taxa(ps, Order!="" | Phyla == " p__")
+
+unique(taxon$Phyla)
 
 
 ####DIVERSITY  FIG 3####
@@ -202,84 +204,6 @@ m1<-lm(Shannon ~ Compartment,  data = df)
 summary(m1) 
 
 
-# nod vs endo viable
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT=="SYBR") %>%
-  select(Shannon, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Nodule"| Compartment=="Roots")
-m1<-lm(Shannon ~ Compartment,  data = df)
-summary(m1) 
-
-
-# active
-# rhizo vs endo
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Shannon, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere"| Compartment=="Nodule", BONCAT=="POS")
-m1<-lm(Shannon ~ Compartment,  data = df)
-summary(m1)
-
-
-# roots vs nod
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Shannon, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Roots"| Compartment=="Nodule", BONCAT=="POS")
-m1<-lm(Shannon ~ compartment_BCAT,  data = df)
-summary(m1)
-
-
-
-#total DNA verse viable
-# in rhizo
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT!="BONCAT") %>%
-  select(Shannon, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere")
-m1<-lm(Shannon ~ BONCAT,  data = df)
-summary(m1)
-
-
-#total DNA verse active
-# in rhizo
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT!="SYBR") %>%
-  select(Shannon, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere")
-m1<-lm(Shannon ~ BONCAT,  data = df)
-summary(m1)
-
-
-# active verse viable
-# in rhizo
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT!="DNA") %>%
-  select(Shannon, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere")
-m1<-lm(Shannon ~ BONCAT,  data = df)
-summary(m1)
-
-
-# in root
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Shannon, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Roots")
-m1<-lm(Shannon ~ BONCAT,  data = df)
-summary(m1)
-
-
-# in nodule
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Shannon, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Nodule")
-m1<-lm(Shannon ~ BONCAT,  data = df)
-summary(m1)
-
-
-
 ###No. ASVs. ###
 # overall anova 
 df<-rich %>%
@@ -289,91 +213,6 @@ df<-rich %>%
 # rep was non signifcant so we dropped it from the model.
 # rhizo, roots and nod are all different but there is an interaction with BONCAT signal
 
-# Total DNA
-# rhizo vs bulk
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere"| Compartment=="Bulk_Soil", BONCAT=="DNA")
-  m1<-lm(Observed ~ Compartment,  data = df)
-  summary(m1)
-
-# viable cell
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT=="SYBR") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere"| Compartment=="Roots")
-  m1<-lm(Observed ~ Compartment,  data = df)
-  summary(m1) 
-
-# nod vs endo viable
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT=="SYBR") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Nodule"| Compartment=="Roots")
-  m1<-lm(Observed ~ Compartment,  data = df)
-  summary(m1) 
-
-# active
-# rhizo vs endo
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere"| Compartment=="Nodule", BONCAT=="POS")
-  m1<-lm(Observed ~ Compartment,  data = df)
-  summary(m1)
-
-# roots vs nod
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Roots"| Compartment=="Nodule", BONCAT=="POS")
-  m1<-lm(Observed ~ compartment_BCAT,  data = df)
-  summary(m1)
-
-
-#total DNA verse viable
-# in rhizo
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT!="Active_Cell") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere")
-  m1<-lm(Observed ~ BONCAT,  data = df)
-  summary(m1)
-
-#total DNA verse active
-# in rhizo
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT!="SYBR") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere")
-  m1<-lm(Observed ~ BONCAT,  data = df)
-  summary(m1)
-
-# active verse viable
-# in rhizo
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive", BONCAT!="DNA") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Rhizosphere")
-  m1<-lm(Observed ~ BONCAT,  data = df)
-  summary(m1)
-
-# in roots
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Roots")
-  m1<-lm(Observed ~ BONCAT,  data = df)
-  summary(m1)
-
-# in nodule
-df<-rich %>%
-  filter(Plant!="NOPLANT", Fraction!="Inactive") %>%
-  select(Observed, BONCAT, Compartment, compartment_BCAT)%>%
-  filter(Compartment=="Nodule")
-  m1<-lm(Observed ~ BONCAT,  data = df)
-  summary(m1)
 ####PERCENT abundance figure: SUPPLEMENT####
 # grab data
 taxon<- as.data.frame(tax_table(ps))
@@ -388,14 +227,14 @@ df<-cbind(df, taxon)
 colnames(df)
 length(n)
 length(colnames(df))
-n<-c("BEADS" ,    "Bulksoil.DNA.1"  , "Endo.BONCAT.1" , "Nodule.BONCAT.1" , "Nodule.Totalcells.1" ,"Rhizo.DNA.1",  "Rhizo.BONCAT.1" , "Rhizo.Totalcells.1" ,"Endo.BONCAT.2" ,  "Endo.Totalcells.2", 
-     "Nodule.BONCAT.2" ,  "Nodule.Totalcells.2"  ,"Rhizo.DNA.2" ,   "Rhizo.BONCAT.2",   "Rhizo.Totalcells.2",  "Bulksoil.DNA.3",    "Endo.BONCAT.3",   "Endo.Totalcells.3" , "Nodule.BONCAT.3",   "Nodule.Totalcells.3" ,
-     "Rhizo.DNA.3" ,  "Rhizo.BONCAT.3"  , "Rhizo.Totalcells.3" , "Bulksoil.DNA.4" ,    "Endo.BONCAT.4",    "Endo.Totalcells.4",  "Nodule.BONCAT.4" ,  "Rhizo.DNA.4",   "Rhizo.BONCAT.4",   "Rhizo.Totalcells.4" ,
-     "BulkSoil.DNA.5",   "Endo.BONCAT.5",   "Endo.Totalcells.5",  "Nodule.BONCAT.5" ,  "Nodule.Totalcells.5" , "Rhizo.DNA.5",   "Rhizo.Totalcells.5" , "CTL"  ,     "Bulksoil.DNA.6"  ,  "Bulksoil.DNA.7"  ,  
-     "Bulksoil.DNA.8",     "Bulksoil.DNA.9"  ,   "Domain"  ,      "Phyla"       ,  "Class"  ,       "Order"    ,     "Family"  ,      "Genus"    ,     "Species"   )
+#n<-c("BEADS" ,    "Bulksoil.DNA.1"  , "Endo.BONCAT.1" , "Nodule.BONCAT.1" , "Nodule.Totalcells.1" ,"Rhizo.DNA.1",  "Rhizo.BONCAT.1" , "Rhizo.Totalcells.1" ,"Endo.BONCAT.2" ,  "Endo.Totalcells.2", 
+#     "Nodule.BONCAT.2" ,  "Nodule.Totalcells.2"  ,"Rhizo.DNA.2" ,   "Rhizo.BONCAT.2",   "Rhizo.Totalcells.2",  "Bulksoil.DNA.3",    "Endo.BONCAT.3",   "Endo.Totalcells.3" , "Nodule.BONCAT.3",   "Nodule.Totalcells.3" ,
+#     "Rhizo.DNA.3" ,  "Rhizo.BONCAT.3"  , "Rhizo.Totalcells.3" , "Bulksoil.DNA.4" ,    "Endo.BONCAT.4",    "Endo.Totalcells.4",  "Nodule.BONCAT.4" ,  "Rhizo.DNA.4",   "Rhizo.BONCAT.4",   "Rhizo.Totalcells.4" ,
+#     "BulkSoil.DNA.5",   "Endo.BONCAT.5",   "Endo.Totalcells.5",  "Nodule.BONCAT.5" ,  "Nodule.Totalcells.5" , "Rhizo.DNA.5",   "Rhizo.Totalcells.5" , "CTL"  ,     "Bulksoil.DNA.6"  ,  "Bulksoil.DNA.7"  ,  
+#     "Bulksoil.DNA.8",     "Bulksoil.DNA.9"  ,   "Domain"  ,      "Phyla"       ,  "Class"  ,       "Order"    ,     "Family"  ,      "Genus"    ,     "Species"   )
 df1<-df
 colnames(df1)<-n
-
+df1
 # make rownames null
 # summarize by phyla
 df1<-aggregate(cbind(BEADS , Bulksoil.DNA.1  , Endo.BONCAT.1 , Nodule.BONCAT.1 , Nodule.Totalcells.1 , Rhizo.DNA.1,  Rhizo.BONCAT.1 , Rhizo.Totalcells.1 ,Endo.BONCAT.2 ,  Endo.Totalcells.2, 

@@ -250,7 +250,7 @@ qiime metadata tabulate \
 #output taxomny file
 
 qiime tools export \
-  --input-path taxonomy.pretrained.gg2.qza \
+  --input-path taxonomy.qza \
   --output-path ./
 
 ############### green genes classification #############################
