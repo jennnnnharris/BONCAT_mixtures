@@ -81,17 +81,15 @@ asvs.phyloseq <- t(asvs.raw)
 row.names(asvs.phyloseq)
 #taxa are columns
 
-# ck names athc in metadata file.
-#length(intersect(colnames(asvs.raw) , metadat$SampleID)) # Apply setdiff function to see what's missing from the tree
-#mynames<- setdiff(metadat$SampleID , colnames(asvs.raw) )
-#length(mynames)
-#mynames
 
 ## order metadata
 metadat<-metadat[order(metadat$SampleID),]
 metadat<-as.data.frame(metadat)
 row.names(metadat) <- metadat$SampleID
 metadat
+
+###
+Union
 
 
 # import it phyloseq
@@ -100,7 +98,7 @@ Workshop_metadat <- sample_data(metadat)
 Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
 ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
 ps
-# 144366 taxa 
+# 13219 taxa 
 
 
 #####remove plant contamination  ########
@@ -108,7 +106,9 @@ ps
 
 ps<-subset_taxa(ps, Order!="" | Phyla == " p__")
 
-unique(taxon$Phyla)
+Phyla<-unique(taxon$Phyla)
+
+order[order(unique(taxon$Order))]
 
 
 ####DIVERSITY  FIG 3####
