@@ -74,6 +74,7 @@ asvs.raw <- read.table("rep123/feature.table.rep123.tsv", sep="\t", header=T, ro
 metadat<-read_excel("metadata.xlsx", sheet = 2)
 
 
+
 ## Transpose ASVS table ##
 colnames(asvs.raw)  
 head(asvs.raw)
@@ -82,33 +83,52 @@ row.names(asvs.phyloseq)
 #taxa are columns
 
 
+## Determine minimum available reads per sample ##
+rowSums(asvs.phyloseq)[order(rowSums(asvs.phyloseq))]
+#T_DNA_23_S153 has really few reads... I think this should be omitted. 
+asvs.phyloseq<-asvs.phyloseq[which(row.names(asvs.phyloseq)!= "T_DNA_23_S153"),]
+min.s<-min(rowSums(asvs.phyloseq))
+min.s
+
+### Rarefy to obtain even numbers of reads by sample ###
+set.seed(336)
+asvs.r<-rrarefy(asvs.phyloseq, min.s)
+dim(asvs.phyloseq)
+dim(asvs.r)
+
 ## order metadata
 metadat<-metadat[order(metadat$SampleID),]
 metadat<-as.data.frame(metadat)
 row.names(metadat) <- metadat$SampleID
 metadat
 
-###
-Union
+# ck names athc in metadata file.
+#length(intersect(colnames(asvs.raw) , metadat$SampleID)) # Apply setdiff function to see what's missing from the tree
+#mynames<- setdiff(metadat$SampleID , colnames(asvs.raw) )
+#length(mynames)
+#mynames
 
 
 # import it phyloseq
-Workshop_OTU <- otu_table(as.matrix(asvs.phyloseq), taxa_are_rows = FALSE)
+Workshop_OTU <- otu_table(as.matrix(asvs.r), taxa_are_rows = FALSE)
 Workshop_metadat <- sample_data(metadat)
 Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
 ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
 ps
-# 13219 taxa 
+# 132,980 taxa 
 
 
 #####remove plant contamination  ########
 # Select unassigned Asvs that the only in the the roots and nodules
 
 ps<-subset_taxa(ps, Order!="" | Phyla == " p__")
-
 Phyla<-unique(taxon$Phyla)
-
 order[order(unique(taxon$Order))]
+
+# remove rare taxa
+ps<-prune_taxa(taxa_sums(ps) > 5, ps)
+ps
+#54 taxa
 
 
 ####DIVERSITY  FIG 3####
@@ -164,11 +184,11 @@ p2<-rich %>%
 p2
  
 
-#svg(file="diversity.svg",width = 8, height=7)
+svg(file="diversity1.svg",width = 8, height=7)
 #windows(8,7)
-#require(gridExtra)
-#grid.arrange(p1, p2, ncol=1)
-#dev.off()
+require(gridExtra)
+grid.arrange(p1, p2, ncol=1)
+dev.off()
 
 # summary table
 rich %>% group_by(compartment_BCAT) %>% summarise(mean(Shannon))
@@ -367,9 +387,9 @@ n
 
 ##all comparents##
 #Pcoa on rarefied asvs Data
-ps.r<-subset_samples(ps.r, Compartment !="ctl")
+#ps<-subset_samples(ps, Fraction !="CTL")
 # Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps.r), method = "bray")
+otus.bray<-vegdist(otu_table(ps), method = "bray")
 # Perform PCoA analysis of BC distances #
 otus.pcoa <- cmdscale(otus.bray, k=(40-1), eig=TRUE)
 # Store coordinates for first two axes in new variable #
@@ -384,14 +404,20 @@ pe2<-perc.exp[2]
 
 
 # subset metadata
-metadat2<-filter(metadat, Compartment!="ctl")
-as.factor(metadat2$Compartment)
-as.factor(metadat2$Fraction)
-as.factor(metadat2$compartment_BCAT)
-levels(as.factor(metadat2$compartment_BCAT))
-unique(levels(as.factor(metadat2$Fraction)))
+#metadat2<-filter(metadat, Compartment!="ctl")
+#as.factor(metadat2$Compartment)
+as.factor(metadat$Fraction)
+as.factor(metadat$Treatment)
+levels(as.factor(metadat$Fraction))
+#unique(levels(as.factor(metadat2$Fraction)))
 #color and shapes
-mycols_pc <-  c("#fc8449", "#bcd3e8" , "#282c55" )
+pal <- colorRampPalette(c("purple", "yellow", "orange"))
+library(RColorBrewer)
+display.brewer.all()
+mycols <- 
+  brewer.pal(8, "Dark2")
+
+mycols_pc <-  c("#fc8449", "#bcd3e8" , "#282c55", "grey" )
 #get shapes
 square <- 22
 diamond <- 23
@@ -408,27 +434,27 @@ par(mfrow=c(2,2))
 #all
 ordiplot(otus.pcoa,choices=c(1,2), type="none", main="All Compartments",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
-title(adj = 0, main= "A")
-points(otus.p, col=c("darkgrey"),
-       pch=c(25, circle, diamond, triangle)[as.factor(metadat2$Compartment)],
+#title(adj = 0, main= "A")
+points(otus.p, 
+       col="darkgrey",
+       pch=c(25, circle, diamond, triangle)[as.factor(metadat$Fraction)],
        lwd=1,cex=2,
-       bg=mycols_pc[as.factor(metadat2$Fraction)])
-legend("topleft", legend=c( "Active Cell"   ,   "Viable Cell", "TotalDNA"  ),
-       fill= mycols3,
+       bg=mycols[as.factor(metadat$Treatment)])
+
+legend("topleft", legend=c( "Active" ,  "CTL"    ,  "Inactive" ,"Total"    ),
+       fill= mycols_pc,
        cex=1,
        title = "Fraction",
        bty = "n")
-legend("top", legend=c("Nodule", "Root", "Rhizosphere", "Bulk soil"  ),
-       pch=c(1, 2, 5, 6),
-       cex=1,
-       title = "Compartment",     bty = "n")
+
 #dev.off()
 
 
-##soil##
-ps2<-subset_samples(ps.r, Compartment !=  "Nodule" & Compartment != "Roots" & Compartment !="ctl" & Fraction != "Total_DNA")
+##active verse inactive##
+ps2<-subset_samples(ps, Fraction!="Total", Fraction !="Inactive")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 any(taxa_sums(ps2) == 0)
+ps2
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps2), method = "bray")
 # Perform PCoA analysis of BC distances #
@@ -442,25 +468,26 @@ pe1<-perc.exp[1]
 pe2<-perc.exp[2]
 # subset metadata1
 metadat2<-as.data.frame(sample_data(ps2))
-metadat2<-metadat%>% filter(Compartment !=  "Nodule" & Compartment != "Roots" & Compartment!="ctl" & Fraction != "Total_DNA")
+metadat2<-metadat%>% filter(Fraction!="Total", Fraction !="Inactive")
 #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT/Data/")
 #svg(file="figures/16s/pcoa/soil_raw.svg",width = 4, height=4 )
 #windows(title="PCoA on asvs- Bray Curtis", width = 4, height = 4)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Rhizosphere",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="active v inactive",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 title(adj = 0, main= "B")
 points(otus.p[,1:2],
        col=c("darkgray"),
-       pch=(diamond),
+       pch=c(25, circle, diamond, triangle)[as.factor(metadat2$Fraction)],
        lwd=1,cex=2,
-       bg= c(mycols3[1:2])[as.factor(metadat2$Fraction)])
-ordiellipse(otus.pcoa, metadat2$Fraction,  
+       bg=mycols[as.factor(metadat$Treatment)])
+       #bg= c(mycols3[1:3])[as.factor(metadat2$Fraction)])
+ordiellipse(otus.pcoa, metadat2$Treatment,  
             kind = "ehull", conf=0.95, label=T, 
             draw = "polygon",
             border = 0,
             #lwd=.1,
-            col= mycols3[1:2],
-            alpha = 50)
+            col= mycols,
+            alpha = 60)
 
 ## roots ###
 ps2<-subset_samples(ps.r, Compartment == "Roots")
