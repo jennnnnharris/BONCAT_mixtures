@@ -1,7 +1,8 @@
 # 16S analysis
+# BONCAT mixtures
 # Jennifer Harris
 # Jan 7 2025
-# Last Updated: Jan 23 2025
+# Last Updated: Feb 14 2025
 
 ### 1. Initial Setup ###
 
@@ -115,20 +116,28 @@ Workshop_metadat <- sample_data(metadat)
 Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
 ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
 ps
-# 132,980 taxa 
+# 132,980 taxa when rarefied 
 
 
 #####remove plant contamination  ########
 # Select unassigned Asvs that the only in the the roots and nodules
 
-ps<-subset_taxa(ps, Order!="" | Phyla == " p__")
+ps<-subset_taxa(ps, Class!="c__Chloroplast" )
+ps<-subset_taxa(ps, Class!=" c__Chloroplast" )
+ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
+
+ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+ps
+# 126655 taxa and 84 samples when mitochondria removed. 
+
+#checking taxa
 Phyla<-unique(taxon$Phyla)
-order[order(unique(taxon$Order))]
+unique(taxon$Family)[order(unique(taxon$Family))]
 
 # remove rare taxa
 ps<-prune_taxa(taxa_sums(ps) > 5, ps)
 ps
-#54 taxa
+#54281 taxa
 
 
 ####DIVERSITY  FIG 3####
@@ -160,9 +169,8 @@ p1<-rich %>%
         legend.position = "none")+
   #facet_wrap(~Fraction, scales = "free_x")+
   scale_x_discrete(drop = TRUE) +
-  ylab("Shannon Diversity
-       
-       ")+
+  ylab("Shannon Diversity   ")+
+  ggtitle("Rarefied + asvs  <5 reads filtered out")
   xlab(" ")
 p1
 #n asvs
@@ -180,18 +188,21 @@ p2<-rich %>%
   #facet_wrap(~Fraction, scales = "free_x")+
   scale_x_discrete(drop = TRUE) +
   ylab("Numbers of ASVs")+
+  ggtitle("Rarefied + asvs  <5 reads filtered out")+
   xlab("")
 p2
  
 
-svg(file="diversity1.svg",width = 8, height=7)
+svg(file="diversity.rarefied.asvs.svg",width = 8, height=7)
 #windows(8,7)
 require(gridExtra)
 grid.arrange(p1, p2, ncol=1)
 dev.off()
 
 # summary table
-rich %>% group_by(compartment_BCAT) %>% summarise(mean(Shannon))
+rich %>% group_by(Treatment) %>% summarise(mean(Shannon))
+rich %>% group_by(Treatment) %>% summarise(mean(Observed))
+
 
 #####DIVERSITY STATS######
 ####shannon###
@@ -241,27 +252,42 @@ df<-as.data.frame(otu_table(ps))
 # make it percent
 df<-(df/rowSums(df))*100
 df<-as.data.frame(t(df))
-df<-cbind(df, taxon)
+df.taxa<-cbind(df, taxon)
 
 # rename columns 
 colnames(df)
 length(n)
 length(colnames(df))
-#n<-c("BEADS" ,    "Bulksoil.DNA.1"  , "Endo.BONCAT.1" , "Nodule.BONCAT.1" , "Nodule.Totalcells.1" ,"Rhizo.DNA.1",  "Rhizo.BONCAT.1" , "Rhizo.Totalcells.1" ,"Endo.BONCAT.2" ,  "Endo.Totalcells.2", 
-#     "Nodule.BONCAT.2" ,  "Nodule.Totalcells.2"  ,"Rhizo.DNA.2" ,   "Rhizo.BONCAT.2",   "Rhizo.Totalcells.2",  "Bulksoil.DNA.3",    "Endo.BONCAT.3",   "Endo.Totalcells.3" , "Nodule.BONCAT.3",   "Nodule.Totalcells.3" ,
-#     "Rhizo.DNA.3" ,  "Rhizo.BONCAT.3"  , "Rhizo.Totalcells.3" , "Bulksoil.DNA.4" ,    "Endo.BONCAT.4",    "Endo.Totalcells.4",  "Nodule.BONCAT.4" ,  "Rhizo.DNA.4",   "Rhizo.BONCAT.4",   "Rhizo.Totalcells.4" ,
-#     "BulkSoil.DNA.5",   "Endo.BONCAT.5",   "Endo.Totalcells.5",  "Nodule.BONCAT.5" ,  "Nodule.Totalcells.5" , "Rhizo.DNA.5",   "Rhizo.Totalcells.5" , "CTL"  ,     "Bulksoil.DNA.6"  ,  "Bulksoil.DNA.7"  ,  
-#     "Bulksoil.DNA.8",     "Bulksoil.DNA.9"  ,   "Domain"  ,      "Phyla"       ,  "Class"  ,       "Order"    ,     "Family"  ,      "Genus"    ,     "Species"   )
-df1<-df
-colnames(df1)<-n
+n<-c("BCAT_11_S31" ,     "BCAT_12_S41" ,     "BCAT_13_S51" ,     "BCAT_14_S61" ,     "BCAT_15_S71" ,     "BCAT_23_S1" ,      "BCAT_24_S12" ,    
+"BCAT_25_S22" ,     "BCAT_26_S32" ,     "BCAT_28_S52" ,     "BCAT_30_S62" ,     "BCAT_38_S72" ,     "BCAT_39_S3" ,      "BCAT_40_S13" ,    
+ "BCAT_41_S23" ,     "BCAT_43_S33" ,     "BCAT_44_S43" ,     "BCAT_45_S53" ,     "BCAT_8_S1" ,       "BCAT_9_S11" ,      "i_10_S36" ,       
+"i_11_S46" ,        "i_12_S56" ,        "i_14_S76" ,        "i_15_S7" ,         "i_23_S17" ,        "i_25_S37" ,        "i_26_S47" ,       
+ "i_27_S57" ,        "i_30_S77" ,        "i_38_S8" ,        "i_39_S18" ,       "i_40_S28" ,       "i_41_S38" ,       "i_43_S48" ,      
+ "i_44_S58" ,       "i_45_S68" ,       "i_8_S16" ,         "i_9_S26" ,         "pcr_ctl25_S173" ,  "pcr_ctl35_S82" ,   "T_DNA_1_S85" ,    
+ "T_DNA_10_S97" ,    "T_DNA_11_S108" ,  "T_DNA_12_S119" ,  "T_DNA_13_S130" ,  "T_DNA_14_S141" ,   "T_DNA_15_S152" ,   "T_DNA_16_S163" ,  
+ "T_DNA_17_S87" ,    "T_DNA_18_S98" ,   "T_DNA_19_S109" ,  "T_DNA_2_S96" ,     "T_DNA_20_S120" ,  "T_DNA_21_S131" ,   "T_DNA_22_S142" ,  
+ "T_DNA_24_S164" ,   "T_DNA_25_S88" ,   "T_DNA_26_S99" ,   "T_DNA_27_S110" ,  "T_DNA_28_S121" ,   "T_DNA_29_S132" ,   "T_DNA_3_S107" ,   
+ "T_DNA_31_S154" ,   "T_DNA_32_S165" ,   "T_DNA_33_S89" ,   "T_DNA_34_S100" ,  "T_DNA_35_S111" ,   "T_DNA_36_S122" ,   "T_DNA_37_S133" ,  
+ "T_DNA_38_S144" ,   "T_DNA_39_S155" ,   "T_DNA_4_S118" ,   "T_DNA_40_S166" ,   "T_DNA_41_S90" ,   "T_DNA_42_S101" ,   "T_DNA_43_S112" ,  
+ "T_DNA_44_S123" ,   "T_DNA_45_S134" ,   "T_DNA_5_S129" ,   "T_DNA_6_S140" ,   "T_DNA_7_S151" ,    "T_DNA_8_S162" ,    "T_DNA_9_S86" )
+
+
+colnames(df)<-n
 df1
 # make rownames null
 # summarize by phyla
-df1<-aggregate(cbind(BEADS , Bulksoil.DNA.1  , Endo.BONCAT.1 , Nodule.BONCAT.1 , Nodule.Totalcells.1 , Rhizo.DNA.1,  Rhizo.BONCAT.1 , Rhizo.Totalcells.1 ,Endo.BONCAT.2 ,  Endo.Totalcells.2, 
-                     Nodule.BONCAT.2 ,  Nodule.Totalcells.2  , Rhizo.DNA.2,   Rhizo.BONCAT.2,   Rhizo.Totalcells.2,  Bulksoil.DNA.3,    Endo.BONCAT.3,   Endo.Totalcells.3 , Nodule.BONCAT.3,   Nodule.Totalcells.3 ,
-                     Rhizo.DNA.3 ,  Rhizo.BONCAT.3  , Rhizo.Totalcells.3 , Bulksoil.DNA.4 ,    Endo.BONCAT.4,    Endo.Totalcells.4,  Nodule.BONCAT.4 ,  Rhizo.DNA.4,   Rhizo.BONCAT.4,   Rhizo.Totalcells.4 ,
-                     BulkSoil.DNA.5,   Endo.BONCAT.5,   Endo.Totalcells.5,  Nodule.BONCAT.5 ,  Nodule.Totalcells.5 , Rhizo.DNA.5,   Rhizo.Totalcells.5 , CTL  ,     Bulksoil.DNA.6  ,  Bulksoil.DNA.7  ,  
-                     Bulksoil.DNA.8,     Bulksoil.DNA.9) ~ Phyla, data = df1, FUN = sum, na.rm = TRUE)
+df1<-aggregate(cbind(BCAT_11_S31 ,     BCAT_12_S41 ,     BCAT_13_S51 ,     BCAT_14_S61 ,     BCAT_15_S71 ,     BCAT_23_S1 ,      BCAT_24_S12 ,    
+                         BCAT_25_S22 ,     BCAT_26_S32 ,     BCAT_28_S52 ,     BCAT_30_S62 ,     BCAT_38_S72 ,     BCAT_39_S3 ,      BCAT_40_S13 ,    
+                         BCAT_41_S23 ,     BCAT_43_S33 ,     BCAT_44_S43 ,     BCAT_45_S53 ,     BCAT_8_S1 ,       BCAT_9_S11 ,      i_10_S36 ,       
+                         i_11_S46 ,        i_12_S56 ,        i_14_S76 ,        i_15_S7 ,         i_23_S17 ,        i_25_S37 ,        i_26_S47 ,       
+                         i_27_S57 ,        i_30_S77 ,        i_38_S8 ,        i_39_S18 ,       i_40_S28 ,       i_41_S38 ,       i_43_S48 ,      
+                         i_44_S58 ,       i_45_S68 ,       i_8_S16 ,         i_9_S26 ,         pcr_ctl25_S173 ,  pcr_ctl35_S82 ,   T_DNA_1_S85 ,    
+                         T_DNA_10_S97 ,    T_DNA_11_S108 ,  T_DNA_12_S119 ,  T_DNA_13_S130 ,  T_DNA_14_S141 ,   T_DNA_15_S152 ,   T_DNA_16_S163 ,  
+                         T_DNA_17_S87 ,    T_DNA_18_S98 ,   T_DNA_19_S109 ,  T_DNA_2_S96 ,     T_DNA_20_S120 ,  T_DNA_21_S131 ,   T_DNA_22_S142 ,  
+                         T_DNA_24_S164 ,   T_DNA_25_S88 ,   T_DNA_26_S99 ,   T_DNA_27_S110 ,  T_DNA_28_S121 ,   T_DNA_29_S132 ,   T_DNA_3_S107 ,   
+                         T_DNA_31_S154 ,   T_DNA_32_S165 ,   T_DNA_33_S89 ,   T_DNA_34_S100 ,  T_DNA_35_S111 ,   T_DNA_36_S122 ,   T_DNA_37_S133 ,  
+                         T_DNA_38_S144 ,   T_DNA_39_S155 ,   T_DNA_4_S118 ,   T_DNA_40_S166 ,   T_DNA_41_S90 ,   T_DNA_42_S101 ,   T_DNA_43_S112 ,  
+                         T_DNA_44_S123 ,   T_DNA_45_S134 ,   T_DNA_5_S129 ,   T_DNA_6_S140 ,   T_DNA_7_S151 ,    T_DNA_8_S162 ,    T_DNA_9_S86 ) ~ Phyla, data = df1, FUN = sum, na.rm = TRUE)
 
 head(df1)
 # summ row 1 and 2 b\c they are both unassigned taxa
