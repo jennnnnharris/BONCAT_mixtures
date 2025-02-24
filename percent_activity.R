@@ -1,6 +1,6 @@
 # Mixtures Boncat
 # March 2023
-# last edited: Jan 2025
+# last edited: Feb 2025
 #Jennifer Harris
 
 
@@ -29,8 +29,51 @@ df$n_species<-rowSums(df[,5:7])
 df<-filter(df, Date_sorted != "2023-05-25")
 head(df)
 
+# make treatment and day factors
+df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+df$Date_sorted   <- factor(df$Date_sorted)
+
+################we need normalize by the day/rep ###############
+#for soil samples -- they were run on the same day
+## there were 4 samples from June 15 that were negative
+## 3 soil samples and 1 brassicae. These values we didn't adjust left them as raw values
+# think i should probably use a link logit model to this in the future, however back transforming the effect size can be tricky.
+#linear model to get coefs to adjusted see binomial model script for binomcial model.
+#m1<-lm(data=df, BONCAT_freq~Treatment + Date_sorted + Rep + Block)
+#plot(m1)
+#coef(m1)
+
+# not adjusted plot:
+df%>% 
+  ggplot(aes(x=Date_sorted, y=BONCAT_freq)) +
+  geom_jitter(width = .2, size=1 )+
+  #geom_line()+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 18, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+
+# adjusted plot
+df%>% 
+  ggplot(aes(x=Date_sorted, y=BONCAT_freq_adj)) +
+  geom_jitter(width = .2, size=1 )+
+  #geom_line()+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 18, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+
+# avg the technical reps that are adj for day.
+
+df1<-df%>% group_by(Species1, Species2, Species3, n_species, Nitrogen, Grass, Legume, Brassicae,   Rep, Block, Treatment, Label_short) %>%
+  summarise(BONCAT_freq = mean(BONCAT_freq_adj), 
+            n_events_cells= round(mean(n_events_cells), digits = 0),
+            n_events_BONCAT= round(mean(success_adj), digits = 0) , 
+            n = n())
+
+df1$n_events_cells
+###### treatment effect ###########
 
 # increasing species boxplot
+# not adjusted
 df%>% # filter(Species1!="Soil") %>%
   ggplot(aes(x=as.factor(n_species), y=BONCAT_freq)) +
   geom_jitter(width = .2, size=1 )+
@@ -39,66 +82,240 @@ df%>% # filter(Species1!="Soil") %>%
   theme_bw(base_size = 18, )+
   theme(axis.text.x = element_text(angle=60, hjust=1))
 
-# increasing species line
-#df%>% filter(Species1!="Soil") %>%
-#  ggplot(aes(x=n_species, y=BONCAT_freq)) +
-#  geom_jitter(width = .2, size=2 )+
-#  theme_bw(base_size = 18, )+
-#  theme(axis.text.x = element_text(angle=60, hjust=1))+
-#  stat_summary(geom = "line", fun = mean)
+# adjusted and technical reps averaged:
+df1%>% # filter(Species1!="Soil") %>%
+  ggplot(aes(x=as.factor(n_species), y=BONCAT_freq)) +
+  geom_jitter(width = .2, size=1 )+
+  #geom_line()+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 18, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
 
-#df%>% filter(Species1!="Soil") %>%
-#  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Date))) +
-#  geom_jitter(width = .2, size=2 )+
-#  theme_bw(base_size = 18, )+
-#  stat_summary(geom = "line", fun = mean)
 
-#ggplot(df, aes(y = BONCAT_freq, x = n_species)) +
-#  geom_point() +
-#  theme_classic(base_size = 15) +
-#  stat_smooth(method = "lm", formula = 'y ~ x', se=F,fullrange = T) +
-#  facet_wrap(~Rep)
-
-#ggplot(df, aes(y = BONCAT_freq, x = Treatment)) +
-#  geom_point() +
-#  theme_classic(base_size = 15) +
-#  stat_smooth(method = "lm", formula = 'y ~ x', se=F,fullrange = T) +
-#  facet_wrap(~Rep)
-
-################we need normalize by the day/rep  #################3
-df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-### simple linear model
-# in simple lm LB and LG are higher than soil.
-m1<-lm(BONCAT_freq  ~Treatment, data=df)
-summary(m1)
-
-library(lme4)
-lm<-lme4::lmer(data=df, BONCAT_freq~Treatment + (1|Date_sorted))
-lm
-coef(lm)
-summary(lm)
-anova(lm)
-
-library(lmerTest)
-lm<-lmer(data=df, BONCAT_freq~Treatment + (1|Date_sorted))
-s<-summary(lm)
-anova(lm)
-# grab effect size
-effectsize<-s$coefficients
-effectsize<-data.frame(effectsize)
-colnames(effectsize) <- c("effect.size", "std.error", "df", "tvalue", "pvalue") 
-head(effectsize)
-
-###### treatment effect ###########
-
+#### all treatments ####
+# not adjusted
 df %>% #filter(Species1!= "Soil")  %>%
   ggplot(aes(x=Treatment, y=BONCAT_freq)) +
   geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
   theme_bw(base_size = 22, )+
   theme(axis.text.x = element_text(angle=60, hjust=1))
- 
+#adjusted  
+df %>% #filter(Species1!= "Soil")  %>%
+  ggplot(aes(x=Treatment, y=BONCAT_freq_adj)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 22, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+# adjusted and techical reps averaged
+df1 %>% #filter(Species1!= "Soil")  %>%
+  ggplot(aes(x=Treatment, y=BONCAT_freq)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+  theme_bw(base_size = 22, )+
+  theme(axis.text.x = element_text(angle=60, hjust=1))
+
+
+## linear model for activity ###########
+# in simple lm LB and LG are higher than soil.
+m1<-lm(BONCAT_freq  ~Treatment + Block + Rep, data=df1)
+summary(m1)
+
+t<-df1%>% filter(Treatment!="Soil")
+m1<-lm(BONCAT_freq  ~Treatment + Block, data=t)
+summary(m1)
+# LG is different than the base line. 
+
+#mixed model
+#library(lme4)
+#lm<-lme4::lmer(data=df, BONCAT_freq~Treatment + (1|Date_sorted))
+#library(lmerTest)
+#lm<-lmer(data=df, BONCAT_freq~Treatment + (1|Date_sorted))
+#s<-summary(lm)
+#anova(lm)
+
+
+
+#---------binomial models ---------
+#binomail model on # failures # successes and proportion of each ##
+
+prop<-df1 %>%
+    mutate(n_failures =  n_events_cells-n_events_BONCAT)
+y<-cbind(prop$n_events_BONCAT, prop$n_failures)
+# make vector of successes and failures
+m1<-glm(data= prop, y~Treatment +Block, family = binomial)
+m1
+summary(m1)
+#plot(m1)
+# I need a quasibinomial model because residual deviance is higher than the degrees of freedom = model is over disposed
+
+## quasibinomial glm on success and failures##
+m1<-glm(data= prop, y~Treatment +Block , family = quasibinomial)
+m1
+summary(m1)
+anova(m1, test= "LRT")  
+anova(m1, test= "Chisq")
+
+# post hoc tests
+# subset to compare treatments
+prop$Treatment <- as.character(prop$Treatment)
+
+# no soil
+prop1<-prop%>% filter(Treatment!="Soil")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  quasibinomial)
+anova(m2, test= "LRT")
+summary(m1)
+
+# L verse G
+prop1<-prop%>% filter(Treatment=="L"|Treatment=="G")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  quasibinomial)
+anova(m2, test= "LRT")
+
+######binomial model with percent data##############
+# make vector of successes and failures
+prop<-df1 %>%
+  mutate(BONCAT_freq = round(BONCAT_freq, 0)) %>%
+  mutate(n_failures =  100-BONCAT_freq)
+y<-cbind(prop$BONCAT_freq, prop$n_failures)
+y
+#model
+m1<-glm(data= prop, y~Treatment +Block, family = binomial)
+m1
+summary(m1)
+plot(m1)
+#plots look okay
+
+#block not significant so we can take block out
+m1<-glm(data= prop, y~Treatment, family = binomial)
+m1
+summary(m1)
+plot(m1)
+
+# over dispersion text 
+library(devtools) # assuming you have that
+install.packages("DHARMa")
+
+library(DHARMa)
+sim_m1 <- simulateResiduals(m1, refit=T) 
+testOverdispersion(sim_m1)
+hist(df1$BONCAT_freq, breaks=10)
+plot(df1$BONCAT_freq ~ df1$n_species, las=1)
+# post hoc tests
+# subset to compare treatments
+prop$Treatment <- as.character(prop$Treatment)
+# no soil
+prop1<-prop%>% filter(Treatment!="Soil")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  binomial)
+summary(m2)
+#anova(m2, test= "LRT")
+#there are difference among treatments when soil is removed.
+
+# L verse G
+prop1<-prop%>% filter(Treatment=="L"|Treatment=="G")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  binomial)
+anova(m2, test= "LRT") # different
+
+# L verse B
+prop1<-prop%>% filter(Treatment=="L"|Treatment=="B")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  binomial)
+anova(m2, test= "LRT") # not different
+
+
+# L verse LG
+prop1<-prop%>% filter(Treatment=="L"|Treatment=="LG")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  binomial)
+anova(m2, test= "LRT") # different
+
+
+# L verse LB
+prop1<-prop%>% filter(Treatment=="L"|Treatment=="LB")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  binomial)
+anova(m2, test= "LRT") # different
+
+# L verse LGB
+prop1<-prop%>% filter(Treatment=="L"|Treatment=="LGB")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  binomial)
+anova(m2, test= "LRT") # different
+
+
+# G verse B
+prop1<-prop%>% filter(Treatment=="G"|Treatment=="B")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  binomial)
+anova(m2, test= "LRT") # different
+
+
+# G verse B
+prop1<-prop%>% filter(Treatment=="G"|Treatment=="GB")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  binomial)
+m2
+anova(m2, test= "Chisq") # different
+
+##quasi binomial model with percent data##
+# make vector of successes and failures
+prop<-df1 %>%
+  mutate(BONCAT_freq = round(BONCAT_freq, 0)) %>%
+  mutate(n_failures =  100-BONCAT_freq)
+y<-cbind(prop$BONCAT_freq, prop$n_failures)
+y
+#model
+m1<-glm(data= prop, y~Treatment +Block, family = quasibinomial)
+m1
+summary(m1)
+plot(m1)
+#plots look okay
+
+#block not significant so we can take block out
+m1<-glm(data= prop, y~Treatment, family = quasibinomial)
+m1
+summary(m1)
+anova(m1, test= "Chisq") # different
+
+
+# post hoc tests
+# subset to compare treatments
+prop$Treatment <- as.character(prop$Treatment)
+# no soil
+prop1<-prop%>% filter(Treatment!="Soil")
+y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+prop1$Treatment
+m2<-glm(y~prop1$Treatment,  quasibinomial)
+plot(m2)
+summary(m2)
+#anova(m2, test= "LRT")
+#there are difference among treatments when soil is removed.
+
+
+
+
+
+#########################effect size + predictions ##################
+# grab effect size
+effectsize<-s$coefficients
+effectsize<-data.frame(effectsize)
+colnames(effectsize) <- c("effect.size", "std.error", "df", "tvalue", "pvalue") 
+head(effectsize)
+
+
 #make summary table
 avg <-df %>% group_by(Treatment) %>%
 summarise(mean.activity = mean(BONCAT_freq), sd.activity = sd(BONCAT_freq))
