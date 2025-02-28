@@ -1,1 +1,7 @@
 scp /home/harris/linux_mixtures_BONCAT/qiime_mapping_rep123.txt jeh6121@submit.hpc.psu.edu:/storage/home/jeh6121/burghardt/JennHarris/Mixtures_BONCAT
+
+#Check the accounts associated with a user
+sacctmgr -s show account format=Account%20,grptres%30,GrpCPUMins,qos%30 where account=<account name> where user='' 
+
+
+$ mybalance 

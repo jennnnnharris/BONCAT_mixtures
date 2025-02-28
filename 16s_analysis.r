@@ -476,11 +476,11 @@ legend("topleft", legend=c( "Active" ,  "CTL"    ,  "Inactive" ,"Total"    ),
 #dev.off()
 
 
-##active verse inactive##
-ps2<-subset_samples(ps, Fraction!="Total", Fraction !="Inactive")
+##total##
+ps2<-subset_samples(ps, Fraction=="Total")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 any(taxa_sums(ps2) == 0)
-ps2
+
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps2), method = "bray")
 # Perform PCoA analysis of BC distances #
@@ -494,16 +494,16 @@ pe1<-perc.exp[1]
 pe2<-perc.exp[2]
 # subset metadata1
 metadat2<-as.data.frame(sample_data(ps2))
-metadat2<-metadat%>% filter(Fraction!="Total", Fraction !="Inactive")
+#metadat2<-metadat%>% filter(Fraction!="Total", Fraction !="Inactive")
 #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT/Data/")
 #svg(file="figures/16s/pcoa/soil_raw.svg",width = 4, height=4 )
 #windows(title="PCoA on asvs- Bray Curtis", width = 4, height = 4)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="active v inactive",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="total ",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 title(adj = 0, main= "B")
 points(otus.p[,1:2],
        col=c("darkgray"),
-       pch=c(25, circle, diamond, triangle)[as.factor(metadat2$Fraction)],
+       pch=c(25), #, circle, diamond, triangle, diamond, circle, circle )[as.factor(metadat2$Treatment)],
        lwd=1,cex=2,
        bg=mycols[as.factor(metadat$Treatment)])
        #bg= c(mycols3[1:3])[as.factor(metadat2$Fraction)])
@@ -515,15 +515,15 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
             col= mycols,
             alpha = 60)
 
-## roots ###
-ps2<-subset_samples(ps.r, Compartment == "Roots")
+##active##
+ps2<-subset_samples(ps, Fraction=="Active")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 any(taxa_sums(ps2) == 0)
-df<-as.data.frame(otu_table(ps2))
+
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps2), method = "bray")
 # Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(9-1), eig=TRUE)
+otus.pcoa <- cmdscale(otus.bray, k=(8-1), eig=TRUE)
 # Store coordinates for first two axes in new variable #
 otus.p <- otus.pcoa$points[,1:2]
 # Calculate % variance explained by each axis #
@@ -531,25 +531,29 @@ otus.eig<-otus.pcoa$eig
 perc.exp<-otus.eig/(sum(otus.eig))*100
 pe1<-perc.exp[1]
 pe2<-perc.exp[2]
-metadat2<- sample_data(ps2)
+# subset metadata1
+metadat2<-as.data.frame(sample_data(ps2))
+metadat2
 
 #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT/Data/")
-#svg(file="figures/16s/pcoa/roots.svg",width = 4, height=4 )
+#svg(file="figures/16s/pcoa/soil_raw.svg",width = 4, height=4 )
 #windows(title="PCoA on asvs- Bray Curtis", width = 4, height = 4)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Roots",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="active ",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
-title(adj = 0, main= "C")
-points(otus.p[,1:2],col=c("darkgrey"),
-       pch=triangle,
+title(adj = 0, main= "B")
+points(otus.p[,1:2],
+       col=c("darkgray"),
+       pch=c(25), #, circle, diamond, triangle, diamond, circle, circle )[as.factor(metadat2$Treatment)],
        lwd=1,cex=2,
-       bg=c(fill= c(mycols3[1:2]) )[as.factor(metadat2$Fraction)])
-ordiellipse(otus.pcoa, metadat2$Fraction,  
+       bg=mycols[as.factor(metadat$Treatment)])
+#bg= c(mycols3[1:3])[as.factor(metadat2$Fraction)])
+ordiellipse(otus.pcoa, metadat2$Treatment,  
             kind = "ehull", conf=0.95, label=T, 
             draw = "polygon",
             border = 0,
             #lwd=.1,
-            col= c(mycols3[1:2]),
-            alpha = 50)
+            col= mycols,
+            alpha = 60)
 
 ###nodule###
 ps2<-subset_samples(ps.r, Compartment == "Nodule")
