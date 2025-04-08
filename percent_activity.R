@@ -9,6 +9,8 @@ library(readxl)
 library(tidyverse)
 library(lubridate)
 
+#import colors
+mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#6A3D9A", "#1a635a","#FF7F00")
 
 
 # import data
@@ -47,7 +49,6 @@ df$Date_sorted   <- factor(df$Date_sorted)
 df%>% 
   ggplot(aes(x=Date_sorted, y=BONCAT_freq)) +
   geom_jitter(width = .2, size=1 )+
-  #geom_line()+
   geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
   theme_bw(base_size = 18, )+
   theme(axis.text.x = element_text(angle=60, hjust=1))
@@ -56,7 +57,6 @@ df%>%
 df%>% 
   ggplot(aes(x=Date_sorted, y=BONCAT_freq_adj)) +
   geom_jitter(width = .2, size=1 )+
-  #geom_line()+
   geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
   theme_bw(base_size = 18, )+
   theme(axis.text.x = element_text(angle=60, hjust=1))
@@ -70,51 +70,44 @@ df1<-df%>% group_by(Species1, Species2, Species3, n_species, Nitrogen, Grass, Le
             n = n())
 
 df1$n_events_cells
-###### treatment effect ###########
+###### plots ###########
 
 # increasing species boxplot
-# not adjusted
-df%>% # filter(Species1!="Soil") %>%
-  ggplot(aes(x=as.factor(n_species), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  #geom_line()+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 18, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
-
 # adjusted and technical reps averaged:
-df1%>% # filter(Species1!="Soil") %>%
+df1%>%  filter(Species1!="Soil") %>%
   ggplot(aes(x=as.factor(n_species), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  #geom_line()+
+  geom_jitter(width = .2, size=2 )+
   geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
   theme_bw(base_size = 18, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
+  theme(axis.text.x = element_text(angle=60, hjust=1)) +
+ylab("percent active")
+
+df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A", "yellow")
+
+# plot for each treatment
 
 
-#### all treatments ####
-# not adjusted
-df %>% #filter(Species1!= "Soil")  %>%
-  ggplot(aes(x=Treatment, y=BONCAT_freq)) +
+  df1  %>%
+  ggplot(aes(x=Treatment, y=BONCAT_freq, fill = Treatment)) +
   geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
-#adjusted  
-df %>% #filter(Species1!= "Soil")  %>%
-  ggplot(aes(x=Treatment, y=BONCAT_freq_adj)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
+  geom_boxplot(alpha=.5, outlier.shape = NA)+
+  scale_color_manual(values=mycols8) +
+  scale_fill_manual(values = mycols8)+
+  theme_classic(base_size = 18)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
+        plot.title = element_text(hjust = 0.5))+
+  ylab("percent active")+
+  facet_grid( ~n_species, scales = "free", space = "free")+
+  ggtitle("number of species")+
+  geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
+  geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 
-# adjusted and techical reps averaged
-df1 %>% #filter(Species1!= "Soil")  %>%
-  ggplot(aes(x=Treatment, y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
+  
+#
+
+
 
 #note about outliers: the high value outlier in LG treatment is the avg of 2 technical reps. (sample #56)
 # the high outlier in teh LGB treatment (sample # 88) does not have technical reps.
@@ -143,41 +136,41 @@ summary(m1)
 #---------binomial models ---------
 #binomail model on # failures # successes and proportion of each ##
 
-prop<-df1 %>%
-    mutate(n_failures =  n_events_cells-n_events_BONCAT)
-y<-cbind(prop$n_events_BONCAT, prop$n_failures)
+#prop<-df1 %>%
+#    mutate(n_failures =  n_events_cells-n_events_BONCAT)
+#y<-cbind(prop$n_events_BONCAT, prop$n_failures)
 # make vector of successes and failures
-m1<-glm(data= prop, y~Treatment +Block, family = binomial)
-m1
-summary(m1)
+#m1<-glm(data= prop, y~Treatment +Block, family = binomial)
+#m1
+#summary(m1)
 #plot(m1)
 # I need a quasibinomial model because residual deviance is higher than the degrees of freedom = model is over disposed
 
 ## quasibinomial glm on success and failures##
-m1<-glm(data= prop, y~Treatment +Block , family = quasibinomial)
-m1
-summary(m1)
-anova(m1, test= "LRT")  
-anova(m1, test= "Chisq")
+#m1<-glm(data= prop, y~Treatment +Block , family = quasibinomial)
+#m1
+#summary(m1)
+#anova(m1, test= "LRT")  
+#anova(m1, test= "Chisq")
 
 # post hoc tests
 # subset to compare treatments
-prop$Treatment <- as.character(prop$Treatment)
+#prop$Treatment <- as.character(prop$Treatment)
 
 # no soil
-prop1<-prop%>% filter(Treatment!="Soil")
-y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
-prop1$Treatment
-m1<-glm(y~prop1$Treatment,  quasibinomial)
+#prop1<-prop%>% filter(Treatment!="Soil")
+#y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+#prop1$Treatment
+#m1<-glm(y~prop1$Treatment,  quasibinomial)
 #anova(m2, test= "LRT")
-summary(m1)
+#summary(m1)
 
 # L verse G
-prop1<-prop%>% filter(Treatment=="L"|Treatment=="G")
-y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
-prop1$Treatment
-m2<-glm(y~prop1$Treatment,  quasibinomial)
-anova(m2, test= "LRT")
+#prop1<-prop%>% filter(Treatment=="L"|Treatment=="G")
+#y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
+#prop1$Treatment
+#m2<-glm(y~prop1$Treatment,  quasibinomial)
+#anova(m2, test= "LRT")
 
 ######binomial model with percent data##############
 # make vector of successes and failures
@@ -197,14 +190,18 @@ summary(m1)
 m1<-glm(data= prop, y~Treatment, family = binomial)
 m1
 summary(m1)
+# all treatments are different that than the soil
 #plot(m1)
 
 # post hoc tests
 # subset to compare treatments
-prop$Treatment <- as.character(prop$Treatment)
+#prop$Treatment <- as.character(prop$Treatment)
 
 # no soil
 prop1<-prop%>% filter(Treatment!="Soil")
+prop1$Treatment   <- factor(prop1$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+prop1$Treatment
 y<-cbind(prop1$BONCAT_freq, prop1$n_failures)
 prop1$Treatment
 y
