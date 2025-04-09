@@ -121,18 +121,46 @@ Phyla<-unique(taxon$Phyla)
 unique(taxon$Family)[order(unique(taxon$Family))]
 
 # remove sigletons
-ps<-prune_taxa(taxa_sums(ps) > 1, ps)
+ps<-prune_taxa(taxa_sums(ps) > 5, ps)
+
+
 ps
-#~266 K taxa
+#~118 K taxa
 
-# quick histogram 
-x<-otu_table(ps) %>%
-t() 
-x<-rowSums(x)
-hist(x, right= TRUE, breaks=y)
+##### histogram ######
 
-y = seq(0, 100000, by = 1000)
-# many very rare taxa
+y<-seq(0, 80000, by=2500)
+
+#all
+otu_table(ps) %>%
+  t() %>%
+  rowSums() %>%
+  hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
+
+subset_samples(ps, Fraction=="Active") %>%
+  prune_taxa(taxa_sums(.) > 0, .) %>%
+  otu_table() %>%
+  t() %>%
+  rowSums() %>%
+  hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
+
+
+subset_samples(ps, Fraction=="Total") %>%
+  prune_taxa(taxa_sums(.) > 0, .) %>%
+  otu_table() %>%
+  t() %>%
+  rowSums() %>%
+  hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
+
+
+subset_samples(ps, Fraction=="Inactive") %>%
+  prune_taxa(taxa_sums(.) > 0, .) %>%
+  otu_table() %>%
+  t() %>%
+  rowSums() %>%
+  hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
+
+# many very rare taxa seeme the saem for all. 
 
 
 #filter by biological reps - estelle
@@ -140,9 +168,7 @@ y = seq(0, 100000, by = 1000)
 # removed taxa that that are in less than the minimum number of reps.
 #trts<-unique(metadat$Treatment)
 trts<-unique(metadat$Trt_fraction)
-
 trts
-
 
 #### make a list of the ps data frames and loop through to filter reads. 
 a<-list()
@@ -150,18 +176,11 @@ for (i in trts)
 {
   a[[i]]<-subset_samples(ps, Trt_fraction==i ) %>%
   ps_prune( min.samples = 2, min.reads = 1)
-  
-  
-}
-
-a
-#names(a) <- paste0("ps",seq_along(trts))
-#a
-
+ }
 ### put big PS object back together again. 
 ps1<-do.call(merge_phyloseq, a)
 ps1
-# 6k taxa
+# 12k taxa
 
 ####DIVERSITY plots  ####
 # diversity is calculated on raw reads b/c many diversity metric use singleton to calculate diversity. 
@@ -191,9 +210,10 @@ rich %>%
   scale_color_manual(values=mycols4) +
   scale_fill_manual(values = mycols4)+
   geom_jitter(width = .1, size=1 )+
-  theme_classic(base_size = 14)+
+  theme_classic(base_size = 18)+
   theme(axis.text.x = element_text(angle=60, hjust=1),legend.position = "none")+
-  ylab("Number of ASVS ")
+  ylab("Number of ASVS ")+
+  ggtitle("ASVs in <2 biological reps filtered")
 
 
 
@@ -205,15 +225,13 @@ rich %>%
   scale_color_manual(values=mycols4) +
   scale_fill_manual(values = mycols4)+
   geom_jitter(width = .1, size=1 )+
-  theme_classic(base_size = 14)+
+  theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5))+
-  scale_x_discrete(drop = TRUE) +
+        plot.title = element_text(hjust = 0.5),)+
   ylab("Number of ASVS ")+
-  ggtitle("Rarefied + asvs  <5 reads filtered out")+
   xlab("")+
-  facet_grid( ~n_species, scales = "free", space = "free")+
-  ggtitle("number of species")
+  labs(title = "number of species", subtitle = "ASVs in <2 biological reps filtered")+
+facet_grid( ~n_species, scales = "free", space = "free")
 
 #treatment
 rich %>%
@@ -222,19 +240,42 @@ rich %>%
   geom_boxplot(alpha=.5, outlier.shape= NA) +
   scale_color_manual(values=mycols4) +
   scale_fill_manual(values = mycols4)+
-  theme_classic(base_size = 14)+
+  theme_classic(base_size = 18)+
   theme(plot.title = element_text(hjust = 0.5))+
   scale_x_discrete(drop = TRUE) +
   ylab("Numbers of ASVs")+
   facet_grid( ~n_species, scales = "free", space = "free")+
-  ggtitle("number of species")
+  labs(title = "number of species", subtitle = "ASVs in <2 biological reps filtered")
+  
+rich
+
+
+#treatment by totoal
+rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A", "yellow")
+rich %>%
+  filter(Treatment!="CTL") %>%
+  filter(Fraction=="Total") %>%
+  
+  ggplot(aes(x=Treatment, y=Observed, fill=Treatment ))+
+  geom_boxplot(alpha=.5, outlier.shape= NA) +
+  geom_jitter(width = .2, size=1 )+
+      scale_color_manual(values=mycols8) +
+  scale_fill_manual(values = mycols8)+
+  theme_classic(base_size = 18)+
+  theme(plot.title = element_text(hjust = 0.5), legend.position="none")+
+  scale_x_discrete(drop = TRUE) +
+  ylab("Numbers of ASVs")+
+  facet_grid( ~n_species, scales = "free", space = "free")+
+  labs(subtitle = "number of species", title = "Total ASVs in <2 biological reps filtered")
 
 rich
 
 
 
 
-#####DIVERSITY STATS######
+##DIVERSITY STATS######
 ####shannon###
 # overall anova
 df<-rich %>%
@@ -274,147 +315,15 @@ df<-rich %>%
 # rep was non signifcant so we dropped it from the model.
 # rhizo, roots and nod are all different but there is an interaction with BONCAT signal
 
-####PERCENT abundance figure: SUPPLEMENT####
-# grab data
-taxon<- as.data.frame(tax_table(ps))
-df<-as.data.frame(otu_table(ps))
-
-# make it percent
-df<-(df/rowSums(df))*100
-df<-as.data.frame(t(df))
-df.taxa<-cbind(df, taxon)
-
-# rename columns 
-colnames(df)
-length(n)
-length(colnames(df))
-n<-c("BCAT_11_S31" ,"BCAT_12_S41" ,  "BCAT_13_S51" , "BCAT_14_S61" ,  "BCAT_15_S71" , "BCAT_23_S2" , 
-  "BCAT_24_S12" , "BCAT_25_S22" ,  "BCAT_26_S32" ,  "BCAT_28_S52" , "BCAT_30_S62" ,  "BCAT_38_S72" ,
-  "BCAT_39_S3"  , "BCAT_40_S13" ,  "BCAT_41_S23" ,  "BCAT_43_S33" ,  "BCAT_44_S43" ,  "BCAT_45_S53" , 
-  "BCAT_53_S63" , "BCAT_54_S73" ,  "BCAT_55_S4"  ,  "BCAT_56_S14"  ,  "BCAT_57_S24"  ,  "BCAT_59_S44" ,  
-  "BCAT_60_S54" , "BCAT_68_S64" ,  "BCAT_69_S74" ,   "BCAT_70_S5"   ,   "BCAT_71_S15"  ,  "BCAT_72_S25" ,  
-  "BCAT_73_S35" , "BCAT_8_S1"   ,  "BCAT_83_S45" ,   "BCAT_84_S55"  ,  "BCAT_86_S65"  ,  "BCAT_87_S75" ,  
-  "BCAT_88_S6"  , "BCAT_9_S11"  , "fc_ct_iso_S83",   "fc_ct_sh_S84" ,
-  "i_10_S36" ,      "i_11_S46" ,  
-  "i_12_S56" ,    "i_14_S76"   ,    "i_15_S7"   ,    "i_23_S17"   ,    "i_25_S37" ,    "i_26_S47"  ,   
-  "i_27_S57" ,    "i_30_S77"   ,    "i_38_S8"   ,    "i_39_S18"   ,   "i_40_S28"  ,    "i_41_S38"  , 
-  "i_43_S48" ,    "i_44_S58"   ,    "i_45_S68"  ,    "i_53_S78"   ,    "i_54_S9"  ,    "i_55_S19"  ,   
-  "i_56_S29" ,    "i_57_S39"  ,    "i_58_S49"  ,    "i_59_S59"   ,    "i_60_S69" ,    "i_68_S79"  ,    
-  "i_69_S10" ,    "i_70_S20"  ,    "i_71_S30"  ,    "i_72_S40"   ,    "i_73_S50" ,    "i_8_S16"   ,    
-  "i_83_S60" ,    "i_84_S70"  ,    "i_86_S80"  ,   "i_88_S81"    ,   "i_9_S26"   ,   "pcr_ctl25_S173" ,
-  "pcr_ctl35_S82",  "T_DNA_1_S85",
-  "T_DNA_10_S97"  , "T_DNA_11_S108" , "T_DNA_12_S119" , "T_DNA_13_S130" ,
-  "T_DNA_14_S141" , "T_DNA_15_S152" , "T_DNA_16_S163" , "T_DNA_17_S87" ,  "T_DNA_18_S98"  ,  "T_DNA_19_S109" ,
-  "T_DNA_2_S96"  ,  "T_DNA_20_S120" , "T_DNA_21_S131" , "T_DNA_22_S142" , "T_DNA_24_S164" , "T_DNA_25_S88"  ,
-  "T_DNA_26_S99"  , "T_DNA_27_S110"  ,"T_DNA_28_S121" , "T_DNA_29_S132" , "T_DNA_3_S107"  , "T_DNA_31_S154" ,
-  "T_DNA_32_S165" , "T_DNA_33_S89"  , "T_DNA_34_S100" , "T_DNA_35_S111" , "T_DNA_36_S122" , "T_DNA_37_S133" ,
-  "T_DNA_38_S144" , "T_DNA_39_S155" , "T_DNA_4_S118"  , "T_DNA_40_S166" , "T_DNA_41_S90"  , "T_DNA_42_S101" ,
-  "T_DNA_43_S112" , "T_DNA_44_S123" , "T_DNA_45_S134" , "T_DNA_46_S145" , "T_DNA_47_S156" , "T_DNA_48_S167" ,
-  "T_DNA_49_S91"  , "T_DNA_5_S129"  , "T_DNA_50_S102" , "T_DNA_51_S113" , "T_DNA_52_S124" , "T_DNA_53_S135" ,
-  "T_DNA_54_S146" , "T_DNA_55_S157" , "T_DNA_56_S168" , "T_DNA_57_S92"  , "T_DNA_58_S103" , "T_DNA_59_S114" ,
-  "T_DNA_6_S140"  , "T_DNA_60_S125" , "T_DNA_61_S136" , "T_DNA_62_S147" , "T_DNA_63_S158" , "T_DNA_64_S169" ,
-  "T_DNA_65_S93"  , "T_DNA_66_S104" , "T_DNA_67_S115" , "T_DNA_68_S126" , "T_DNA_69_S137" , "T_DNA_7_S151"  ,
-  "T_DNA_70_S148" , "T_DNA_71_S159" , "T_DNA_72_S170" , "T_DNA_73_S94"  , "T_DNA_74_S105" , "T_DNA_75_S116" ,
-  "T_DNA_76_S127" , "T_DNA_77_S138" , "T_DNA_78_S149" , "T_DNA_79_S160" , "T_DNA_8_S162"  , "T_DNA_80_S171" ,
-  "T_DNA_81_S95"  , "T_DNA_82_S106" , "T_DNA_83_S117" , "T_DNA_84_S128" , "T_DNA_85_S139" , "T_DNA_86_S150" ,
-  "T_DNA_87_S161" , "T_DNA_88_S172" , "T_DNA_9_S86"    )
- 
-#length(n)
-#colnames(df)<-n
-#rownames(df)<-NULL
-# make rownames null
-# summarize by phyla
-df1<-aggregate(cbind( BCAT_11_S31 ,BCAT_12_S41 ,  BCAT_13_S51 , BCAT_14_S61 ,  BCAT_15_S71 , BCAT_23_S2 , 
-                      BCAT_24_S12 , BCAT_25_S22 ,  BCAT_26_S32 ,  BCAT_28_S52 , BCAT_30_S62 ,  BCAT_38_S72 ,
-                      BCAT_39_S3  , BCAT_40_S13 ,  BCAT_41_S23 ,  BCAT_43_S33 ,  BCAT_44_S43 ,  BCAT_45_S53 , 
-                      BCAT_53_S63 , BCAT_54_S73 ,  BCAT_55_S4  ,  BCAT_56_S14  ,  BCAT_57_S24  ,  BCAT_59_S44 ,  
-                      BCAT_60_S54 , BCAT_68_S64 ,  BCAT_69_S74 ,   BCAT_70_S5   ,   BCAT_71_S15  ,  BCAT_72_S25 ,  
-                      BCAT_73_S35 , BCAT_8_S1   ,  BCAT_83_S45 ,   BCAT_84_S55  ,  BCAT_86_S65  ,  BCAT_87_S75 ,  
-                      BCAT_88_S6  , BCAT_9_S11  , fc_ct_iso_S83,   fc_ct_sh_S84 ,
-                      i_10_S36 ,      i_11_S46 ,  
-                      i_12_S56 ,    i_14_S76   ,    i_15_S7   ,    i_23_S17   ,    i_25_S37 ,    i_26_S47  ,   
-                      i_27_S57 ,    i_30_S77   ,    i_38_S8   ,    i_39_S18   ,   i_40_S28  ,    i_41_S38  , 
-                      i_43_S48 ,    i_44_S58   ,    i_45_S68  ,    i_53_S78   ,    i_54_S9  ,    i_55_S19  ,   
-                      i_56_S29 ,    i_57_S39  ,    i_58_S49  ,    i_59_S59   ,    i_60_S69 ,    i_68_S79  ,    
-                      i_69_S10 ,    i_70_S20  ,    i_71_S30  ,    i_72_S40   ,    i_73_S50 ,    i_8_S16   ,    
-                      i_83_S60 ,    i_84_S70  ,    i_86_S80  ,   i_88_S81    ,   i_9_S26   ,   pcr_ctl25_S173 ,
-                      pcr_ctl35_S82,  T_DNA_1_S85,
-                      T_DNA_10_S97  , T_DNA_11_S108 , T_DNA_12_S119 , T_DNA_13_S130 ,
-                      T_DNA_14_S141 , T_DNA_15_S152 , T_DNA_16_S163 , T_DNA_17_S87 ,  T_DNA_18_S98  ,  T_DNA_19_S109 ,
-                      T_DNA_2_S96  ,  T_DNA_20_S120 , T_DNA_21_S131 , T_DNA_22_S142 , T_DNA_24_S164 , T_DNA_25_S88  ,
-                      T_DNA_26_S99  , T_DNA_27_S110  ,T_DNA_28_S121 , T_DNA_29_S132 , T_DNA_3_S107  , T_DNA_31_S154 ,
-                      T_DNA_32_S165 , T_DNA_33_S89  , T_DNA_34_S100 , T_DNA_35_S111 , T_DNA_36_S122 , T_DNA_37_S133 ,
-                      T_DNA_38_S144 , T_DNA_39_S155 , T_DNA_4_S118  , T_DNA_40_S166 , T_DNA_41_S90  , T_DNA_42_S101 ,
-                      T_DNA_43_S112 , T_DNA_44_S123 , T_DNA_45_S134 , T_DNA_46_S145 , T_DNA_47_S156 , T_DNA_48_S167 ,
-                      T_DNA_49_S91  , T_DNA_5_S129  , T_DNA_50_S102 , T_DNA_51_S113 , T_DNA_52_S124 , T_DNA_53_S135 ,
-                      T_DNA_54_S146 , T_DNA_55_S157 , T_DNA_56_S168 , T_DNA_57_S92  , T_DNA_58_S103 , T_DNA_59_S114 ,
-                      T_DNA_6_S140  , T_DNA_60_S125 , T_DNA_61_S136 , T_DNA_62_S147 , T_DNA_63_S158 , T_DNA_64_S169 ,
-                      T_DNA_65_S93  , T_DNA_66_S104 , T_DNA_67_S115 , T_DNA_68_S126 , T_DNA_69_S137 , T_DNA_7_S151  ,
-                      T_DNA_70_S148 , T_DNA_71_S159 , T_DNA_72_S170 , T_DNA_73_S94  , T_DNA_74_S105 , T_DNA_75_S116 ,
-                      T_DNA_76_S127 , T_DNA_77_S138 , T_DNA_78_S149 , T_DNA_79_S160 , T_DNA_8_S162  , T_DNA_80_S171 ,
-                      T_DNA_81_S95  , T_DNA_82_S106 , T_DNA_83_S117 , T_DNA_84_S128 , T_DNA_85_S139 , T_DNA_86_S150 ,
-                      T_DNA_87_S161 , T_DNA_88_S172 , T_DNA_9_S86 
-  
-               )~ Phyla, data = df.taxa, FUN = sum, na.rm = TRUE)
-
-head(df1)
-# summ row 1 and 2 b\c they are both unassigned taxa
-n<-dim(df1)[2]
-n
-row1<-df1[1,2:n]+ df1[2,2:n] 
-# call empty phyla unassigned
-row1<-c("Unassigned", row1)
-# put in df
-row1
-row1<-as.vector(row1)
-df1[1,] <- row1
-df1<-df1[c(-2),] #remove p___ row because it is already counted
-
-# gather by sample
-df1<-  gather(df1, "sample", value, 2:n )
-head(df1)
-#remove zeros
-df1<-df1[df1$value!=0,]
-head(df1)
-
-
-# make really low abundance taxa other
-df1$Phyla[df1$value<3] <- "other"
-df0<-aggregate(cbind(value) ~ sample+Phyla, data = df1, FUN = sum, na.rm =TRUE)
-head(df0)
-df0<-df0[order(df0$sample),]
-head(df0)
-
-hist(df0$value)
-RColorBrewer::brewer.pal(26, "Spectral")
-mycols18<- c( "#1F78B4","#A6CEE3","#E31A1C",  "#FB9A99", "#33A02C","#B2DF8A",  "#FF7F00",  "#FDBF6F", "#6A3D9A" , "#CAB2D6",
-               "#B15928", "#FFFF99",  "#eb05db","#edceeb","#1a635a","#9ad6ce" , "#969696", "#232423")
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/")
-svg(file="percent_barplot.svg",width = 12, height=10)
-windows(12,12)
-df1%>% 
-  ggplot(aes(fill=Phyla, y=value, x=sample)) + 
-  geom_bar(position="fill", stat= "identity")+
-  scale_fill_manual(values=mycols18) +
-  #scale_fill_viridis(discrete = TRUE) +
-  #ggtitle("Top phyla") +
-  theme_bw(base_size = 12)+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
-
-dev.off()
-
-
-
 #####PCOA plots FIG 4######
 
 #Pcoa on rarefied asvs Data
-ps1<-subset_samples(ps, Fraction =="Total")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
+ps2<-subset_samples(ps1, Fraction =="Total")
+ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+ps2
 
 # Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
+otus.bray<-vegdist(otu_table(ps2), method = "bray")
 # Perform PCoA analysis of BC distances #
 otus.pcoa <- cmdscale(otus.bray, k=(44-1), eig=TRUE)
 # Store coordinates for first two axes in new variable #
@@ -445,7 +354,7 @@ upsidedown_tri <- 25
 
 #total
 windows(6,6)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Total",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Total - asvs in <2 biological reps filter ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 points(otus.p, 
        col="darkgrey",
@@ -470,12 +379,12 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
 
 
 ##active##
-ps1<-subset_samples(ps, Fraction=="Active")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
+ps2<-subset_samples(ps1, Fraction=="Active")
+ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+ps2
 
 # Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
+otus.bray<-vegdist(otu_table(ps2), method = "bray")
 # Perform PCoA analysis of BC distances #
 otus.pcoa <- cmdscale(otus.bray, k=(10-1), eig=TRUE)
 # Store coordinates for first two axes in new variable #
@@ -494,7 +403,7 @@ metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "
 
 
 windows(6,6)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Active ",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Active ASVs in <2 biological reps filtered",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 
 points(otus.p, 
@@ -518,13 +427,13 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
             alpha = 30)
 
 
-##active##
-ps1<-subset_samples(ps, Fraction=="Inactive")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
+##inactive##
+ps2<-subset_samples(ps1, Fraction=="Inactive")
+ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+ps2
 
 # Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
+otus.bray<-vegdist(otu_table(ps2), method = "bray")
 # Perform PCoA analysis of BC distances #
 otus.pcoa <- cmdscale(otus.bray, k=(10-1), eig=TRUE)
 # Store coordinates for first two axes in new variable #
@@ -543,7 +452,7 @@ metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "
 
 
 windows(6,6)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Inactive ",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Inactive filtered ",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 
 points(otus.p, 
@@ -815,56 +724,265 @@ otu.perm
 #Fraction  1 0.065957 0.51041 7.2978  0.031 *
 
 
-#####SCATTERPLOT FIG 5##############
-# this is done on rarefied data, to be able to compare abundances between samples
-sample_data(ps.r)
-df<-subset_samples(ps.r, Compartment!="ctl" & Compartment=="Rhizosphere" & Fraction!="Total_DNA")
-df<-prune_taxa(taxa_sums(df) > 0, df)
-taxon<-tax_table(df)
-df<-as.data.frame(t(otu_table(df)))
-dim(df)
-# 5215 taxa
 
-colnames(df)
-n<-c( "BONCAT_1", "Total_1", "BONCAT_2" ,  "Total_2",  "BONCAT_3" , 
-      "Total_3" , "BONCAT_4" ,  "Total_4",  "Total_5" )
-colnames(df)<-n
-#make a column for the value in active and a column for the value in viable
-#make a columns that states the rep. 
-df$otu <- row.names(df) 
-total<-df %>% dplyr::select(contains("Total"))
-total$otu <- row.names(total) 
-total<-total %>% pivot_longer(cols = 1:4, values_to = "total", names_to = "rep_total") %>% dplyr::select(-Total_5)
-#active
-active<-df %>% dplyr::select(contains("BONCAT"))
-active$otu <- row.names(active) 
-active<-active %>% pivot_longer(cols = 1:4, values_to = "active", names_to = "rep")
-active[,2:3]
-df<-cbind(total, active[,2:3])
-df<-df%>% filter(total>0 & active>0 )
-df<-df%>%
-  mutate( rep= str_split_i(df$rep, "_", 2))
 
-#plot
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_gradients/Manuscript/figures/Fig5_scatter")
-mycols<-c("#00436d", "#416d9a", "#729ac9", "#a3c9fa")
+####PERCENT abundance figure by TREATment: ####
+#get data
+taxon<- as.data.frame(tax_table(ps))
+df<-as.data.frame(otu_table(ps))
 
-svg(file="scatterplot.svg",width = 7, height=4)
-windows(8,4)
+# make it percent
+df<-(df/rowSums(df))*100
+df<-as.data.frame(t(df))
+df.taxa<-cbind(df, taxon)
 
-filter(df) %>%
-  ggplot(aes(x=log10(total) , y=log10(active), col=rep)) + 
-  geom_jitter(stat="identity", position="identity") +
-  #geom_abline(slope=1)+
-  geom_smooth(method=lm, se=FALSE)+
-  theme_classic(base_size = 14)+
-  scale_color_manual(values = mycols)+
-  labs(x="log10 Abundance in Total Viable Cell population",y="log10 Abundance in Active population")
+
+# summarize by phyla
+df1<-aggregate(cbind( BCAT_11_S31 ,BCAT_12_S41 ,  BCAT_13_S51 , BCAT_14_S61 ,  BCAT_15_S71 , BCAT_23_S2 , 
+                      BCAT_24_S12 , BCAT_25_S22 ,  BCAT_26_S32 ,  BCAT_28_S52 , BCAT_30_S62 ,  BCAT_38_S72 ,
+                      BCAT_39_S3  , BCAT_40_S13 ,  BCAT_41_S23 ,  BCAT_43_S33 ,  BCAT_44_S43 ,  BCAT_45_S53 , 
+                      BCAT_53_S63 , BCAT_54_S73 ,  BCAT_55_S4  ,  BCAT_56_S14  ,  BCAT_57_S24  ,  BCAT_59_S44 ,  
+                      BCAT_60_S54 , BCAT_68_S64 ,  BCAT_69_S74 ,   BCAT_70_S5   ,   BCAT_71_S15  ,  BCAT_72_S25 ,  
+                      BCAT_73_S35 , BCAT_8_S1   ,  BCAT_83_S45 ,   BCAT_84_S55  ,  BCAT_86_S65  ,  BCAT_87_S75 ,  
+                      BCAT_88_S6  , BCAT_9_S11  , fc_ct_iso_S83,   fc_ct_sh_S84 ,
+                      i_10_S36 ,      i_11_S46 ,  
+                      i_12_S56 ,    i_14_S76   ,    i_15_S7   ,    i_23_S17   ,    i_25_S37 ,    i_26_S47  ,   
+                      i_27_S57 ,    i_30_S77   ,    i_38_S8   ,    i_39_S18   ,   i_40_S28  ,    i_41_S38  , 
+                      i_43_S48 ,    i_44_S58   ,    i_45_S68  ,    i_53_S78   ,    i_54_S9  ,    i_55_S19  ,   
+                      i_56_S29 ,    i_57_S39  ,    i_58_S49  ,    i_59_S59   ,    i_60_S69 ,    i_68_S79  ,    
+                      i_69_S10 ,    i_70_S20  ,    i_71_S30  ,    i_72_S40   ,    i_73_S50 ,    i_8_S16   ,    
+                      i_83_S60 ,    i_84_S70  ,    i_86_S80  ,   i_88_S81    ,   i_9_S26   ,   pcr_ctl25_S173 ,
+                      pcr_ctl35_S82,  T_DNA_1_S85,
+                      T_DNA_10_S97  , T_DNA_11_S108 , T_DNA_12_S119 , T_DNA_13_S130 ,
+                      T_DNA_14_S141 , T_DNA_15_S152 , T_DNA_16_S163 , T_DNA_17_S87 ,  T_DNA_18_S98  ,  T_DNA_19_S109 ,
+                      T_DNA_2_S96  ,  T_DNA_20_S120 , T_DNA_21_S131 , T_DNA_22_S142 , T_DNA_24_S164 , T_DNA_25_S88  ,
+                      T_DNA_26_S99  , T_DNA_27_S110  ,T_DNA_28_S121 , T_DNA_29_S132 , T_DNA_3_S107  , T_DNA_31_S154 ,
+                      T_DNA_32_S165 , T_DNA_33_S89  , T_DNA_34_S100 , T_DNA_35_S111 , T_DNA_36_S122 , T_DNA_37_S133 ,
+                      T_DNA_38_S144 , T_DNA_39_S155 , T_DNA_4_S118  , T_DNA_40_S166 , T_DNA_41_S90  , T_DNA_42_S101 ,
+                      T_DNA_43_S112 , T_DNA_44_S123 , T_DNA_45_S134 , T_DNA_46_S145 , T_DNA_47_S156 , T_DNA_48_S167 ,
+                      T_DNA_49_S91  , T_DNA_5_S129  , T_DNA_50_S102 , T_DNA_51_S113 , T_DNA_52_S124 , T_DNA_53_S135 ,
+                      T_DNA_54_S146 , T_DNA_55_S157 , T_DNA_56_S168 , T_DNA_57_S92  , T_DNA_58_S103 , T_DNA_59_S114 ,
+                      T_DNA_6_S140  , T_DNA_60_S125 , T_DNA_61_S136 , T_DNA_62_S147 , T_DNA_63_S158 , T_DNA_64_S169 ,
+                      T_DNA_65_S93  , T_DNA_66_S104 , T_DNA_67_S115 , T_DNA_68_S126 , T_DNA_69_S137 , T_DNA_7_S151  ,
+                      T_DNA_70_S148 , T_DNA_71_S159 , T_DNA_72_S170 , T_DNA_73_S94  , T_DNA_74_S105 , T_DNA_75_S116 ,
+                      T_DNA_76_S127 , T_DNA_77_S138 , T_DNA_78_S149 , T_DNA_79_S160 , T_DNA_8_S162  , T_DNA_80_S171 ,
+                      T_DNA_81_S95  , T_DNA_82_S106 , T_DNA_83_S117 , T_DNA_84_S128 , T_DNA_85_S139 , T_DNA_86_S150 ,
+                      T_DNA_87_S161 , T_DNA_88_S172 , T_DNA_9_S86 
+                      
+)~ Phyla, data = df.taxa, FUN = sum, na.rm = TRUE)
+
+#head(df1)
+# summ row 1 and 2 b\c they are both unassigned taxa
+n<-dim(df1)[2]
+#n
+row1<-df1[1,2:n]+ df1[2,2:n] 
+# call empty phyla unassigned
+row1<-c("Unassigned", row1)
+# put in df
+#row1
+
+df1[1,] <- as.vector(row1)
+df1<-df1[c(-2),] #remove p___ row because it is already counted
+
+# summarize by treatment
+row.names(df1)<-df1$Phyla
+df1<-df1[,-1]                        # first row is colnames names -- re name columnes. 
+#head(df1)
+df1<-t(df1) #transform
+#head(df1)
+df1<-as.data.frame(df1)
+head(df1)
+#df1$Trt_fraction <- metadat$Trt_fraction
+
+df1<-metadat %>%
+select(Trt_fraction, n_species, Treatment, Fraction) %>%
+  cbind(., df1)
+
+
+head(df1)
+
+df1<-df1%>%
+group_by(Trt_fraction, Fraction, n_species, Treatment) %>%
+summarise_all(mean)
+
+# gather by sample
+
+df<- df1%>%
+ gather("Phyla", value, 5:45 ) %>%
+ filter(. , value>0)
+
+df
+
+
+# make really low abundance taxa other
+df$Phyla[df$value<1] <- "other"
+df0<-aggregate(cbind(value) ~ Trt_fraction+Phyla, data = df, FUN = sum, na.rm =TRUE)
+head(df0)
+#df0<-df0[order(df0$Trt_fraction),]
+#head(df0)
+
+hist(df0$value)
+unique(df0$Phyla)
+RColorBrewer::brewer.pal(12, "Paired")
+
+mycols18<-c("#A6CEE3" ,"#1F78B4" ,"#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", "#CAB2D6",
+"#6A3D9A", "#FFFF99", "#B15928", "#5c3218")
+
+mycols18<- c( "#1F78B4","#A6CEE3","#E31A1C",  "#FB9A99", "#eb05db",  "#ffccef", "#33A02C","#B2DF8A",  "#FF7F00",  "#FDBF6F", "#6A3D9A" , "#CAB2D6",
+            "grey")
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/")
+svg(file="percent_barplot.svg",width = 12, height=10)
+windows(12,12)
+df0%>% 
+  filter(Trt_fraction!="CTL_CTL") %>%
+  ggplot(aes(fill=Phyla, y=value, x=Trt_fraction)) + 
+  geom_bar(position="fill", stat= "identity")+
+ scale_fill_manual(values=mycols18) +
+ # scale_fill_viridis_d() +
+  #ggtitle("Top phyla") +
+  theme_bw(base_size = 12)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
 dev.off()
-#lm
-m1<-lm(log10(total)~log10(active), data=df)
-summary(m1)
-#R squared = .32
+
+
+
+
+
+####PERCENT abundance figure: ####
+# grab data
+taxon<- as.data.frame(tax_table(ps))
+df<-as.data.frame(otu_table(ps))
+
+# make it percent
+df<-(df/rowSums(df))*100
+df<-as.data.frame(t(df))
+df.taxa<-cbind(df, taxon)
+
+# rename columns 
+colnames(df)
+length(n)
+length(colnames(df))
+n<-c("BCAT_11_S31" ,"BCAT_12_S41" ,  "BCAT_13_S51" , "BCAT_14_S61" ,  "BCAT_15_S71" , "BCAT_23_S2" , 
+  "BCAT_24_S12" , "BCAT_25_S22" ,  "BCAT_26_S32" ,  "BCAT_28_S52" , "BCAT_30_S62" ,  "BCAT_38_S72" ,
+  "BCAT_39_S3"  , "BCAT_40_S13" ,  "BCAT_41_S23" ,  "BCAT_43_S33" ,  "BCAT_44_S43" ,  "BCAT_45_S53" , 
+  "BCAT_53_S63" , "BCAT_54_S73" ,  "BCAT_55_S4"  ,  "BCAT_56_S14"  ,  "BCAT_57_S24"  ,  "BCAT_59_S44" ,  
+  "BCAT_60_S54" , "BCAT_68_S64" ,  "BCAT_69_S74" ,   "BCAT_70_S5"   ,   "BCAT_71_S15"  ,  "BCAT_72_S25" ,  
+  "BCAT_73_S35" , "BCAT_8_S1"   ,  "BCAT_83_S45" ,   "BCAT_84_S55"  ,  "BCAT_86_S65"  ,  "BCAT_87_S75" ,  
+  "BCAT_88_S6"  , "BCAT_9_S11"  , "fc_ct_iso_S83",   "fc_ct_sh_S84" ,
+  "i_10_S36" ,      "i_11_S46" ,  
+  "i_12_S56" ,    "i_14_S76"   ,    "i_15_S7"   ,    "i_23_S17"   ,    "i_25_S37" ,    "i_26_S47"  ,   
+  "i_27_S57" ,    "i_30_S77"   ,    "i_38_S8"   ,    "i_39_S18"   ,   "i_40_S28"  ,    "i_41_S38"  , 
+  "i_43_S48" ,    "i_44_S58"   ,    "i_45_S68"  ,    "i_53_S78"   ,    "i_54_S9"  ,    "i_55_S19"  ,   
+  "i_56_S29" ,    "i_57_S39"  ,    "i_58_S49"  ,    "i_59_S59"   ,    "i_60_S69" ,    "i_68_S79"  ,    
+  "i_69_S10" ,    "i_70_S20"  ,    "i_71_S30"  ,    "i_72_S40"   ,    "i_73_S50" ,    "i_8_S16"   ,    
+  "i_83_S60" ,    "i_84_S70"  ,    "i_86_S80"  ,   "i_88_S81"    ,   "i_9_S26"   ,   "pcr_ctl25_S173" ,
+  "pcr_ctl35_S82",  "T_DNA_1_S85",
+  "T_DNA_10_S97"  , "T_DNA_11_S108" , "T_DNA_12_S119" , "T_DNA_13_S130" ,
+  "T_DNA_14_S141" , "T_DNA_15_S152" , "T_DNA_16_S163" , "T_DNA_17_S87" ,  "T_DNA_18_S98"  ,  "T_DNA_19_S109" ,
+  "T_DNA_2_S96"  ,  "T_DNA_20_S120" , "T_DNA_21_S131" , "T_DNA_22_S142" , "T_DNA_24_S164" , "T_DNA_25_S88"  ,
+  "T_DNA_26_S99"  , "T_DNA_27_S110"  ,"T_DNA_28_S121" , "T_DNA_29_S132" , "T_DNA_3_S107"  , "T_DNA_31_S154" ,
+  "T_DNA_32_S165" , "T_DNA_33_S89"  , "T_DNA_34_S100" , "T_DNA_35_S111" , "T_DNA_36_S122" , "T_DNA_37_S133" ,
+  "T_DNA_38_S144" , "T_DNA_39_S155" , "T_DNA_4_S118"  , "T_DNA_40_S166" , "T_DNA_41_S90"  , "T_DNA_42_S101" ,
+  "T_DNA_43_S112" , "T_DNA_44_S123" , "T_DNA_45_S134" , "T_DNA_46_S145" , "T_DNA_47_S156" , "T_DNA_48_S167" ,
+  "T_DNA_49_S91"  , "T_DNA_5_S129"  , "T_DNA_50_S102" , "T_DNA_51_S113" , "T_DNA_52_S124" , "T_DNA_53_S135" ,
+  "T_DNA_54_S146" , "T_DNA_55_S157" , "T_DNA_56_S168" , "T_DNA_57_S92"  , "T_DNA_58_S103" , "T_DNA_59_S114" ,
+  "T_DNA_6_S140"  , "T_DNA_60_S125" , "T_DNA_61_S136" , "T_DNA_62_S147" , "T_DNA_63_S158" , "T_DNA_64_S169" ,
+  "T_DNA_65_S93"  , "T_DNA_66_S104" , "T_DNA_67_S115" , "T_DNA_68_S126" , "T_DNA_69_S137" , "T_DNA_7_S151"  ,
+  "T_DNA_70_S148" , "T_DNA_71_S159" , "T_DNA_72_S170" , "T_DNA_73_S94"  , "T_DNA_74_S105" , "T_DNA_75_S116" ,
+  "T_DNA_76_S127" , "T_DNA_77_S138" , "T_DNA_78_S149" , "T_DNA_79_S160" , "T_DNA_8_S162"  , "T_DNA_80_S171" ,
+  "T_DNA_81_S95"  , "T_DNA_82_S106" , "T_DNA_83_S117" , "T_DNA_84_S128" , "T_DNA_85_S139" , "T_DNA_86_S150" ,
+  "T_DNA_87_S161" , "T_DNA_88_S172" , "T_DNA_9_S86"    )
+ 
+#length(n)
+#colnames(df)<-n
+#rownames(df)<-NULL
+# make rownames null
+# summarize by phyla
+df1<-aggregate(cbind( BCAT_11_S31 ,BCAT_12_S41 ,  BCAT_13_S51 , BCAT_14_S61 ,  BCAT_15_S71 , BCAT_23_S2 , 
+                      BCAT_24_S12 , BCAT_25_S22 ,  BCAT_26_S32 ,  BCAT_28_S52 , BCAT_30_S62 ,  BCAT_38_S72 ,
+                      BCAT_39_S3  , BCAT_40_S13 ,  BCAT_41_S23 ,  BCAT_43_S33 ,  BCAT_44_S43 ,  BCAT_45_S53 , 
+                      BCAT_53_S63 , BCAT_54_S73 ,  BCAT_55_S4  ,  BCAT_56_S14  ,  BCAT_57_S24  ,  BCAT_59_S44 ,  
+                      BCAT_60_S54 , BCAT_68_S64 ,  BCAT_69_S74 ,   BCAT_70_S5   ,   BCAT_71_S15  ,  BCAT_72_S25 ,  
+                      BCAT_73_S35 , BCAT_8_S1   ,  BCAT_83_S45 ,   BCAT_84_S55  ,  BCAT_86_S65  ,  BCAT_87_S75 ,  
+                      BCAT_88_S6  , BCAT_9_S11  , fc_ct_iso_S83,   fc_ct_sh_S84 ,
+                      i_10_S36 ,      i_11_S46 ,  
+                      i_12_S56 ,    i_14_S76   ,    i_15_S7   ,    i_23_S17   ,    i_25_S37 ,    i_26_S47  ,   
+                      i_27_S57 ,    i_30_S77   ,    i_38_S8   ,    i_39_S18   ,   i_40_S28  ,    i_41_S38  , 
+                      i_43_S48 ,    i_44_S58   ,    i_45_S68  ,    i_53_S78   ,    i_54_S9  ,    i_55_S19  ,   
+                      i_56_S29 ,    i_57_S39  ,    i_58_S49  ,    i_59_S59   ,    i_60_S69 ,    i_68_S79  ,    
+                      i_69_S10 ,    i_70_S20  ,    i_71_S30  ,    i_72_S40   ,    i_73_S50 ,    i_8_S16   ,    
+                      i_83_S60 ,    i_84_S70  ,    i_86_S80  ,   i_88_S81    ,   i_9_S26   ,   pcr_ctl25_S173 ,
+                      pcr_ctl35_S82,  T_DNA_1_S85,
+                      T_DNA_10_S97  , T_DNA_11_S108 , T_DNA_12_S119 , T_DNA_13_S130 ,
+                      T_DNA_14_S141 , T_DNA_15_S152 , T_DNA_16_S163 , T_DNA_17_S87 ,  T_DNA_18_S98  ,  T_DNA_19_S109 ,
+                      T_DNA_2_S96  ,  T_DNA_20_S120 , T_DNA_21_S131 , T_DNA_22_S142 , T_DNA_24_S164 , T_DNA_25_S88  ,
+                      T_DNA_26_S99  , T_DNA_27_S110  ,T_DNA_28_S121 , T_DNA_29_S132 , T_DNA_3_S107  , T_DNA_31_S154 ,
+                      T_DNA_32_S165 , T_DNA_33_S89  , T_DNA_34_S100 , T_DNA_35_S111 , T_DNA_36_S122 , T_DNA_37_S133 ,
+                      T_DNA_38_S144 , T_DNA_39_S155 , T_DNA_4_S118  , T_DNA_40_S166 , T_DNA_41_S90  , T_DNA_42_S101 ,
+                      T_DNA_43_S112 , T_DNA_44_S123 , T_DNA_45_S134 , T_DNA_46_S145 , T_DNA_47_S156 , T_DNA_48_S167 ,
+                      T_DNA_49_S91  , T_DNA_5_S129  , T_DNA_50_S102 , T_DNA_51_S113 , T_DNA_52_S124 , T_DNA_53_S135 ,
+                      T_DNA_54_S146 , T_DNA_55_S157 , T_DNA_56_S168 , T_DNA_57_S92  , T_DNA_58_S103 , T_DNA_59_S114 ,
+                      T_DNA_6_S140  , T_DNA_60_S125 , T_DNA_61_S136 , T_DNA_62_S147 , T_DNA_63_S158 , T_DNA_64_S169 ,
+                      T_DNA_65_S93  , T_DNA_66_S104 , T_DNA_67_S115 , T_DNA_68_S126 , T_DNA_69_S137 , T_DNA_7_S151  ,
+                      T_DNA_70_S148 , T_DNA_71_S159 , T_DNA_72_S170 , T_DNA_73_S94  , T_DNA_74_S105 , T_DNA_75_S116 ,
+                      T_DNA_76_S127 , T_DNA_77_S138 , T_DNA_78_S149 , T_DNA_79_S160 , T_DNA_8_S162  , T_DNA_80_S171 ,
+                      T_DNA_81_S95  , T_DNA_82_S106 , T_DNA_83_S117 , T_DNA_84_S128 , T_DNA_85_S139 , T_DNA_86_S150 ,
+                      T_DNA_87_S161 , T_DNA_88_S172 , T_DNA_9_S86 
+  
+               )~ Phyla, data = df.taxa, FUN = sum, na.rm = TRUE)
+
+head(df1)
+# summ row 1 and 2 b\c they are both unassigned taxa
+n<-dim(df1)[2]
+n
+row1<-df1[1,2:n]+ df1[2,2:n] 
+# call empty phyla unassigned
+row1<-c("Unassigned", row1)
+# put in df
+row1
+row1<-as.vector(row1)
+df1[1,] <- row1
+df1<-df1[c(-2),] #remove p___ row because it is already counted
+
+# gather by sample
+df1<-  gather(df1, "sample", value, 2:n )
+head(df1)
+#remove zeros
+df1<-df1[df1$value!=0,]
+head(df1)
+
+
+# make really low abundance taxa other
+df1$Phyla[df1$value<3] <- "other"
+df0<-aggregate(cbind(value) ~ sample+Phyla, data = df1, FUN = sum, na.rm =TRUE)
+head(df0)
+df0<-df0[order(df0$sample),]
+head(df0)
+
+hist(df0$value)
+RColorBrewer::brewer.pal(26, "Spectral")
+mycols18<- c( "#1F78B4","#A6CEE3","#E31A1C",  "#FB9A99", "#33A02C","#B2DF8A",  "#FF7F00",  "#FDBF6F", "#6A3D9A" , "#CAB2D6",
+               "#B15928", "#FFFF99",  "#eb05db","#edceeb","#1a635a","#9ad6ce" , "#969696", "#232423")
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/")
+svg(file="percent_barplot.svg",width = 12, height=10)
+windows(12,12)
+df1%>% 
+  ggplot(aes(fill=Phyla, y=value, x=sample)) + 
+  geom_bar(position="fill", stat= "identity")+
+  scale_fill_manual(values=mycols18) +
+  #scale_fill_viridis(discrete = TRUE) +
+  #ggtitle("Top phyla") +
+  theme_bw(base_size = 12)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+dev.off()
+
+
+
+
+
 
 
 #####BARPLOT TOP ASVS FIG 5######
