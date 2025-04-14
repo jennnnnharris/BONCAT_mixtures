@@ -2,7 +2,7 @@
 # BONCAT mixtures
 # Jennifer Harris
 # Jan 7 2025
-# Last Updated: April 3 2025
+# Last Updated: April 11 2025
 
 ### 1. Initial Setup ###
 
@@ -10,13 +10,6 @@
 
 rm(list=ls())
 
-## if trouble loading phyloseq, see: http://joey711.github.io/phyloseq/install
-#source("http://bioconductor.org/biocLite.R")
-#biocLite("Heatplus")
-#if (!require("BiocManager", quietly = TRUE))
- # install.packages("BiocManager")
-#BiocManager::install("phyloseq")
-#BiocManager::install("Heatplus")
 
 ################## Load required libraries ############
 
@@ -27,23 +20,11 @@ library(readxl)
 library(lubridate)
 
 
-#Phyloseq and mbiome
+#Phyloseq and mbiome #if trouble loading phyloseq, see: http://joey711.github.io/phyloseq/install
 library(phyloseq)
-#library(microbiome)
 library(MicEco)
+#library(microbiome)
 #library(DT)
-#options(DT.options = list(
-#  initComplete = JS("function(settings, json) {",
-#                    "$(this.api().table().header()).css({'background-color': 
-#  '#000', 'color': '#fff'});","}")))
-
-#colors and patterns
-
-#df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-#mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A", "yellow")
-
-# plot for each treatment
 
 # venn diagrams
 #library(ggvenn)
@@ -53,7 +34,7 @@ library(MicEco)
 #library(ANCOMBC)
 
 #####Import data#####
-## Set the working directory; ###
+## Set the working directory ###
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
 
 taxon <- read.csv("all/taxonomy.csv", header=T)
@@ -68,7 +49,7 @@ asvs <- t(asvs)
 
 ## Determine minimum available reads per sample ##
 rowSums(asvs)[order(rowSums(asvs))]
-#T_DNA_23_S153 has really few reads... I think this should be omitted. 
+#T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
 asvs[1:5,1:5]
 min.s<-min(rowSums(asvs))
@@ -87,7 +68,7 @@ row.names(metadat) <- metadat$SampleID
 metadat
 
 # ck names athc in metadata file.
-#length(intersect(colnames(asvs.raw) , metadat$SampleID)) # Apply setdiff function to see what's missing from the tree
+# length(intersect(colnames(asvs.raw) , metadat$SampleID)) # Apply setdiff function to see what's missing from the tree
 # mynames<- setdiff(metadat$SampleID , colnames(asvs.raw) )
 # length(mynames)
 # mynames
@@ -123,11 +104,53 @@ unique(taxon$Family)[order(unique(taxon$Family))]
 # remove sigletons
 ps<-prune_taxa(taxa_sums(ps) > 5, ps)
 
-
 ps
-#~118 K taxa
 
-##### histogram ######
+#~118 K taxa
+####### rarefaction######
+
+data(BCI)
+head(BCI)
+S <- specnumber(BCI) # observed number of species
+(raremax <- min(rowSums(BCI)))
+Srare <- rarefy(BCI, raremax)
+plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
+abline(0, 1)
+rarecurve(BCI, step = 20, sample = raremax, col = "blue", cex = 0.6)
+
+
+#use not rarefied asvs. 
+asvs[1:5,1:5]
+S <- specnumber(asvs) # observed number of species
+S
+(raremax <- min(rowSums(asvs)))
+Srare <- rarefy(asvs, raremax)
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+
+svg("r.plot0.svg", )
+plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
+abline(0, 1)
+dev.off()
+
+svg("r.plot1.svg", )
+rarecurve(i, step = 10000, sample = raremax, col = "blue", cex = 0.6)
+dev.off()
+
+i<-asvs[which(metadat$Fraction=="Active"),]
+svg("r.plot2.svg", )
+rarecurve(i, step = 10000, sample = raremax, col = "blue", cex = 0.6)
+dev.off()
+
+i<-asvs[which(metadat$Fraction=="Total"),]
+i[1:5,1:15]
+svg("r.plot3.svg", )
+rarecurve(i, step = 10000, sample = raremax, col = "blue", cex = 0.6)
+dev.off()
+
+##can you rarefy by number of cells. 
+
+##### histograms ######
 
 y<-seq(0, 80000, by=2500)
 
@@ -160,10 +183,10 @@ subset_samples(ps, Fraction=="Inactive") %>%
   rowSums() %>%
   hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
 
-# many very rare taxa seeme the saem for all. 
+# many very rare taxa
 
 
-#filter by biological reps - estelle
+#####filter by biological reps - estelle#########
 #for each treatment
 # removed taxa that that are in less than the minimum number of reps.
 #trts<-unique(metadat$Treatment)
@@ -179,13 +202,14 @@ for (i in trts)
  }
 ### put big PS object back together again. 
 ps1<-do.call(merge_phyloseq, a)
+ps1<-prune_taxa(taxa_sums(ps1) > 5, ps1)
 ps1
 # 12k taxa
 
 ####DIVERSITY plots  ####
 # diversity is calculated on raw reads b/c many diversity metric use singleton to calculate diversity. 
 # Normalizing data first can create an inaccurate estimate of diversity. 
-rich<-estimate_richness(ps1, measures = c("Observed", "Shannon", "Simpson", "InvSimpson" ))
+rich<-estimate_richness(ps, measures = c("Observed", "Shannon", "Simpson", "InvSimpson" ))
 
 # Data wrangling fo rdiversity of active microbes in each fraction
 rich<-cbind(rich, metadat)
@@ -205,7 +229,7 @@ rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB"
 
 # sanity check
 rich %>%
-  ggplot(aes(x=Fraction, y=Observed,  fill=Fraction))+
+  ggplot(aes(x=Fraction, y=Shannon,  fill=Fraction))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols4) +
   scale_fill_manual(values = mycols4)+
@@ -220,7 +244,9 @@ rich %>%
 #does diversity increase with n species?
 rich %>%
   filter(Fraction!="CTL")%>%
-  ggplot(aes(x=Fraction, y=Observed,  fill=Fraction))+
+  #filter(Fraction!="Active")%>%
+  
+  ggplot(aes(x=Fraction, y=Shannon,  fill=Fraction))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols4) +
   scale_fill_manual(values = mycols4)+
@@ -230,22 +256,25 @@ rich %>%
         plot.title = element_text(hjust = 0.5),)+
   ylab("Number of ASVS ")+
   xlab("")+
-  labs(title = "number of species", subtitle = "ASVs in <2 biological reps filtered")+
+  labs(title = "Active", subtitle = "ASVs in <2 biological reps filtered")+
 facet_grid( ~n_species, scales = "free", space = "free")
+
+mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A", "yellow")
 
 #treatment
 rich %>%
   filter(Treatment!="CTL") %>%
-  ggplot(aes(x=Treatment, y=Observed, col=Fraction ))+
-  geom_boxplot(alpha=.5, outlier.shape= NA) +
+  #filter(Fraction=="Active") %>%
+  ggplot(aes(x=Treatment, y=Shannon, fill=Fraction ))+
+  geom_boxplot(alpha=.6, outlier.shape= NA) +
   scale_color_manual(values=mycols4) +
   scale_fill_manual(values = mycols4)+
   theme_classic(base_size = 18)+
-  theme(plot.title = element_text(hjust = 0.5))+
+  theme(plot.title = element_text(hjust = 0.5), legend.position="none")+
   scale_x_discrete(drop = TRUE) +
-  ylab("Numbers of ASVs")+
+  ylab("Shannon")+
   facet_grid( ~n_species, scales = "free", space = "free")+
-  labs(title = "number of species", subtitle = "ASVs in <2 biological reps filtered")
+  labs(title = "Active")
   
 rich
 
@@ -315,12 +344,23 @@ df<-rich %>%
 # rep was non signifcant so we dropped it from the model.
 # rhizo, roots and nod are all different but there is an interaction with BONCAT signal
 
-#####PCOA plots FIG 4######
+###PCOA set shapes and cols######
+  
+
+  mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A",  "gold")
+  myshapes <- c(1, 12, 21, 22, 23, 24, 25 )
+  setwd()
+  mycols3<- c( "grey", "#1F78B4",   "gold")
+  setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+  
+  
+#####PCOA plots of total ######
 
 #Pcoa on rarefied asvs Data
-ps2<-subset_samples(ps1, Fraction =="Total")
+ps2<-subset_samples(ps, Fraction =="Total")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 ps2
+
 
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps2), method = "bray")
@@ -328,8 +368,6 @@ otus.bray<-vegdist(otu_table(ps2), method = "bray")
 otus.pcoa <- cmdscale(otus.bray, k=(44-1), eig=TRUE)
 # Store coordinates for first two axes in new variable #
 otus.p <- otus.pcoa$points[,1:2]
-# swtich order
-#switch<-otus.p[,2:1]
 # Calculate % variance explained by each axis #
 otus.eig<-otus.pcoa$eig
 perc.exp<-otus.eig/(sum(otus.eig))*100
@@ -340,25 +378,18 @@ pe2<-perc.exp[2]
 # subset metadata
 metadat2<-filter(metadat, Fraction=="Total")
 
-
-#color and shapes
+#set factors 
 metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A", "yellow")
-#shapes
-square <- 22
-diamond <- 23
-triangle <- 24
-circle <- 21
-upsidedown_tri <- 25
+factor(metadat2$Fraction)
 
-
-#total
-windows(6,6)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Total - asvs in <2 biological reps filter ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
+#plot
+#windows(6,6)
+svg("pcoa1.svg", height = 6, width =6)
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="active vs inactive ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 points(otus.p, 
-       col="darkgrey",
-       pch=square,
+       col= mycols8.1[metadat2$Treatment],
+       pch= myshapes[metadat2$Rep],
        lwd=1,cex=1.5,
        bg=mycols8[metadat2$Treatment])
 
@@ -375,11 +406,113 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
             #lwd=.1,
             col= mycols8,
             alpha = 30)
-#dev.off()
+dev.off()
 
 
-##active##
-ps2<-subset_samples(ps1, Fraction=="Active")
+##############PCOA of inactive vs active###########
+#Pcoa on rarefied asvs Data
+ps2<-subset_samples(ps, Fraction !="Total" & Fraction !="CTL" )
+ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+ps2
+
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps2), method = "bray")
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(44-1), eig=TRUE)
+# Store coordinates for first two axes in new variable #
+otus.p <- otus.pcoa$points[,1:2]
+
+# Calculate % variance explained by each axis #
+otus.eig<-otus.pcoa$eig
+perc.exp<-otus.eig/(sum(otus.eig))*100
+pe1<-perc.exp[1]
+pe2<-perc.exp[2]
+
+# subset metadata
+metadat2<-filter(metadat, Fraction!="Total" & Fraction!="CTL")
+
+#faction
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2$Fraction   <- factor(metadat2$Fraction)
+
+#plot
+#windows(6,6)
+
+svg("pcoa.2.svg",  width = 6, height = 6 )
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="active vs inactive ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
+         ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
+points(otus.p, 
+       col= mycols8[metadat2$Fraction],
+       pch= myshapes[metadat2$Rep],
+       lwd=1,cex=1.5,     
+       bg=mycols8[metadat2$Fraction])
+
+ordiellipse(otus.pcoa, metadat2$Fraction,  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            #lwd=.1,
+            col= mycols8,
+            alpha = 30)
+dev.off()
+
+
+##############PCOA of all fractions###########
+#Pcoa on rarefied asvs Data
+ps2<-subset_samples(ps, Fraction !="CTL" )
+
+ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+ps2
+
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps2), method = "bray")
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(44-1), eig=TRUE)
+# Store coordinates for first two axes in new variable #
+otus.p <- otus.pcoa$points[,1:2]
+
+# Calculate % variance explained by each axis #
+otus.eig<-otus.pcoa$eig
+perc.exp<-otus.eig/(sum(otus.eig))*100
+pe1<-perc.exp[1]
+pe2<-perc.exp[2]
+
+
+
+# subset metadata
+metadat2<-filter(metadat, Fraction!="CTL")
+
+#factor
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+#mycols8<- c( "grey", "#1F78B4",   "gold")
+metadat2$Fraction   <- factor(metadat2$Fraction)
+
+#plot
+windows(6,6)
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+
+svg("pcoa.3.svg",  width = 6, height = 6 )
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="all fractions ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
+         ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
+points(otus.p, 
+       col= mycols3[metadat2$Fraction],
+       pch= myshapes[metadat2$Rep],
+       lwd=1,cex=1.5,
+       bg=mycols3[metadat2$Fraction])
+
+ordiellipse(otus.pcoa, metadat2$Fraction,  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            #lwd=.1,
+            col= mycols3,
+            alpha = 30)
+dev.off()
+
+
+
+############active#####################
+ps2<-subset_samples(ps, Fraction=="Active")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 ps2
 
@@ -397,18 +530,17 @@ pe2<-perc.exp[2]
 
 
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Active")
+metadat2<-filter(metadat, Fraction == "Active")
 metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 
-
-windows(6,6)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Active ASVs in <2 biological reps filtered",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
+svg("pcoa.4.svg",  width = 6, height = 6 )
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Active ASVs ",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 
 points(otus.p, 
-       col="darkgrey",
-       pch=circle,
+       col=mycols8[metadat2$Treatment],
+       pch= myshapes[metadat2$Rep],
        lwd=1,cex=1.5,
        bg=mycols8[metadat2$Treatment])
 
@@ -426,19 +558,17 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
             col= mycols8,
             alpha = 30)
 
+dev.off()
 
 ##inactive##
-ps2<-subset_samples(ps1, Fraction=="Inactive")
+ps2<-subset_samples(ps, Fraction=="Inactive")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 ps2
 
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps2), method = "bray")
-# Perform PCoA analysis of BC distances #
 otus.pcoa <- cmdscale(otus.bray, k=(10-1), eig=TRUE)
-# Store coordinates for first two axes in new variable #
 otus.p <- otus.pcoa$points[,1:2]
-# Calculate % variance explained by each axis #
 otus.eig<-otus.pcoa$eig
 perc.exp<-otus.eig/(sum(otus.eig))*100
 pe1<-perc.exp[1]
@@ -450,14 +580,14 @@ metadat2<-filter(metadat, Fraction=="Inactive")
 metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 
-
-windows(6,6)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Inactive filtered ",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
+#windows(6,6)
+svg("pcoa.5.svg",  width = 6, height = 6 )
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Inactive ",xlab=paste("PCoA1(",round(pe1, 2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 
 points(otus.p, 
-       col="darkgrey",
-       pch=circle,
+       col= mycols8[metadat2$Treatment],
+       pch=myshapes[metadat2$Rep],
        lwd=1,cex=1.5,
        bg=mycols8[metadat2$Treatment])
 
@@ -474,6 +604,8 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
             #lwd=.1,
             col= mycols8,
             alpha = 30)
+dev.off()
+
 #####PCOA STATS----------------#########
 
 ###BETA DISPERSION#
