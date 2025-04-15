@@ -511,7 +511,7 @@ dev.off()
 
 
 
-############active#####################
+######PCOA active#####################
 ps2<-subset_samples(ps, Fraction=="Active")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 ps2
@@ -560,7 +560,7 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
 
 dev.off()
 
-##inactive##
+######PCOA inactive######
 ps2<-subset_samples(ps, Fraction=="Inactive")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 ps2
@@ -606,256 +606,166 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
             alpha = 30)
 dev.off()
 
-#####PCOA STATS----------------#########
 
-###BETA DISPERSION#
-#full data set between compartments#
-asvs.clean<-otu_table(ps.r)
-# subset metadata
-metadat2<-filter(metadat, Compartment!="ctl")
-# Calculate Bray-Curtis distance between samples
-asvs.bray<-vegdist(otu_table(ps.r), method = "bray")
-
-dispersion <- betadisper(asvs.bray, group=metadat2$Compartment)
-permutest(dispersion)
-plot(dispersion, hull=FALSE, ellipse=TRUE)
-#Permutation test for homogeneity of multivariate dispersions
-#Permutation: free
-#Number of permutations: 999
-#Response: Distances
-#Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)    
-#Groups     3 0.037320 0.0124400 22.441    999  0.001 ***
-
-#full data between fractions
-dispersion <- betadisper(asvs.bray, group=metadat2$Fraction)
-permutest(dispersion)
-plot(dispersion, hull=FALSE, ellipse=TRUE)
-#Permutation test for homogeneity of multivariate dispersions
-#Permutation: free
-#Number of permutations: 999
-#Response: Distances
-#          Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)
-#Groups     2 0.01847 0.009235 0.1262    999  0.878
-#Residuals 37 2.70752 0.073176   
-
-# just soil
-ps2<-subset_samples(ps.r, Compartment !=  "Nodule" & Compartment != "Roots" & Compartment !="ctl")
+###PCOA STATS: BETA DISPERSION#####
+#full dna  between trts
+ps2<-subset_samples(ps, Fraction =="Total")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-# subset metadata
-metadat2<-metadat%>% filter(Compartment !=  "Nodule" & Compartment != "Roots" & Compartment!="ctl") 
-#test for dispersion between compartments
-dispersion <- betadisper(otus.bray, group=as.factor(metadat2$compartment_BCAT))
-permutest(dispersion)
-plot(dispersion, hull=FALSE, ellipse=TRUE) ##sd ellipse
-#Permutation test for homogeneity of multivariate dispersions
-#Permutation: free
-#Number of permutations: 999
-#Response: Distances
-#Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)    
-#Groups     3 0.037320 0.0124400 22.441    999  0.001 ***
-
-
-# just rhizosphere
-ps2<-subset_samples(ps.r, Compartment ==  "Rhizosphere" & Compartment !="ctl")
-ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-any(taxa_sums(ps2) == 0)
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-# subset metadata
-metadat2<-metadat%>% filter(Compartment ==  "Rhizosphere" & Compartment!="ctl") 
-#test for dispersion between groups
-dispersion <- betadisper(otus.bray, group=as.factor(metadat2$Fraction))
-permutest(dispersion)
-anova(dispersion)
-plot(dispersion, hull=FALSE, ellipse=TRUE) ##sd ellipse
-#Response: Distances
-#Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)    
-#Groups     2 0.033450 0.0167251 29.276    999  0.001 ***
-#  Residuals 11 0.006284 0.0005713   
-
-
-
-
-
-# just rhizosphere total cells and active
-ps2<-subset_samples(ps.r, Compartment ==  "Rhizosphere" & Compartment !="ctl" & Fraction!="Total_DNA")
-ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-any(taxa_sums(ps2) == 0)
-
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-# subset metadata
-metadat2<-metadat%>% filter(Compartment ==  "Rhizosphere" & Compartment!="ctl" & Fraction!="Total_DNA")
-#test for dispersion between groups
-# compartments are not equaly dispersed
-dispersion <- betadisper(otus.bray, group=as.factor(metadat2$Fraction))
-permutest(dispersion)
-#Permutation test for homogeneity of multivariate dispersions
-#Permutation: free
-#Number of permutations: 999
-
-#Response: Distances
-#Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)    
-#Groups     1 0.013346 0.0133460 19.805    999  0.001 ***
-#  Residuals  7 0.004717 0.0006739              
-
-
-# just Total DNA
-ps.r
-metadat
-ps2<-subset_samples(ps.r, Fraction=="Total_DNA" & Plant =="Clover")
-ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-any(taxa_sums(ps2) == 0)
 ps2
-sample_names(ps2)
-# 8665 asvs
+
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps2), method = "bray")
+
 # subset metadata
-metadat2<-metadat%>% filter(Fraction=="Total_DNA" & Plant=="Clover")
-#test for dispersion between groups
-# compartments are not equaly dispersed
-dispersion <- betadisper(otus.bray, group=as.factor(metadat2$Compartment))
+metadat2<-filter(metadat,Fraction =="Total")
+
+#calculate beta dispersion
+dispersion <- betadisper(otus.bray, group=metadat2$Treatment)
 permutest(dispersion)
+plot(dispersion, hull=FALSE, ellipse=TRUE)
+#Number of permutations: 999
+#
+#Response: Distances
+#Df   Sum Sq   Mean Sq      F N.Perm Pr(>F)    
+##Groups     7 0.040222 0.0057459 8.0956    999  0.001 ***
+#  Residuals 78 0.055362 0.0007098  
+
+#Total but not including soil
+ps2<-subset_samples(ps, Fraction =="Total" & Treatment!="Soil")
+ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+ps2
+
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps2), method = "bray")
+
+# subset metadata
+metadat2<-filter(metadat,Fraction =="Total" & Treatment!="Soil")
+
+#calculate beta dispersion
+dispersion <- betadisper(otus.bray, group=metadat2$Treatment)
+permutest(dispersion, by = "terms")
+plot(dispersion, hull=FALSE, ellipse=TRUE)
+
 #Permutation test for homogeneity of multivariate dispersions
 #Permutation: free
 #Number of permutations: 999
+
 #Response: Distances
-#Df     Sum Sq    Mean Sq      F N.Perm Pr(>F)
-#Groups     1 0.00092857 0.00092857 2.3009    999  0.166
-#Residuals  7 0.00282501 0.00040357 
-plot(dispersion, hull=FALSE, ellipse=TRUE) ##sd ellipse
+#Df   Sum Sq    Mean Sq      F N.Perm Pr(>F)   
+#Groups     6 0.018732 0.00312194 4.3247    999  0.004 **
+# Residuals 76 0.054863 0.00072189   
 
-
-
-#roots + nodules #
-ps2<-subset_samples(ps.r, Compartment !=  "Rhizosphere" & Compartment !="Bulk_Soil" & Compartment != "ctl")
+#full dna  between Fraction
+ps2<-subset_samples(ps, Fraction!="CTL")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+
 otus.bray<-vegdist(otu_table(ps2), method = "bray")
-metadat2<-metadat%>% filter(Compartment !=  "Rhizosphere" & Compartment !="Bulk_Soil" & Compartment != "ctl")
-#test for dispersion between groups
-dispersion <- betadisper(otus.bray, group=as.factor(metadat2$Fraction))
+metadat2<-filter(metadat,Fraction!="CTL")
+
+#calculate beta dispersion
+dispersion <- betadisper(otus.bray, group=metadat2$Fraction)
 permutest(dispersion)
-plot(dispersion, hull=FALSE, ellipse=TRUE) ##sd ellipse
+plot(dispersion, hull=FALSE, ellipse=TRUE)
 
 
-
-#roots + nodules #
-ps2<-subset_samples(ps.r, Compartment !=  "Rhizosphere" & Compartment !="Bulk_Soil" & Compartment != "ctl")
+##### no total dna -- between Fraction
+ps2<-subset_samples(ps, Fraction!="CTL" & Fraction!="Total")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+ps2
+
 otus.bray<-vegdist(otu_table(ps2), method = "bray")
-metadat2<-metadat%>% filter(Compartment !=  "Rhizosphere" & Compartment !="Bulk_Soil" & Compartment != "ctl")
-#test for dispersion between groups
-dispersion <- betadisper(otus.bray, group=as.factor(metadat2$Compartment))
+metadat2<-filter(metadat,Fraction!="CTL"& Fraction!="Total")
+
+#calculate beta dispersion
+dispersion <- betadisper(otus.bray, group=metadat2$Fraction)
 permutest(dispersion)
-plot(dispersion, hull=FALSE, ellipse=TRUE) ##sd ellipse
+plot(dispersion, hull=FALSE, ellipse=TRUE)
 
+########PERMANOVA##############
 
-
-#roots #
-ps2<-subset_samples(ps.r, Compartment ==  "Roots" )
+## total 
+#full dna  between trts
+ps2<-subset_samples(ps, Fraction =="Total"& Treatment!="Soil")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-metadat2<-metadat%>% filter(Compartment == "Roots")
-metadat2
-#test for dispersion between groups
-dispersion <- betadisper(otus.bray, group=as.factor(metadat2$Fraction))
-permutest(dispersion)
-plot(dispersion, hull=FALSE, ellipse=TRUE) ##sd ellipse
+ps2
 
+#get asvs table
+asvs.clean<-otu_table(ps2)
+metadat2<-filter(metadat, Fraction =="Total" & Treatment!="Soil")
 
-#nodules #
-ps2<-subset_samples(ps.r, Compartment ==  "Nodule" )
-ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-metadat2<-metadat%>% filter(Compartment == "Nodule")
-#test for dispersion between groups
-dispersion <- betadisper(otus.bray, group=as.factor(metadat2$Fraction))
-permutest(dispersion)
-plot(dispersion, hull=FALSE, ellipse=TRUE) ##sd ellipse
-
-###PERMANOVA##
-#full model
-asvs.clean<-otu_table(ps.r)
-dim(asvs.clean)
-head(asvs.clean)
-head(metadat)
-metadat2<-filter(metadat, Compartment!="ctl")
 # Calculate Bray-Curtis distance between samples
-asvs.bray<-vegdist(otu_table(ps.r), method = "bray")
+asvs.bray<-vegdist(asvs.clean, method = "bray")
 #
-asvs.perm<- adonis2(asvs.clean ~ Compartment+ Fraction+Compartment*Fraction +REP, data = metadat2, permutations = 999, method="bray")
+asvs.perm<- adonis2(asvs.clean ~ Treatment, data = metadat2, permutations = 999, method="bray")
 asvs.perm
-#Df SumOfSqs      R2       F Pr(>F)    
-#Compartment           3   7.9377 0.68157 33.0965  0.001 ***
-#  Fraction              2   0.8828 0.07580  5.5211  0.001 ***
-#  Compartment:Fraction  2   0.2675 0.02297  1.6728  0.122    
-# rep was not sifnificant so we dropped it from the model.
+#adonis2(formula = asvs.clean ~ Treatment, data = metadat2, permutations = 999, method = "bray")
+#Df SumOfSqs      R2      F Pr(>F)    
+#Treatment  6   3.0996 0.13358 1.9528  0.001 ***
+##  Residual  76  20.1049 0.86642                  
+##Total     82  23.2045 1.00000  
 
-#rhizo +bulk total dna
-ps2<-subset_samples(ps.r, Compartment ==  "Rhizosphere" | Compartment =="Bulk_Soil" )
+asvs.perm<- adonis2(asvs.clean ~ (Grass + Brassicae + Legume)^2, data = metadat2, permutations = 999, method="bray")
+asvs.perm
+adonis2(formula = asvs.clean ~ (Grass + Brassicae + Legume)^3, data = metadat2, permutations = 999, method = "bray")
+
+#Df SumOfSqs      R2      F Pr(>F)    
+#Grass             1   0.6725 0.02898 2.5422  0.001 ***
+#  Brassicae         1   0.3851 0.01660 1.4558  0.004 ** 
+#  Legume            1   1.1009 0.04745 4.1618  0.001 ***
+#  Grass:Brassicae   1   0.3533 0.01522 1.3354  0.015 *  
+#  Grass:Legume      1   0.3167 0.01365 1.1970  0.040 *  
+#  Brassicae:Legume  1   0.2711 0.01168 1.0248  0.325    
+#Residual         76  20.1049 0.86642                  
+#Total            82  23.2045 1.00000     
+
+adonis2(formula = asvs.clean ~ (Grass*Brassicae*Legume + Grass:Brassicae:Legume), data = metadat2, permutations = 999, method = "bray")
+
+
+#adonis2(formula = asvs.clean ~ (Grass * Brassicae * Legume + Grass:Brassicae:Legume), data = metadat2, permutations = 999, method = "bray")
+#Df SumOfSqs      R2      F Pr(>F)    
+#Grass             1   0.6725 0.02898 2.5422  0.001 ***
+#  Brassicae         1   0.3851 0.01660 1.4558  0.006 ** 
+#  Legume            1   1.1009 0.04745 4.1618  0.001 ***
+#  Grass:Brassicae   1   0.3533 0.01522 1.3354  0.013 *  
+#  Grass:Legume      1   0.3167 0.01365 1.1970  0.056 .  
+# Brassicae:Legume  1   0.2711 0.01168 1.0248  0.309    
+#Residual         76  20.1049 0.86642                  
+#Total            82  23.2045 1.00000                  
+#---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+
+########## PERMANOVA Fraction############
+ps2<-subset_samples(ps, Fraction!="CTL")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-any(taxa_sums(ps2) == 0)
+#
+#get asvs table
+asvs.clean<-otu_table(ps2)
+metadat2<-filter(metadat,Fraction!="CTL")
+#
 # Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-# subset metadata
-metadat2<-metadat%>% filter(Compartment =="Rhizosphere" | Compartment =="Bulk_Soil" )
-otu.perm<- adonis2((otu_table(ps2))~ Compartment, data = metadat2, permutations = 999, method="bray")
-otu.perm
+asvs.bray<-vegdist(asvs.clean, method = "bray")
+#
+asvs.perm<- adonis2(asvs.clean ~ Fraction, data = metadat2, permutations = 999, method="bray")
+asvs.perm
 
-
-# root + nodules 
-ps2<-subset_samples(ps.r, Compartment !=  "Rhizosphere" & Compartment !="Bulk_Soil" & Compartment != "ctl")
+##active verse inactive
+ps2<-subset_samples(ps, Fraction!="CTL" & Fraction!="Total")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-any(taxa_sums(ps2) == 0)
+#
+#get asvs table
+asvs.clean<-otu_table(ps2)
+metadat2<-filter(metadat,Fraction!="CTL" & Fraction!="Total")
+#
 # Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-# subset metadata
-metadat2<-metadat%>% filter(Compartment !=  "Rhizosphere" & Compartment !="Bulk_Soil" & Compartment != "ctl")
-#full model
-otu.perm<- adonis2((otu_table(ps2))~ Compartment+ Fraction + Compartment*Fraction, data = metadat2, permutations = 999, method="bray")
-otu.perm
-
-# roots + nodules, difference between compartments
-otu.perm<- adonis2((otu_table(ps2))~ Compartment, data = metadat2, permutations = 999, method="bray")
-otu.perm
-
-# roots + nodules, difference between fractions
-otu.perm<- adonis2((otu_table(ps2))~ Fraction, data = metadat2, permutations = 999, method="bray")
-otu.perm
-
-
-# roots difference between fraction
-ps2<-subset_samples(ps.r, Compartment =="Roots" )
-ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-# subset metadata
-metadat2<-metadat%>% filter(Compartment =="Roots")
-otu.perm<- adonis2((otu_table(ps2))~ Fraction , data = metadat2, permutations = 999, method="bray")
-otu.perm
-#adonis2(formula = (otu_table(ps2)) ~ Fraction, data = metadat2, permutations = 999, method = "bray")
-#Df SumOfSqs      R2      F Pr(>F)  
-#Fraction  1  0.14573 0.53911 8.1879  0.011 *
-
-
-# nodule difference between fractions
-# roots difference between fraction
-ps2<-subset_samples(ps.r, Compartment =="Nodule" )
-ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
-# subset metadata
-metadat2<-metadat%>% filter(Compartment =="Nodule")
-otu.perm<- adonis2((otu_table(ps2))~ Fraction , data = metadat2, permutations = 999, method="bray")
-otu.perm
-#adonis2(formula = (otu_table(ps2)) ~ Fraction, data = metadat2, permutations = 999, method = "bray")
-#Df SumOfSqs      R2      F Pr(>F)  
-#Fraction  1 0.065957 0.51041 7.2978  0.031 *
-
-
+asvs.bray<-vegdist(asvs.clean, method = "bray")
+#
+asvs.perm<- adonis2(asvs.clean ~ Fraction, data = metadat2, permutations = 999, method="bray")
+asvs.perm
+#adonis2(formula = asvs.clean ~ Fraction, data = metadat2, permutations = 999, method = "bray")
+#Df SumOfSqs      R2      F Pr(>F)    
+#Fraction  1   1.0113 0.03579 2.7098  0.001 ***
 
 
 ####PERCENT abundance figure by TREATment: ####
