@@ -32,7 +32,12 @@ library(MicEco)
 
 #Ancom
 #library(ANCOMBC)
+load("C:/Users/Jenn/OneDrive - The Pennsylvania State University/Documents/Github/BONCAT_mixtures/16S.RData")
 
+
+
+####
+#("C:/Users/Jenn/OneDrive - The Pennsylvania State University/Documents/Github/BONCAT_mixtures/16S.RData")
 #####Import data#####
 ## Set the working directory ###
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
@@ -97,16 +102,44 @@ ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
 # 314K taxa and 84 samples when mitochondria removed. 
 
-#checking taxa
-Phyla<-unique(taxon$Phyla)
-unique(taxon$Family)[order(unique(taxon$Family))]
 
-# remove sigletons
-ps<-prune_taxa(taxa_sums(ps) > 5, ps)
 
-ps
+#######filtering##################
+#total only
+total<-subset_samples(ps, Fraction=="Total")
+total<-prune_taxa(taxa_sums(total) > 0, total)
+total
+sample_data(total)
+#183208 asvs
+total <-ps_prune(total, min.samples = 5)
+total
 
-#~118 K taxa
+# 6109 taxa and 86 samples 
+
+# remove taxa with only 1 read
+total<-prune_taxa(taxa_sums(total) > 1, total)
+total
+
+
+# remove taxa with less than one  read across samples. 
+total <- filter_taxa(total, function (x) {sum(x > 0) > 1}, prune=TRUE)
+total
+
+
+
+# chekc data frame
+df<-as.data.frame(otu_table(total))
+df[1:10,1:5]
+
+#y<-seq(0, 80000, by=2500)
+
+#all
+otu_table(total) %>%
+  t() %>%
+  rowSums() %>%
+  hist(right= TRUE, breaks=10)
+
+
 ####### rarefaction######
 
 data(BCI)
@@ -736,6 +769,56 @@ adonis2(formula = asvs.clean ~ (Grass*Brassicae*Legume + Grass:Brassicae:Legume)
 
 
 
+########PERMANOVA active ########### 
+#full dna  between trts
+ps2<-subset_samples(ps, Fraction =="Active"& Treatment!="Soil")
+ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
+ps2
+
+#get asvs table
+asvs.clean<-otu_table(ps2)
+metadat2<-filter(metadat, Fraction =="Active"& Treatment!="Soil")
+
+# Calculate Bray-Curtis distance between samples
+asvs.bray<-vegdist(asvs.clean, method = "bray")
+#
+asvs.perm<- adonis2(asvs.clean ~ Treatment, data = metadat2, permutations = 999, method="bray")
+asvs.perm
+#adonis2(formula = asvs.clean ~ Treatment, data = metadat2, permutations = 999, method = "bray")
+#Df SumOfSqs      R2      F Pr(>F)    
+#Treatment  6   3.0996 0.13358 1.9528  0.001 ***
+##  Residual  76  20.1049 0.86642                  
+##Total     82  23.2045 1.00000  
+
+asvs.perm<- adonis2(asvs.clean ~ (Grass + Brassicae + Legume)^2, data = metadat2, permutations = 999, method="bray")
+asvs.perm
+adonis2(formula = asvs.clean ~ (Grass + Brassicae + Legume)^3, data = metadat2, permutations = 999, method = "bray")
+
+#Df SumOfSqs      R2      F Pr(>F)    
+#Grass             1   0.6725 0.02898 2.5422  0.001 ***
+#  Brassicae         1   0.3851 0.01660 1.4558  0.004 ** 
+#  Legume            1   1.1009 0.04745 4.1618  0.001 ***
+#  Grass:Brassicae   1   0.3533 0.01522 1.3354  0.015 *  
+#  Grass:Legume      1   0.3167 0.01365 1.1970  0.040 *  
+#  Brassicae:Legume  1   0.2711 0.01168 1.0248  0.325    
+#Residual         76  20.1049 0.86642                  
+#Total            82  23.2045 1.00000     
+
+adonis2(formula = asvs.clean ~ (Grass*Brassicae*Legume + Grass:Brassicae:Legume), data = metadat2, permutations = 999, method = "bray")
+
+
+#adonis2(formula = asvs.clean ~ (Grass * Brassicae * Legume + Grass:Brassicae:Legume), data = metadat2, permutations = 999, method = "bray")
+#Df SumOfSqs      R2      F Pr(>F)    
+#Grass             1   0.6725 0.02898 2.5422  0.001 ***
+#  Brassicae         1   0.3851 0.01660 1.4558  0.006 ** 
+#  Legume            1   1.1009 0.04745 4.1618  0.001 ***
+#  Grass:Brassicae   1   0.3533 0.01522 1.3354  0.013 *  
+#  Grass:Legume      1   0.3167 0.01365 1.1970  0.056 .  
+# Brassicae:Legume  1   0.2711 0.01168 1.0248  0.309    
+#Residual         76  20.1049 0.86642                  
+#Total            82  23.2045 1.00000                  
+#---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ########## PERMANOVA Fraction############
 ps2<-subset_samples(ps, Fraction!="CTL")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
