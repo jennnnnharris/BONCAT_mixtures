@@ -47,10 +47,9 @@ asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
 metadat<-read_excel("metadata.xlsx", sheet = 1)
 
 ## Transpose ASVS table ##
-asvs <- t(asvs)
-#row.names(asvs)
-#asvs[1:5,1:5]
 #taxa are columns
+asvs <- t(asvs)
+
 
 ## Determine minimum available reads per sample ##
 rowSums(asvs)[order(rowSums(asvs))]
@@ -111,6 +110,20 @@ total<-prune_taxa(taxa_sums(total) > 0, total)
 total
 sample_data(total)
 #183208 asvs
+#asvs with a mean of less than 5
+keep<-rowSums(t(otu_table(total)))/86 > 5
+
+asvs<-t(otu_table(total))[keep, ]
+
+#MAKE # import it phyloseq
+Workshop_OTU <- otu_table(as.matrix(asvs), taxa_are_rows = true)
+Workshop_metadat <- sample_data(metadat)
+Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
+total <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
+total
+
+
+
 total <-ps_prune(total, min.samples = 5)
 total
 
