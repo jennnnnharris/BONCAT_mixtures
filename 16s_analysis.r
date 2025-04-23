@@ -47,23 +47,24 @@ asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
 metadat<-read_excel("metadata.xlsx", sheet = 1)
 
 ## Transpose ASVS table ##
-#taxa are columns
 asvs <- t(asvs)
-
+asvs[1:5,1:5]#taxa are columns
 
 ## Determine minimum available reads per sample ##
 rowSums(asvs)[order(rowSums(asvs))]
+
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
-asvs[1:5,1:5]
+#asvs[1:5,1:5]
+#get min number of reads in a sample
 min.s<-min(rowSums(asvs))
 min.s
 
 ### Rarefy to obtain even numbers of reads by sample ###
 set.seed(336)
-asvs<-rrarefy(asvs, min.s)
-dim(asvs)
-asvs[1:5,1:5]
+asvs.r<-rrarefy(asvs, min.s)
+dim(asvs.r)
+asvs.r[1:5,1:5]
 
 ## order metadata
 metadat<-metadat[order(metadat$SampleID),]
@@ -78,82 +79,20 @@ metadat
 # mynames
 
 #make taxon matrix row names OTUs
-taxon[1:5,1:5]
+#taxon[1:5,1:5]
 row.names(taxon) <- taxon$Feature.ID
 
 
 
 # import it phyloseq
-Workshop_OTU <- otu_table(as.matrix(asvs), taxa_are_rows = FALSE)
+Workshop_OTU <- otu_table(as.matrix(asvs.r), taxa_are_rows = FALSE)
 Workshop_metadat <- sample_data(metadat)
 Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
 ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
 ps
 # 329K taxa when rarefied 
 
-#####remove plant contamination  ########
-# Select unassigned Asvs that the only in the the roots and nodules
-ps<-subset_taxa(ps, Class!="c__Chloroplast" )
-ps<-subset_taxa(ps, Class!=" c__Chloroplast" )
-ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
-
-ps<-prune_taxa(taxa_sums(ps) > 0, ps)
-ps
-# 314K taxa and 84 samples when mitochondria removed. 
-
-
-
-#######filtering##################
-#total only
-total<-subset_samples(ps, Fraction=="Total")
-total<-prune_taxa(taxa_sums(total) > 0, total)
-total
-sample_data(total)
-#183208 asvs
-#asvs with a mean of less than 5
-keep<-rowSums(t(otu_table(total)))/86 > 5
-
-asvs<-t(otu_table(total))[keep, ]
-
-#MAKE # import it phyloseq
-Workshop_OTU <- otu_table(as.matrix(asvs), taxa_are_rows = true)
-Workshop_metadat <- sample_data(metadat)
-Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
-total <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
-total
-
-
-
-total <-ps_prune(total, min.samples = 5)
-total
-
-# 6109 taxa and 86 samples 
-
-# remove taxa with only 1 read
-total<-prune_taxa(taxa_sums(total) > 1, total)
-total
-
-
-# remove taxa with less than one  read across samples. 
-total <- filter_taxa(total, function (x) {sum(x > 0) > 1}, prune=TRUE)
-total
-
-
-
-# chekc data frame
-df<-as.data.frame(otu_table(total))
-df[1:10,1:5]
-
-#y<-seq(0, 80000, by=2500)
-
-#all
-otu_table(total) %>%
-  t() %>%
-  rowSums() %>%
-  hist(right= TRUE, breaks=10)
-
-
-####### rarefaction######
+####### rarefaction curve ######
 
 data(BCI)
 head(BCI)
@@ -196,61 +135,76 @@ dev.off()
 
 ##can you rarefy by number of cells. 
 
-##### histograms ######
 
-y<-seq(0, 80000, by=2500)
-
-#all
-otu_table(ps) %>%
-  t() %>%
-  rowSums() %>%
-  hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
-
-subset_samples(ps, Fraction=="Active") %>%
-  prune_taxa(taxa_sums(.) > 0, .) %>%
-  otu_table() %>%
-  t() %>%
-  rowSums() %>%
-  hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
-
-
-subset_samples(ps, Fraction=="Total") %>%
-  prune_taxa(taxa_sums(.) > 0, .) %>%
-  otu_table() %>%
-  t() %>%
-  rowSums() %>%
-  hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
-
-
-subset_samples(ps, Fraction=="Inactive") %>%
-  prune_taxa(taxa_sums(.) > 0, .) %>%
-  otu_table() %>%
-  t() %>%
-  rowSums() %>%
-  hist(right= TRUE, breaks=y, ylim=c(0,.001), freq = FALSE)
 
 # many very rare taxa
 
 
-#####filter by biological reps - estelle#########
-#for each treatment
-# removed taxa that that are in less than the minimum number of reps.
-#trts<-unique(metadat$Treatment)
-trts<-unique(metadat$Trt_fraction)
-trts
+#####remove plant contamination  ########
+# Select unassigned Asvs that the only in the the roots and nodules
+ps<-subset_taxa(ps, Class!="c__Chloroplast" )
+ps<-subset_taxa(ps, Class!=" c__Chloroplast" )
+ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
 
-#### make a list of the ps data frames and loop through to filter reads. 
-a<-list()
-for (i in trts)
-{
-  a[[i]]<-subset_samples(ps, Trt_fraction==i ) %>%
-  ps_prune( min.samples = 2, min.reads = 1)
- }
-### put big PS object back together again. 
-ps1<-do.call(merge_phyloseq, a)
-ps1<-prune_taxa(taxa_sums(ps1) > 5, ps1)
-ps1
-# 12k taxa
+ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+ps
+# 314K taxa and 84 samples when mitochondria removed. 
+
+
+
+#######filtering total##################
+#total
+total<-subset_samples(ps, Fraction=="Total")
+total<-prune_taxa(taxa_sums(total) > 0, total)
+total
+
+#183208 asvs
+#### plot
+#plot(sort(taxa_sums(total), TRUE), type="h", ylim=c(0, 8000))
+
+# remove true singletons # 183000 ASVS 
+total<-prune_taxa(taxa_sums(total) > 1, total)
+total
+#plot(sort(taxa_sums(total), TRUE), type="h", ylim=c(0, 8000))
+head(t(otu_table(total)))
+
+#remove asvs with a mean of less than 5
+keep<-rowSums(t(otu_table(total)))/86 > 5
+abundasvs<-row.names(t(otu_table(total))[keep, ])
+abundasvs[1:5]
+total<-prune_taxa(abundasvs, total)
+total
+
+# remove asvs that are in less than 5 samples
+total <-ps_prune(total, min.samples = 5)
+
+#######filtering active + inactive ##################
+#total
+fc<-subset_samples(ps, Fraction!="Total" & Fraction!="CTL")
+fc<-prune_taxa(taxa_sums(fc) > 0, total)
+fc
+
+#110488 asvs
+#### plot
+plot(sort(taxa_sums(fc), TRUE), type="h", ylim=c(0, 8000))
+
+# remove true singletons # 183000 ASVS 
+total<-prune_taxa(taxa_sums(total) > 1, total)
+total
+#plot(sort(taxa_sums(total), TRUE), type="h", ylim=c(0, 8000))
+head(t(otu_table(total)))
+
+#remove asvs with a mean of less than 5
+keep<-rowSums(t(otu_table(total)))/86 > 5
+abundasvs<-row.names(t(otu_table(total))[keep, ])
+abundasvs[1:5]
+total<-prune_taxa(abundasvs, total)
+total
+
+# remove asvs that are in less than 5 samples
+total <-ps_prune(total, min.samples = 5)
+
+
 
 ####DIVERSITY plots  ####
 # diversity is calculated on raw reads b/c many diversity metric use singleton to calculate diversity. 
@@ -394,8 +348,8 @@ df<-rich %>%
   
 
   mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A",  "gold")
-  myshapes <- c(1, 12, 21, 22, 23, 24, 25 )
-  setwd()
+  mycols7<- c( "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A",  "gold")
+  myshapes <- c(21 , 12, 24,1, 15 , 22, 23 )
   mycols3<- c( "grey", "#1F78B4",   "gold")
   setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
   
@@ -403,13 +357,12 @@ df<-rich %>%
 #####PCOA plots of total ######
 
 #Pcoa on rarefied asvs Data
-ps2<-subset_samples(ps, Fraction =="Total")
-ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-ps2
-
-
+  
+ps1<-total %>% subset_samples(Treatment!="Soil")
+# 1694 ASVS
+  
 # Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps2), method = "bray")
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
 # Perform PCoA analysis of BC distances #
 otus.pcoa <- cmdscale(otus.bray, k=(44-1), eig=TRUE)
 # Store coordinates for first two axes in new variable #
@@ -419,25 +372,56 @@ otus.eig<-otus.pcoa$eig
 perc.exp<-otus.eig/(sum(otus.eig))*100
 pe1<-perc.exp[1]
 pe2<-perc.exp[2]
+pe3<-perc.exp[3]
+pe4<-perc.exp[4]
 
 
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Total")
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil")
 
 #set factors 
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 factor(metadat2$Fraction)
+metadat2$N <- factor(metadat2$N)
 
 #plot
-#windows(6,6)
+windows(6,6)
+
+myshapes2 <- c(21 , 12 )
+
 svg("pcoa1.svg", height = 6, width =6)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="active vs inactive ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="total, filtered out ASVs with mean of <5 ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
          ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
 points(otus.p, 
-       col= mycols8.1[metadat2$Treatment],
-       pch= myshapes[metadat2$Rep],
+       col= mycols7[metadat2$Treatment],
+       pch= myshapes[metadat2$N],
        lwd=1,cex=1.5,
-       bg=mycols8[metadat2$Treatment])
+       bg=mycols7[metadat2$Treatment])
+
+legend("topleft", legend=c( "L", "G", "B", "GB", "LB", "LG", "LGB") ,
+       fill= mycols7,
+       cex=1,
+       title = "Treatment",
+       bty = "n")
+
+ordiellipse(otus.pcoa, metadat2$Treatment,  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            #lwd=.1,
+            col= mycols7,
+            alpha = 30)
+dev.off()
+
+##PC 13 and PC4
+svg("pcoa2.svg", height = 6, width =6)
+ordiplot(otus.pcoa,choices=c(3,4), type="none", main="pc 3, 4, total, filtered  ",xlab=paste("PCoA3 (",round(pe3,2),"% variance explained)"),
+         ylab=paste("PCoA4 (",round(pe4,2),"% variance explained)"))
+points(otus.p, 
+       col= mycols7[metadat2$Treatment],
+       pch= myshapes[metadat2$N],
+       lwd=1,cex=1.5,
+       bg=mycols7[metadat2$Treatment])
 
 legend("topleft", legend=c( "Soil", "L", "G", "B", "GB", "LB", "LG", "LGB") ,
        fill= mycols8,
@@ -450,9 +434,10 @@ ordiellipse(otus.pcoa, metadat2$Treatment,
             draw = "polygon",
             border = 0,
             #lwd=.1,
-            col= mycols8,
+            col= mycols7,
             alpha = 30)
 dev.off()
+
 
 
 ##############PCOA of inactive vs active###########
