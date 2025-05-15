@@ -10,8 +10,11 @@ library(tidyverse)
 library(lubridate)
 
 #import colors
-mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#6A3D9A", "#1a635a","#FF7F00")
-
+#mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#6A3D9A", "#1a635a","#FF7F00")
+#mycols7<-c("#E3C1CBFF", "#AD5A6BFF", "#C993A2FF", "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
+mycols7<-c( "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF", , "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
+mycols8<-c("grey", "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF",  "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
+#mycols7 <-c("#4B2D4BFF", "#3C3C5AFF", "#4B6987FF", "#789696FF", "#968787FF", "#D2C3C3FF", "#875A2DFF", "#873C3CFF")
 
 # import data
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
@@ -84,18 +87,19 @@ ylab("percent active")
 
 df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
-mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A", "yellow")
 
 # plot for each treatment
 
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+svg(file="activity.svg",width = 7, height=4)
 
   df1  %>%
   ggplot(aes(x=Treatment, y=BONCAT_freq, fill = Treatment)) +
   geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, outlier.shape = NA)+
+  geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=mycols8) +
   scale_fill_manual(values = mycols8)+
-  theme_classic(base_size = 18)+
+  theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0.5))+
   ylab("percent active")+
@@ -104,7 +108,7 @@ mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A
   geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
   geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 
-  
+dev.off()  
 #
 
 
