@@ -52,10 +52,18 @@ asvs[1:5,1:5]#taxa are columns
 
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
+###
+asvs<-asvs[which(row.names(asvs)!= "BCAT_56_S14"),]
+asvs<-asvs[which(row.names(asvs)!= "BCAT_57_S24"),]
+                
+row.names(asvs)
+
 
 ## order metadata
 metadat<-as.data.frame(metadat[order(metadat$SampleID),])
 row.names(metadat) <- metadat$SampleID
+metadat<-metadat[which(row.names(metadat)!= "BCAT_56_S14"),]
+metadat<-metadat[which(row.names(metadat)!= "BCAT_57_S24"),]
 metadat
 
 # length(intersect(colnames(asvs.raw) , metadat$SampleID)) # Apply setdiff function to see what's missing from the tree
@@ -83,7 +91,7 @@ ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 
 #remove singletons
-ps<-prune_taxa(taxa_sums(ps) > 1, ps)
+#ps<-prune_taxa(taxa_sums(ps) > 1, ps)
 
 ps
 # 328K taxa and 165 samples when mitochondria removed. 
@@ -107,6 +115,7 @@ rich %>% group_by(n_species) %>% summarise(mean(Observed), sd(Observed))
 rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 rich$Fraction   <- factor(rich$Fraction, levels= c("Total", "Active", "Inactive"))
 rich$n_species   <- as.numeric(rich$n_species)
+
 # calculated eveness
 # eveness = shannon/ ln(richness)
 H<-rich$Shannon  
@@ -134,7 +143,7 @@ p1<-rich%>% filter(Treatment!="NA") %>%
   ylab("Chao1 observed asvs")+
   xlab("n species")+  
   labs(title = "Total")
-
+p1
 
 #shannon
 p2<-rich%>% filter(Treatment!="NA") %>%
@@ -192,6 +201,93 @@ require(gridExtra)
 #windows(12,4)
 grid.arrange(p1, p3, ncol=2)
 dev.off()
+
+svg(file="shannon.total.species.svg",width = 3.5, height=3.5)
+p2
+dev.off()
+
+
+
+#####diversity of active communtiy by nspecies####
+
+p1<-rich%>% filter(Treatment!="NA") %>%
+  filter(Treatment!="Soil") %>%
+  filter(Fraction=="Active") %>%
+  ggplot(aes(x=n_species, y=Chao1 )) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+  ylab("Chao1 observed asvs")+
+  xlab("n species")+  
+  labs(title = "Active")
+
+p1
+
+#shannon
+p2<-rich%>% filter(Treatment!="NA") %>%
+  filter(Treatment!="Soil") %>%
+  filter(Fraction=="Active") %>%
+  ggplot(aes(x=n_species, y=Shannon )) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+  labs(title = "Active")+
+  xlab("n species")
+p2
+
+#inverse simpson
+p3<-rich%>% filter(Treatment!="NA") %>%
+  filter(Treatment!="Soil") %>%
+  filter(Fraction=="Active") %>%
+  ggplot(aes(x=n_species, y=InvSimpson )) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+  #ylab("Chao1 observed asvs")+
+  xlab("n species")+  
+  labs(title = "Active")
+
+
+#evenness
+p4<-rich%>% filter(Treatment!="NA") %>%
+  filter(Treatment!="Soil") %>%
+  filter(Fraction=="Active") %>%
+  ggplot(aes(x=n_species, y=Evenness)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5) )+
+  xlab("n species")+  
+  labs(title = "Active")
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+
+svg(file="diversity.active.species.svg",width = 12, height=3.5)
+#chao1
+require(gridExtra)
+#windows(12,4)
+grid.arrange(p1, p2, p3, p4, ncol=4)
+dev.off()
+
+svg(file="diversity.active.species.2.svg",width = 7, height=3.5)
+#chao1
+require(gridExtra)
+#windows(12,4)
+grid.arrange(p1, p3, ncol=2)
+dev.off()
+
+svg(file="shannon.act.species.svg",width = 3.5, height=3.5)
+
+p2
+dev.off()
+
 
 
 
