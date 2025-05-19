@@ -24,30 +24,9 @@ library(readxl)
 library(lubridate)
 
 
-
-
 #Phyloseq and mbiome #if trouble loading phyloseq, see: http://joey711.github.io/phyloseq/install
 library(phyloseq)
 
-#install.packages("Rtools")
-
-#if(!"devtools" %in% installed.packages()){
-#  install.packages("devtools")
-#}
-#devtools::install_github("gmteunisse/fantaxtic")
-
-#install.packages("fantaxtic")
-#library(fantaxtic)
-#library(microbiome)
-#library(DT)
-
-# venn diagrams
-#library(ggvenn)
-#library(grid)
-
-#Ancom
-#library(ANCOMBC)
-#load("C:/Users/Jenn/OneDrive - The Pennsylvania State University/Documents/Github/BONCAT_mixtures/16S.RData")
 
 
 #colors
@@ -58,7 +37,7 @@ mycols3<- c( "#006d77",  "#f4d35e", "#e94f37")
 blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
 
 ####
-#("C:/Users/Jenn/OneDrive - The Pennsylvania State University/Documents/Github/BONCAT_mixtures/16S.RData")
+
 #####Import data#####
 ## Set the working directory ###
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
@@ -71,16 +50,8 @@ metadat<-read_excel("metadata.xlsx", sheet = 1)
 asvs <- t(asvs)
 asvs[1:5,1:5]#taxa are columns
 
-## check the reads per sample ##
-#rowSums(asvs)[order(rowSums(asvs))]
-
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
-
-
-#get min number of reads in a sample
-min.s<-min(rowSums(asvs))
-
 
 ## order metadata
 metadat<-as.data.frame(metadat[order(metadat$SampleID),])
@@ -103,96 +74,19 @@ ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
 ps
 # 329K taxa 
 
-####### rarefaction curve ######
-
-#use not rarefied asvs. 
-asvs[1:5,1:5]
-S <- specnumber(asvs) # observed number of species
-S
-(raremax <- min(rowSums(asvs)))
-Srare <- rarefy(asvs, raremax)
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-
-svg("observed.vs.rarefied.svg", )
-plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
-abline(0, 1)
-dev.off()
-
-svg("rarefaction.svg", height=8, width=8 )
-rarecurve(asvs, step = 10000, sample = raremax, col = "blue", cex = 0.6)
-dev.off()
-
-i<-asvs[which(metadat$Fraction=="Active"),]
-svg("r.plot2.svg", )
-rarecurve(i, step = 10000, sample = raremax, col = "blue", cex = 0.6)
-dev.off()
-
-i<-asvs[which(metadat$Fraction=="Total"),]
-i[1:5,1:15]
-svg("r.plot3.svg", )
-rarecurve(i, step = 10000, sample = raremax, col = "blue", cex = 0.6)
-dev.off()
-
-##can you rarefy by number of cells. 
-
-
-#####remove plant contamination  ########
+#####remove plant contamination##
 # Select unassigned Asvs that the only in the the roots and nodules
 ps<-subset_taxa(ps, Class!="c__Chloroplast" )
 ps<-subset_taxa(ps, Class!=" c__Chloroplast" )
 ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
 
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+
+#remove singletons
+ps<-prune_taxa(taxa_sums(ps) > 1, ps)
+
 ps
-# 314K taxa and 84 samples when mitochondria removed. 
-
-
-
-#######filtering total##################
-#total
-total<-subset_samples(ps, Fraction=="Total")
-total<-prune_taxa(taxa_sums(total) > 0, total)
-total
-
-# remove true singletons 
-total<-prune_taxa(taxa_sums(total) > 1, total)
-
-#remove asvs with a mean of less than 5
-mean.reads <- rowSums(t(otu_table(total)))/nsamples(total)
-keep<-row.names(t(otu_table(total))[ mean.reads > 5, ])
-total<-prune_taxa(keep, total)
-
-# remove asvs that are in less than 5 samples
-total <-ps_prune(total, min.samples = 3)
-total
-#1696 taxa
-
-## plot
-#plot(sort(taxa_sums(total), TRUE), type="h", ylim=c(0, 8000))
-
-#######filtering active + inactive ##################
-fc<-subset_samples(ps, Fraction!="Total" & Fraction!="CTL")
-fc<-prune_taxa(taxa_sums(fc) > 0, fc)
-fc
-
-# remove true singletons # 183000 ASVS 
-fc<-prune_taxa(taxa_sums(fc) > 1, fc)
-fc
-
-#remove asvs with a mean of less than 5
-mean.reads <- rowSums(t(otu_table(fc)))/nsamples(fc)
-keep<-row.names(t(otu_table(fc))[ mean.reads > 5, ])
-fc<-prune_taxa(keep, fc)
-fc
-
-# remove asvs that are in less than 5 samples
-fc <-ps_prune(fc, min.samples = 3)
-fc
-
-#1864 taxa
-plot(sort(taxa_sums(fc), TRUE), type="h", ylim=c(0, 8000))
-
+# 328K taxa and 165 samples when mitochondria removed. 
 
 
 ####DIVERSITY plots  ####
@@ -209,13 +103,101 @@ rich<-as.data.frame(rich)
 rich %>% group_by(Fraction) %>% summarise(mean(Observed), sd(Observed))
 rich %>% group_by(n_species) %>% summarise(mean(Observed), sd(Observed))
 
-#colors
+#adjust factors
 rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 rich$Fraction   <- factor(rich$Fraction, levels= c("Total", "Active", "Inactive"))
+rich$n_species   <- as.numeric(rich$n_species)
+# calculated eveness
+# eveness = shannon/ ln(richness)
+H<-rich$Shannon  
+S1<-rich$Observed  
+S<-log(S1)  
+Evenness<-H/S
+rich$Evenness <- Evenness
 
 
 # Does diversity increase with number of species?
+
+
+#require(gridExtra)
+#svg(file="activity.species.svg",width = 3, height=3)
+#chao1
+p1<-rich%>% filter(Treatment!="NA") %>%
+  filter(Treatment!="Soil") %>%
+  filter(Fraction=="Total") %>%
+  ggplot(aes(x=n_species, y=Chao1 )) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+  ylab("Chao1 observed asvs")+
+  xlab("n species")+  
+  labs(title = "Total")
+
+
+#shannon
+p2<-rich%>% filter(Treatment!="NA") %>%
+  filter(Treatment!="Soil") %>%
+  filter(Fraction=="Total") %>%
+  ggplot(aes(x=n_species, y=Shannon )) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+  labs(title = "Total")+
+  xlab("n species")
+
+#inverse simpson
+p3<-rich%>% filter(Treatment!="NA") %>%
+  filter(Treatment!="Soil") %>%
+  filter(Fraction=="Total") %>%
+  ggplot(aes(x=n_species, y=InvSimpson )) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+  #ylab("Chao1 observed asvs")+
+  xlab("n species")+  
+  labs(title = "Total")
+
+
+#evenness
+p4<-rich%>% filter(Treatment!="NA") %>%
+  filter(Treatment!="Soil") %>%
+  filter(Fraction=="Total") %>%
+  ggplot(aes(x=n_species, y=Evenness)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5) )+
+  xlab("n species")+  
+  labs(title = "Total")
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+
+svg(file="diversity.species.svg",width = 12, height=3.5)
+#chao1
+require(gridExtra)
+#windows(12,4)
+grid.arrange(p1, p3, p3, p4, ncol=4)
+dev.off()
+
+svg(file="diversity.species.2.svg",width = 7, height=3.5)
+#chao1
+require(gridExtra)
+#windows(12,4)
+grid.arrange(p1, p3, ncol=2)
+dev.off()
+
+
+
+#plot by fraction
 p1 <- rich%>% filter(Treatment!="NA") %>%
+  
   ggplot(aes(x=Fraction, y=Shannon,  fill=Fraction))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols3) +
@@ -239,6 +221,7 @@ p2<- rich%>% filter(Treatment!="NA") %>%
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
   ylab("Observed Diversity ")+
+  labs(title = "Total")+
   xlab("")
 
 p2
@@ -248,21 +231,6 @@ svg(file="diversity.fraction.svg",width = 5, height=4)
 p2
 dev.off()
 
-
-svg(file="activity.species.svg",width = 3, height=3)
-#require(gridExtra)
-#windows(8,4)
-df  %>%  filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq )) +
-  geom_jitter(width = .2, size=1 )+
-  geom_smooth(method = lm, color= blues[4])+
-  theme_classic(base_size = 14)+
-  theme( legend.position="none",
-         plot.title = element_text(hjust = 0.5))+
-  ylab("percent active")+
-  xlab("n species")
-
-dev.off()
 
 
 #total
@@ -285,7 +253,6 @@ rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB"
 #mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A", "yellow")
 
 
-# Does diversity increase with number of species?
 p1<-rich%>%
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
@@ -311,7 +278,8 @@ p2<-rich%>%
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
   ylab("N Asvs")+
-  xlab("")+
+  xlab("")+  
+  labs(title = "Total")+
   facet_grid( ~n_species, scales = "free", space = "free")
 
 p2

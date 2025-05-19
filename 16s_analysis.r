@@ -109,31 +109,14 @@ ps
 
 ####### rarefaction curve ######
 
-data(BCI)
-head(BCI)
-S <- specnumber(BCI) # observed number of species
-(raremax <- min(rowSums(BCI)))
-Srare <- rarefy(BCI, raremax)
-plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
-abline(0, 1)
-rarecurve(BCI, step = 20, sample = raremax, col = "blue", cex = 0.6)
-
-
-#use not rarefied asvs. 
-asvs[1:5,1:5]
-S <- specnumber(asvs) # observed number of species
-S
-(raremax <- min(rowSums(asvs)))
-Srare <- rarefy(asvs, raremax)
-
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
 
-svg("r.plot0.svg", )
+svg("observed.vs.rarefied.svg" )
 plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
 abline(0, 1)
 dev.off()
 
-svg("r.plot1.svg", )
+svg("rarefaction.svg", height=8, width=8 )
 rarecurve(i, step = 10000, sample = raremax, col = "blue", cex = 0.6)
 dev.off()
 
