@@ -14,7 +14,7 @@ library(lubridate)
 #mycols7<-c("#E3C1CBFF", "#AD5A6BFF", "#C993A2FF", "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
 mycols7<-c( "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF", , "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
 mycols8<-c("grey", "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF",  "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
-#mycols7 <-c("#4B2D4BFF", "#3C3C5AFF", "#4B6987FF", "#789696FF", "#968787FF", "#D2C3C3FF", "#875A2DFF", "#873C3CFF")
+blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
 
 # import data
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
@@ -84,6 +84,23 @@ df1%>%  filter(Species1!="Soil") %>%
   theme_bw(base_size = 18, )+
   theme(axis.text.x = element_text(angle=60, hjust=1)) +
 ylab("percent active")
+
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+svg(file="activity.species.svg",width = 3, height=3)
+#require(gridExtra)
+#windows(8,4)
+df  %>%  filter(Species1!="Soil") %>%
+  ggplot(aes(x=n_species, y=BONCAT_freq )) +
+  geom_jitter(width = .2, size=1 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+        plot.title = element_text(hjust = 0.5))+
+  ylab("percent active")+
+  xlab("n species")
+
+dev.off()
 
 df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 

@@ -20,9 +20,22 @@ library(readxl)
 library(lubridate)
 
 
+
+
 #Phyloseq and mbiome #if trouble loading phyloseq, see: http://joey711.github.io/phyloseq/install
 library(phyloseq)
+install.packages("MicEco")
 library(MicEco)
+
+install.packages("Rtools")
+
+if(!"devtools" %in% installed.packages()){
+  install.packages("devtools")
+}
+devtools::install_github("gmteunisse/fantaxtic")
+
+install.packages("fantaxtic")
+library(fantaxtic)
 #library(microbiome)
 #library(DT)
 
@@ -1026,6 +1039,22 @@ asvs.perm <- adonis2(asvs.clean ~ Treatment*N, data = metadat2, permutations = 9
 asvs.perm
 # LG and GB are different
 
+
+
+#L treatments
+# 2 species
+t1<-subset_samples(total, Legume=="1", Treatment!="L")
+asvs.clean<-otu_table(t1)
+metadat2<-as.data.frame(as.matrix(sample_data(t1)))
+metadat2
+# Calculate Bray-Curtis distance between samples
+asvs.bray<-vegdist(asvs.clean, method = "bray")
+head(asvs.bray)
+asvs.perm <- adonis2(asvs.clean ~ Treatment*N, data = metadat2, permutations = 999, method="bray")
+asvs.perm
+# LG and GB are different
+
+
 ##############PCOA of inactive vs active###########
 
 # Calculate Bray-Curtis distance between samples
@@ -1501,6 +1530,43 @@ asvs.perm
 
 ####PERCENT abundance figure by TREATment: ####
 #get data
+
+# Transform ASV counts to proportions / relative abundance
+total.prop <- transform_sample_counts(subset_samples(total),function(ASV) ASV/sum(ASV))
+
+# Subset by family
+total.prop.order <- phyloseq::tax_glom(total.prop, "Order") # 196 taxa
+
+# Take x number of taxa per taxonomic rank based on relative abundance
+# Taxa > n will be added to as "other" label
+install.packages("fantaxtic")
+total.prop.family.top10 <- fantaxtic::nested_top_taxa(physeq_obj = total.prop.family, n=10, relative = TRUE, discard_other = FALSE, other_label = "Other")
+
+# Melt data frame with phyloseq function for plotting
+total.family.top10 <- psmelt(p1.ccmAim3.nod.prop.family.top10)
+
+# Reorder levels to put other at the end - otherwise taxa are in alphabetical order
+p1.family.nod.top10$Family <- forcats::fct_relevel(as.factor(p1.family.nod.top10$Family), "Other", after = Inf)
+
+# Visualize
+ggplot(p1.family.nod.top10, aes(x=Sample, y=Abundance, fill=Family))+
+  geom_bar(stat = "identity")+
+  facet_wrap(~CommonCoverCropCode, scales="free_x",
+             labeller=as_labeller(c(BC='Bush clover', YSC='Yellow sweet clover',
+                                    FP='Field pea', CC='Crimson clover',
+                                    WC='White clover', CP='Cowpea')))+
+  labs(y="Relative abundance", title="Nodule")+
+  theme_bw()+
+  theme(legend.position='right', axis.title.x=element_blank(),
+        axis.text.x=element_blank(), text=element_text(size=15),
+        plot.title=element_text(hjust=0.5, size=16), legend.text=element_text
+        (size=8))+
+  scale_fill_manual(values=c("#855C75FF", "#D9AF6BFF", "#AF6458FF", "#736F4CFF", 
+                             "#526A83FF", "#625377FF", "#68855CFF", "#9C9C5EFF", 
+                             "#A06177FF", "#8C785DFF", "#467378FF"))
+
+
+####old ##
 taxon<- as.data.frame(tax_table(ps))
 df<-as.data.frame(otu_table(ps))
 
