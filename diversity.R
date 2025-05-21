@@ -206,8 +206,6 @@ svg(file="shannon.total.species.svg",width = 3.5, height=3.5)
 p2
 dev.off()
 
-
-
 #####diversity of active communtiy by nspecies####
 
 p1<-rich%>% filter(Treatment!="NA") %>%
@@ -288,7 +286,52 @@ svg(file="shannon.act.species.svg",width = 3.5, height=3.5)
 p2
 dev.off()
 
+#### total diversity by treatment#######
 
+p1<-rich%>%  filter(Fraction=="Total") %>%
+  filter(Treatment!="Soil") %>%
+  
+  ggplot(aes(x=Treatment, y=Chao1,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = mycols7)+
+  geom_jitter(width = .1, size=1,  )+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  ggtitle("E Diversity Total DNA")+
+  xlab("")+
+  facet_grid( ~n_species, scales = "free", space = "free")
+  #scale_shape_discrete() 
+
+
+svg(file="chao1.total.treatment.svg",width = 3.5, height=3.5)
+
+p1
+dev.off()
+
+
+p1<-rich%>%  filter(Fraction=="Total") %>%
+  filter(Treatment!="Soil") %>%
+  
+  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = mycols7)+
+  geom_jitter(width = .1, size=1,  )+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  ggtitle("E Diversity Total DNA")+
+  xlab("")+
+  facet_grid( ~n_species, scales = "free", space = "free")
+#scale_shape_discrete() 
+
+
+svg(file="shannon.total.treatment.svg",width = 3.5, height=3.5)
+
+p1
+dev.off()
 
 
 #plot by fraction

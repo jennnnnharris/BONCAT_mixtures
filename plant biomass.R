@@ -94,14 +94,14 @@ p1<-df  %>%
   scale_fill_manual(values = mycols7)+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
+        plot.title = element_text(hjust = 0, size=14))+
   #ylab("percent active")+
-  facet_grid( ~n_species, scales = "free", space = "free")
-  #ggtitle("number of species")
+  facet_grid( ~n_species, scales = "free", space = "free")+
+  ggtitle("A Root biomass")
   #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
   #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 
-dev.off()  
+#dev.off()  
 #
 
 
@@ -113,14 +113,14 @@ p2<-df  %>%
   scale_fill_manual(values = mycols7)+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
+        plot.title = element_text(hjust = 0, size= 14))+
+  ggtitle("B shoot biomass")+
   #ylab("")+
   facet_grid( ~n_species, scales = "free", space = "free")
-  #ggtitle("number of species")
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 
-dev.off()  
+#dev.off()  
 
 p3<-df  %>%
   ggplot(aes(x=Treatment, y=Root.to.Shoot, fill = Treatment)) +
@@ -130,20 +130,21 @@ p3<-df  %>%
   scale_fill_manual(values = mycols7)+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
+        plot.title = element_text(hjust = 0, size=14))+
+  ggtitle("C root:shoot")+
   #ylab("")+
   facet_grid( ~n_species, scales = "free", space = "free")
   #ggtitle("number of species")
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 
-dev.off()  
+#dev.off()  
 
 
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
 svg(file="biomass.svg",width = 10, height=4)
 require(gridExtra)
-#windows(8,4)
+#windows(9,4)
 grid.arrange(p1, p2, p3, ncol=3)
 dev.off()
 

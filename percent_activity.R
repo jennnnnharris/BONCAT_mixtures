@@ -12,7 +12,7 @@ library(lubridate)
 #import colors
 #mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#6A3D9A", "#1a635a","#FF7F00")
 #mycols7<-c("#E3C1CBFF", "#AD5A6BFF", "#C993A2FF", "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
-mycols7<-c( "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF", , "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
+mycols7<-c( "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF",  "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
 mycols8<-c("grey", "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF",  "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
 blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
 
@@ -49,20 +49,20 @@ df$Date_sorted   <- factor(df$Date_sorted)
 #coef(m1)
 
 # not adjusted plot:
-df%>% 
-  ggplot(aes(x=Date_sorted, y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 18, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
+#df%>% 
+#  ggplot(aes(x=Date_sorted, y=BONCAT_freq)) +
+#  geom_jitter(width = .2, size=1 )+
+#  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+#  theme_bw(base_size = 18, )+
+#  theme(axis.text.x = element_text(angle=60, hjust=1))
 
 # adjusted plot
-df%>% 
-  ggplot(aes(x=Date_sorted, y=BONCAT_freq_adj)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 18, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
+#df%>% 
+#  ggplot(aes(x=Date_sorted, y=BONCAT_freq_adj)) +
+#  geom_jitter(width = .2, size=1 )+
+#  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
+#  theme_bw(base_size = 18, )+
+#  theme(axis.text.x = element_text(angle=60, hjust=1))
 
 # avg the technical reps that are adj for day.
 
@@ -108,22 +108,23 @@ df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "L
 # plot for each treatment
 
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg(file="activity.svg",width = 7, height=4)
-
+svg(file="activity.svg",width = 4, height=4)
+windows(4,4)
   df1  %>%
+  filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=BONCAT_freq, fill = Treatment)) +
   geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols8) +
-  scale_fill_manual(values = mycols8)+
-  theme_classic(base_size = 16)+
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = mycols7)+
+  theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
+        plot.title = element_text(hjust = 0))+
   ylab("percent active")+
   facet_grid( ~n_species, scales = "free", space = "free")+
-  ggtitle("number of species")+
-  geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
-  geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
+  ggtitle("D Percent Activity")
+  #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
+  #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 
 dev.off()  
 #
