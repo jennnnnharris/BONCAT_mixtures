@@ -103,7 +103,7 @@ ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 #ps<-prune_taxa(taxa_sums(ps) > 1, ps)
 
 ps
-# 311K taxa and 163 samples when mitochondria removed. 
+# 186 K taxa and 163 samples when mitochondria removed. 
 
 
 ##compute DIVERSITY######
@@ -354,12 +354,13 @@ p4<-rich%>% filter(Treatment!="NA") %>%
   labs(title = "Total")
 
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-
 svg(file="diversity.nitrogen.total.svg",width = 13.5, height=3.5)
 require(gridExtra)
 windows(12,4)
 grid.arrange(p1, p2, p3, p4, ncol=4)
 dev.off()
+
+
 #lm
 #total
 tot<-rich %>% filter(Fraction=="Total") %>%  filter(Treatment!="NA") %>%
@@ -381,7 +382,7 @@ m1<-lm(Evenness~N,data=tot)
 summary(m1)
 #not significant
 
-#### total diversity by treatment#######
+####total by treatment#######
 
 p1<-rich%>%  filter(Fraction=="Total") %>%
   filter(Treatment!="Soil") %>%
@@ -394,19 +395,18 @@ p1<-rich%>%  filter(Fraction=="Total") %>%
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  ggtitle("E Diversity Total DNA")+
+  ggtitle("A Total DNA")+
   xlab("")+
   facet_grid( ~n_species, scales = "free", space = "free")
-  #scale_shape_discrete() 
+  
+#p1
+
+#svg(file="chao1.total.treatment.svg",width = 3.5, height=3.5)
+#p1
+#dev.off()
 
 
-svg(file="chao1.total.treatment.svg",width = 3.5, height=3.5)
-
-p1
-dev.off()
-
-
-p1<-rich%>%  filter(Fraction=="Total") %>%
+p2<-rich%>%  filter(Fraction=="Total") %>%
   filter(Treatment!="Soil") %>%
   
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
@@ -417,19 +417,78 @@ p1<-rich%>%  filter(Fraction=="Total") %>%
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  ggtitle("E Diversity Total DNA")+
+  ggtitle("B Total DNA")+
   xlab("")+
   facet_grid( ~n_species, scales = "free", space = "free")
-#scale_shape_discrete() 
+#p2
 
 
-svg(file="shannon.total.treatment.svg",width = 3.5, height=3.5)
+#svg(file="shannon.total.treatment.svg",width = 3.5, height=3.5)
+#p2
+#dev.off()
 
-p1
+p3<-rich%>%  filter(Fraction=="Total") %>%
+  filter(Treatment!="Soil") %>%
+  
+  ggplot(aes(x=Treatment, y=InvSimpson,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = mycols7)+
+  geom_jitter(width = .1, size=1,  )+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  ggtitle("C Total DNA")+
+  xlab("")+
+  facet_grid( ~n_species, scales = "free", space = "free")
+#p3
+
+
+p4<-rich%>%  filter(Fraction=="Total") %>%
+  filter(Treatment!="Soil") %>%
+  ggplot(aes(x=Treatment, y=Evenness,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = mycols7)+
+  geom_jitter(width = .1, size=1,  )+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  ggtitle("D Total DNA")+
+  xlab("")+
+  facet_grid( ~n_species, scales = "free", space = "free")
+
+#p4
+
+#save plot
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+svg(file="diversity.trt.total.svg",width = 13.5, height=3.5)
+require(gridExtra)
+windows(12,4)
+grid.arrange(p1, p2, p3, p4, ncol=4)
 dev.off()
 
+###functional group #####
 
-#plot by fraction
+
+p1<-rich%>%  filter(Fraction=="Total") %>%
+  filter(Treatment!="Soil") %>%
+  ggplot(aes(x=Treatment, y=Chao1,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = mycols7)+
+  geom_jitter(width = .1, size=1,  )+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  ggtitle("A Total DNA")+
+  facet_grid( ~Legume, scales = "free", space = "free")
+
+#p1
+#colnames(rich)
+
+
+#####fraction##########
 p1 <- rich%>% filter(Treatment!="NA") %>%
   
   ggplot(aes(x=Fraction, y=Shannon,  fill=Fraction))+
