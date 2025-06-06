@@ -18,30 +18,37 @@ blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
 
 
 # write functions
-get.shoot.predict<-function(df, sp1, sp2, sp3) {
+get.predict<-function(df, sp1, sp2, sp3, trait) {
   if(missing(sp3)){
-    sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
-    sp1.predict<-sp1.df$Shoot.Biomass/3
-    sp2.df<-filter(df, Treatment==sp2)
-    sp2.predict<-sp2.df$Shoot.Biomass/3
+    sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
+    #print(sp1.df)
+    sp1.predict<-sp1.df/2
+    print(sp1.predict)
+    sp2.df<-filter(df, Treatment==sp2) %>% select(all_of(trait))
+    sp2.predict<-sp2.df /2
+    print(sp2.predict)
     predict <- sp1.predict + sp2.predict
     print(predict)
-    return(predict)
+    #return(predict)
   }
-  else
+  else {
     print(paste("the 3rd species is",sp3))
-  sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
-  sp1.predict<-sp1.df$Shoot.Biomass/2
+  sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
+  sp1.predict<-sp1.df/2
   sp2.df<-filter(df, Treatment==sp2)
-  sp2.predict<-sp2.df$Shoot.Biomass/2
+  sp2.predict<-sp2.df$trait/2
   sp3.df<-filter(df, Treatment==sp3)
-  sp3.predict<-sp3.df$Shoot.Biomass/2
+  sp3.predict<-sp3.df$trait/2
   predict <- sp1.predict + sp2.predict + sp3.predict
   print(predict)
   return(predict)
+  }
   
 }
 
+get.predict(df, "G", "B", trait="Shoot.Biomass")
+t<-"Shoot.Biomass"
+df %>% select(all_of(t))
 
 get.root.predict<-function(df, sp1, sp2, sp3) {
   if(missing(sp3)){
@@ -71,7 +78,7 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
 
 # import data
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df <- read.csv("Rice_greenhouse_ccexp_biomass_block.csv", row.names = 1)
+df <- read.csv("Rice_greenhouse_ccexp_biomass_block.csv")
 head(df)
 
 # data wrangling
@@ -104,7 +111,7 @@ p1<-df  %>%
         plot.title = element_text(hjust = 0.5))
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
-
+p1
 
 p2<-  df  %>%
   ggplot(aes(x=n_species, y=Root.Biomass )) +
@@ -268,7 +275,9 @@ plot(m1)
 #get shoot predictions
 df<-df %>% group_by(Rep, N)
 
-GB<-get.shoot.predict(df, "G", "L") 
+GB<-get.predict(df, "G", "L" , "G", Shoot.Biomass) 
+
+
 LB<-get.shoot.predict(df, "L", "B") 
 LG<-get.shoot.predict(df, "L", "G") 
 LGB<-get.shoot.predict(df, "L", "G", "B")  
