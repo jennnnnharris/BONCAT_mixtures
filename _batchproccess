@@ -1,8 +1,12 @@
-dir1 = getDirectory("open file ");
+
+// 1. Define input and output directories
+//    YOU MUST CHANGE THESE PATHS TO YOUR ACTUAL DIRECTORIES
+var dir1 = "C:\Users\Jenn\The Pennsylvania State University\Burghardt, Liana T - Burghardt Lab Shared Folder\Projects\BONCAT-MicrobialActivity\BONCAT_mixtures\Data\plant_physiology\nod_pictures\cropped"; // Folder containing your RGB images
 list = getFileList(dir1);
 dir2 = dir1+"splits"+File.separator;
 File.makeDirectory(dir2);
-for (i=0; i<list.length; i++)
+
+for (i=0; i<3; i++)
         {
        
         if (File.isDirectory(dir1+list[i])){}
@@ -19,10 +23,9 @@ for (i=0; i<list.length; i++)
                                 title = File.nameWithoutExtension ;
                                 run("Split Channels");
                                 close();
-saveAs("PNG", dir2+"blue_"+title+".png");
-                                close();
-                                setBatchMode(false);                                
-saveAs("PNG", dir2+"Red_"+title+".png");
+                               
+close();                                
+saveAs("Jpeg", dir2+"Red_"+title+".jpg");
                                 close();
                                 setBatchMode(false);
 

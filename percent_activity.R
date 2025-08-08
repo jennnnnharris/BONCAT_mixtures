@@ -3,18 +3,22 @@
 # last edited: April 25
 # author: Jennifer Harris
 
-
+rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
+
+#load libraries 
 library(readxl)
 library(tidyverse)
 library(lubridate)
 
-#import colors
-#mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#6A3D9A", "#1a635a","#FF7F00")
-#mycols7<-c("#E3C1CBFF", "#AD5A6BFF", "#C993A2FF", "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
-mycols7<-c( "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF",  "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
-mycols8<-c("grey", "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF",  "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
+
+
+# set colors
 blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
+mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 
 # import data
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
@@ -74,42 +78,47 @@ df1<-df%>% group_by(Species1, Species2, Species3, n_species, Nitrogen, Grass, Le
 
 df1$n_events_cells
 ###### plots ###########
-
-# increasing species boxplot
-# adjusted and technical reps averaged:
-df1%>%  filter(Species1!="Soil") %>%
-  ggplot(aes(x=as.factor(n_species), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=2 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 18, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1)) +
-ylab("percent active")
+pathfig3<-"C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Figure3_activitydiversity"
+setwd(pathfig3)
 
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
 svg(file="activity.species.svg",width = 3, height=3)
 #require(gridExtra)
 #windows(8,4)
 df  %>%  filter(Species1!="Soil") %>%
   ggplot(aes(x=n_species, y=BONCAT_freq )) +
-  geom_jitter(width = .2, size=1 )+
+  geom_jitter(width = .2, size=2 )+
   geom_smooth(method = lm, color= blues[4])+
   theme_classic(base_size = 14)+
   theme( legend.position="none",
         plot.title = element_text(hjust = 0.5))+
   ylab("percent active")+
-  xlab("n species")
+  xlab("# plant species")
 
 dev.off()
 
+
+#with colors
 df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+svg(file="col.activity.species.svg",width = 3, height=3)
+
+df  %>%  filter(Species1!="Soil") %>%
+  ggplot(aes(x=n_species, y=BONCAT_freq, colour = Treatment )) +
+  geom_jitter(width = .2, size=2 )+
+  geom_smooth(method = lm, color= blues[4])+
+  theme_classic(base_size = 14)+
+  theme( legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+  scale_color_manual(values=mycols7)+ 
+  ylab("percent active")+
+  xlab("# plant species")
+
+dev.off()
+
 
 
 # plot for each treatment
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg(file="activity.svg",width = 4, height=4)
-windows(4,4)
+svg(file="activity.trt.svg",width = 5, height=4)
   df1  %>%
   filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=BONCAT_freq, fill = Treatment)) +
@@ -120,9 +129,7 @@ windows(4,4)
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0))+
-  ylab("percent active")+
-  facet_grid( ~n_species, scales = "free", space = "free")+
-  ggtitle("D Percent Activity")
+  ylab("percent active")
   #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
   #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 
@@ -143,6 +150,12 @@ summary(m1)
 t<-df1%>% filter(Treatment!="Soil")
 m1<-lm(BONCAT_freq  ~Treatment + Block, data=t)
 summary(m1)
+
+m1<-lm(BONCAT_freq  ~Treatment + Block + Rep, data=df1)
+
+m1<-lm(BONCAT_freq  ~ n_species, data=df1)
+summary(m1)
+
 # LG is different than the base line. 
 
 #mixed model
@@ -157,6 +170,7 @@ summary(m1)
 
 #---------binomial models ---------
 #binomail model on # failures # successes and proportion of each ##
+
 
 #prop<-df1 %>%
 #    mutate(n_failures =  n_events_cells-n_events_BONCAT)
@@ -203,6 +217,13 @@ y<-cbind(prop$BONCAT_freq, prop$n_failures)
 y
 #model
 m1<-glm(data= prop, y~Treatment +Block, family = binomial)
+m1
+summary(m1)
+#plot(m1)
+#plots look okay
+
+#model
+m1<-glm(data= prop, y~n_species, family = binomial)
 m1
 summary(m1)
 #plot(m1)

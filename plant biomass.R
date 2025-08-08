@@ -4,17 +4,21 @@
 # author: Jennifer Harris
 # data: plant biomass
 
-
 rm(list=ls())
+rstudioapi::restartSession(clean = TRUE)
+
+
 library(readxl)
 library(tidyverse)
 library(lubridate)
 library(lme4)
 
 #import colors
-mycols7<-c( "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF",  "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
-mycols8<-c("grey", "#4B2D4BFF", "#AD5A6BFF", "#E3C1CBFF",  "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
 blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
+mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 
 
 # write functions
@@ -46,9 +50,6 @@ get.predict<-function(df, sp1, sp2, sp3, trait) {
   
 }
 
-get.predict(df, "G", "B", trait="Shoot.Biomass")
-t<-"Shoot.Biomass"
-df %>% select(all_of(t))
 
 get.root.predict<-function(df, sp1, sp2, sp3) {
   if(missing(sp3)){
@@ -79,7 +80,6 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
 # import data
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 df <- read.csv("Rice_greenhouse_ccexp_biomass_block.csv")
-head(df)
 
 # data wrangling
 # make n species column
@@ -98,50 +98,75 @@ df$Root.to.Shoot <- df$Root.Biomass / df$Shoot.Biomass
 df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 
-# plot for n species
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-#svg(file="biomass.svg",width = 7, height=4)
+###############plots n species #################
 
+#no colors
 p1<-df  %>%
   ggplot(aes(x=n_species, y=Shoot.Biomass )) +
-  geom_jitter(width = .2, size=1 )+
-  geom_smooth(method = lm, color= blues[2])+
+  #geom_jitter(width = .2, size=.75 )+
+  geom_jitter(size=2)+
+  geom_smooth(method = lm, color=  "#5480B5FF" )+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0.5))
+  #scale_color_manual(values = mycols7)
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
-#geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 p1
 
-p2<-  df  %>%
+p2<-df  %>%
   ggplot(aes(x=n_species, y=Root.Biomass )) +
-  geom_jitter(width = .2, size=1 )+
-  geom_smooth(method = lm, color= blues[3])+
+  #geom_jitter(width = .2, size=.75 )+
+  geom_jitter(size=2)+
+  geom_smooth(method = lm, color=  "#5480B5FF")+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0.5))
+  #scale_color_manual(values = mycols7)
+#geom_text(aes(,y=4, label = ifelse(df$Treatment=="LB", "", "")), size=10)
+p2
 
-p3<-df  %>%
-    ggplot(aes(x=n_species, y=Root.to.Shoot )) +
-    geom_jitter(width = .2, size=1 )+
-    geom_smooth(method = lm, color= blues[4])+
-    theme_classic(base_size = 14)+
-    theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-          plot.title = element_text(hjust = 0.5))
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg(file="biomass.species.svg",width = 10, height=4)
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Figure1_nspecies")
+svg(file="biomass.species.svg",width = 6, height=3)
 require(gridExtra)
-#windows(8,4)
-grid.arrange(p1, p2, p3, ncol=3)
+#windows(2,6)
+grid.arrange(p1, p2, ncol=2)
 dev.off()
 
 
-# plot for each treatment
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-#svg(file="biomass.svg",width = 7, height=4)
-
+##with colors
 p1<-df  %>%
+  ggplot(aes(x=n_species, y=Shoot.Biomass, colour = Treatment )) +
+  geom_jitter(size=2)+
+  geom_smooth(method = lm, color= "grey5")+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5))+
+  scale_color_manual(values = mycols7)
+p1
+
+p2<-df  %>%
+  ggplot(aes(x=n_species, y=Root.Biomass, colour = Treatment )) +
+  #geom_jitter(width = .2, size=.75 )+
+  geom_jitter(size=2)+
+  geom_smooth(method = lm, color= "grey5")+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5))+
+  scale_color_manual(values = mycols7)
+ #geom_text(aes(,y=4, label = ifelse(df$Treatment=="LB", "", "")), size=10)
+p2
+
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Figure1_nspecies")
+svg(file="col.biomass.species.svg",width = 10, height=4)
+require(gridExtra)
+#windows(2,6)
+grid.arrange(p1, p2, ncol=2)
+dev.off()
+#####################bar plot for each treatment####
+
+p1<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -151,12 +176,12 @@ p1<-df  %>%
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0, size=14))+
   facet_grid( ~n_species, scales = "free", space = "free")
-  #ggtitle("A Root biomass")
+ #ggtitle("A Root biomass")
   #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
   #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
 p1
 
-p2<-df  %>%
+p2<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -166,31 +191,15 @@ p2<-df  %>%
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0, size= 14))+
   facet_grid( ~n_species, scales = "free", space = "free")
-p2
 
 
 
-p3<-df  %>%
-  ggplot(aes(x=Treatment, y=Root.to.Shoot, fill = Treatment)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
-  theme_classic(base_size = 14)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0, size=14))+
-  ggtitle("C root:shoot")+
-  facet_grid( ~n_species, scales = "free", space = "free")
-  
-
-p3
-
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg(file="biomass.svg",width = 10, height=4)
+fig2path <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Figure2_treatment"
+setwd(fig2path)
+svg(file="biomass.trt.svg",width = 7, height=4)
 require(gridExtra)
-#windows(9,4)
-grid.arrange(p1, p2, p3, ncol=3)
+#windows(3,6)
+grid.arrange(p1, p2, ncol=2)
 dev.off()
 
 ####linear model#####
@@ -203,6 +212,16 @@ plot(m1)
 # number of species
 #Adjusted R-squared:  0.002231 
 #F-statistic: 1.092 on 2 and 80 DF,  p-value: 0.3406
+
+#number of species
+#lm
+m1<-lm(Root.Biomass~n_species ,data=df)
+summary(m1)
+plot(m1)
+# number of species
+#Adjusted R-squared:  0.002231 
+#F-statistic: 1.092 on 2 and 80 DF,  p-value: 0.3406
+
 
 #Legume
 m1<-lm(Shoot.Biomass~ Legume*Block*N ,data=df)
