@@ -51,6 +51,32 @@ get.predict<-function(df, sp1, sp2, sp3, trait) {
 }
 
 
+
+get.shoot.predict<-function(df, sp1, sp2, sp3) {
+  if(missing(sp3)){
+    sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
+    sp1.predict<-sp1.df$Shoot.Biomass/3
+    sp2.df<-filter(df, Treatment==sp2)
+    sp2.predict<-sp2.df$Shoot.Biomass/3
+    predict <- sp1.predict + sp2.predict
+    print(predict)
+    return(predict)
+  }
+  else
+    
+    print(paste("the 3rd species is",sp3))
+  sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
+  sp1.predict<-sp1.df$Shoot.Biomass/2
+  sp2.df<-filter(df, Treatment==sp2)
+  sp2.predict<-sp2.df$Shoot.Biomass/2
+  sp3.df<-filter(df, Treatment==sp3)
+  sp3.predict<-sp3.df$Shoot.Biomass/2
+  predict <- sp1.predict + sp2.predict + sp3.predict
+  print(predict)
+  return(predict)
+  
+}
+
 get.root.predict<-function(df, sp1, sp2, sp3) {
   if(missing(sp3)){
     sp1.df<- filter(df, Treatment==sp1) %>% select(Root.Biomass)
@@ -293,10 +319,11 @@ plot(m1)
 
 #get shoot predictions
 df<-df %>% group_by(Rep, N)
+df
 
-GB<-get.predict(df, "G", "L" , "G", Shoot.Biomass) 
 
 
+GB<-get.shoot.predict(df, "G", "B") 
 LB<-get.shoot.predict(df, "L", "B") 
 LG<-get.shoot.predict(df, "L", "G") 
 LGB<-get.shoot.predict(df, "L", "G", "B")  
@@ -329,7 +356,9 @@ mixtures<-df %>% filter(n_species!="1")
 df1<-full_join(df1, predict) 
 df1<-df1 %>% ungroup()
 
-mycols<-c("#365C83FF", "grey" ,"#384351FF", "grey", "#4D8F8BFF", "grey", "#CDD6ADFF", "grey")
+
+
+mycols<-c("#365C83FF", "grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
 as.factor(df1$Treatment)
 
 ##plot
