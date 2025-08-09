@@ -20,6 +20,8 @@ mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E
 mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 
+fig2path <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Figure2_treatment"
+
 
 # write functions
 get.predict<-function(df, sp1, sp2, sp3, trait) {
@@ -131,10 +133,11 @@ p1<-df  %>%
   ggplot(aes(x=n_species, y=Shoot.Biomass )) +
   #geom_jitter(width = .2, size=.75 )+
   geom_jitter(size=2)+
-  geom_smooth(method = lm, color=  "#5480B5FF" )+
+  geom_smooth(method = lm, color=  "grey10" )+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5))+
+  xlab("Number of Species") 
   #scale_color_manual(values = mycols7)
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
 p1
@@ -143,10 +146,11 @@ p2<-df  %>%
   ggplot(aes(x=n_species, y=Root.Biomass )) +
   #geom_jitter(width = .2, size=.75 )+
   geom_jitter(size=2)+
-  geom_smooth(method = lm, color=  "#5480B5FF")+
+  geom_smooth(method = lm, color=  "grey10")+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5))+
+  xlab("Number of Species") 
   #scale_color_manual(values = mycols7)
 #geom_text(aes(,y=4, label = ifelse(df$Treatment=="LB", "", "")), size=10)
 p2
@@ -168,7 +172,8 @@ p1<-df  %>%
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5))+
-  scale_color_manual(values = mycols7)
+  scale_color_manual(values = mycols7)+
+  xlab("Number of Species") 
 p1
 
 p2<-df  %>%
@@ -179,7 +184,8 @@ p2<-df  %>%
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5))+
-  scale_color_manual(values = mycols7)
+  scale_color_manual(values = mycols7)+
+  xlab("Number of Species")
  #geom_text(aes(,y=4, label = ifelse(df$Treatment=="LB", "", "")), size=10)
 p2
 
@@ -201,7 +207,8 @@ p1<-df  %>% filter(n_species!="NA") %>%
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0, size=14))+
-  facet_grid( ~n_species, scales = "free", space = "free")
+  facet_grid( ~n_species, scales = "free", space = "free")+
+  xlab("Identity") 
  #ggtitle("A Root biomass")
   #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
   #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
@@ -216,7 +223,8 @@ p2<-df  %>% filter(n_species!="NA") %>%
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0, size= 14))+
-  facet_grid( ~n_species, scales = "free", space = "free")
+  facet_grid( ~n_species, scales = "free", space = "free")+
+  xlab("Identity") 
 
 
 
@@ -387,12 +395,47 @@ p2<-df1  %>%
 p2
  
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
+setwd(fig2path)
 svg(file="overyielding.biomass.svg",width = 10, height=4)
 require(gridExtra)
-windows(8,4)
+
 grid.arrange(p1, p2, ncol=2)
 dev.off()
+
+#tiny version
+##plot
+p1<-df1  %>% 
+  ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.7, outlier.shape = NA)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
+        plot.title = element_text(hjust = 0.5))+
+  ylab("Shoot Biomass")
+
+p1
+
+p2<-df1  %>% 
+  ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.7, outlier.shape = NA)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
+        plot.title = element_text(hjust = 0.5))
+p2
+
+
+setwd(fig2path)
+svg(file="lil.overyielding.biomass.svg",width = 3, height=6)
+require(gridExtra)
+
+grid.arrange(p1, p2, ncol=1)
+dev.off()
+
 
 ####tukey test###
 
