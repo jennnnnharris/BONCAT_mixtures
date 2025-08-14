@@ -257,36 +257,7 @@ plot(m1)
 #F-statistic: 1.092 on 2 and 80 DF,  p-value: 0.3406
 
 
-#Legume
-m1<-lm(Shoot.Biomass~ Legume*Block*N ,data=df)
-summary(m1)
-plot(m1)
-
-#Leg +Brass
-m1<-lm(Shoot.Biomass~Brassicae*Legume*Block*N ,data=df)
-summary(m1)
-plot(m1)
-
-#Leg +Grass
-m1<-lm(Shoot.Biomass~Grass*Brassicae*Legume*Block*N ,data=df)
-summary(m1)
-plot(m1)
-
-#Grass + Legume
-m1<-lm(Shoot.Biomass~Grass*Legume*Block*N ,data=df)
-summary(m1)
-plot(m1)
-
 ###roots
-#plots
-df  %>%
-  ggplot(aes(x=n_species, y=Root.Biomass )) +
-  geom_jitter(width = .2, size=1 )+
-  geom_smooth(method = lm, color= blues[3])+
-  theme_classic(base_size = 14)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
-  facet_wrap(~N)
 
 #n species
 m1<-lm(Shoot.Biomass~n_species*N*Block ,data=df)
@@ -297,26 +268,6 @@ m1<-lm(Shoot.Biomass~ Legume*Block*N ,data=df)
 summary(m1)
 plot(m1)
 
-
-###root2shoot
-#plots
-df  %>%
-  ggplot(aes(x=n_species, y=Root.to.Shoot )) +
-  geom_jitter(width = .2, size=1 )+
-  geom_smooth(method = lm, color= blues[3])+
-  theme_classic(base_size = 14)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
-  facet_wrap(~Block)
-
-#n species
-m1<-lm(Shoot.Biomass~n_species*N*Block ,data=df)
-summary(m1)
-
-#Legume
-m1<-lm(Shoot.Biomass~ Legume*Block*N ,data=df)
-summary(m1)
-plot(m1)
 
 
 ####improvement over prediction #######
@@ -437,8 +388,26 @@ grid.arrange(p1, p2, ncol=1)
 dev.off()
 
 
-####tukey test###
+####anova###
 
-df1
-anova()
-TukeyHSD()
+#GB
+#filter
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LB
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LG
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LGB
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
