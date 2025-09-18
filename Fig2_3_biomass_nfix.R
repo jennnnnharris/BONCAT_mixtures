@@ -142,7 +142,7 @@ dfnoNadd.leg$totalN.mg.g.1 <- (dfnoNadd.leg$totalN.g.pot.1*1000)/3900
 head(dfnoNadd.leg)
 head(dfNadd.leg)
 
-###### put together N+ and N- #####
+#put together N+ and N- ##
 dfNadd.leg
 dfnoNadd.leg
 df.leg<-rbind(dfnoNadd.leg, dfNadd.leg)
@@ -157,7 +157,102 @@ df.leg$treatment <- factor(df.leg$treatment)
    mutate(n_fix_per_legume = totalN.g.pot.1/n_legume)
 
 
+############## Fig 2  N fix ####################
+  
+ #set wd
+setwd(fig2path)
+ 
+ #plot nspecies perc
+ setwd(fig2path)
+ svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
+ ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa)) + 
+   ylab('Nitrogen from Fixation (%)') +
+   xlab("Number of species") +
+   geom_jitter(width = .2, size=1 )+
+   geom_smooth(method = lm, color= "grey10")+
+   theme_classic(base_size = 12)
+  dev.off()
 
+  # plot nspecies per legume
+  setwd(fig2path)
+  svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
+  ggplot(df.leg, aes(x=spp.number, y=n_fix_per_legume)) + 
+    ylab('grams N fixed per legume') +
+    xlab("Number of species") +
+    geom_jitter(width = .2, size=1 )+
+    geom_smooth(method = lm, color= "grey10")+
+    theme_classic(base_size = 12)
+  dev.off()
+
+  
+  # plot nspecies with colors
+ ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa, colour = treatment)) + 
+   ylab('Nitrogen from Fixation (%)') +
+   xlab("Number of species") +
+   geom_jitter(width = .2, size=2 )+
+   geom_smooth(method = lm, color= "grey10")+
+   theme_classic(base_size = 12)+
+   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+   scale_color_manual(values=mycols4)
+
+ #per legume
+ ggplot(df.leg, aes(x=spp.number, y=n_fix_per_legume, colour = treatment)) + 
+   ylab('grams N fixed per legume') +
+   xlab("Number of species") +
+   geom_jitter(width = .2, size=2 )+
+   geom_smooth(method = lm, color= "grey10")+
+   theme_classic(base_size = 12)+
+   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
+         plot.title = element_text(hjust = 0.5))+
+   scale_color_manual(values=mycols4)
+ 
+ # linear model
+ m1<-lm( perc.Ndfa~spp.number , data= df.leg )
+ summary(m1)
+ #plot(m1)
+ 
+ 
+ #plot perc by nspecies
+ svg(file="nfix.prec.treatment.svg",width = 2.3, height=2.3)
+ ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
+   geom_boxplot(alpha=.7, outlier.shape = NA)+
+   geom_jitter(size=.5)+
+   ylab('Nitrogen from Fixation (%)') +
+   xlab("Treatment") +
+   theme_classic(base_size = 12) +
+   theme(legend.position = "none")+
+   scale_fill_manual(values = mycols4)+
+   facet_grid( ~spp.number, scales = "free", space = "free")
+ 
+ dev.off() 
+ 
+ svg(file="nfix.perleg.treatment.svg",width = 2.3, height=2.3)
+ ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
+   geom_boxplot(alpha=.7, outlier.shape = NA)+
+   geom_jitter(size=.5)+
+   #ylab('Nitrogen from Fixation (%)') +
+   xlab("Treatment") +
+   theme_classic(base_size = 12) +
+   theme(legend.position = "none")+
+   scale_fill_manual(values = mycols4)+
+   facet_grid( ~spp.number, scales = "free", space = "free")
+ 
+ dev.off() 
+ 
+ 
+ 
+ # Analysis of variance 
+ one.way.Nadd <- aov(perc.Ndfa ~ treatment, data = dfNadd.leg)
+ summary(one.way.Nadd) # difference between treatments
+ tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
+ print(tukey.result.Nadd) # All difference except LG-LB
+ #plot(one.way.Nadd) #homoscedasticity looks fine
+ 
+ 
+ 
+ 
+ 
 ### figure N fixed######
 ggplot(df.leg, aes(x=treatment, y=totalN.mg.g.1, fill=treatment)) + 
   geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -194,8 +289,7 @@ ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
 
 
 
-
-# write functions
+# Fig 3 write functions
 get.predict<-function(df, sp1, sp2, sp3, trait) {
   if(missing(sp3)){
     sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
@@ -223,7 +317,6 @@ get.predict<-function(df, sp1, sp2, sp3, trait) {
   }
   
 }
-
 get.shoot.predict<-function(df, sp1, sp2, sp3) {
   if(missing(sp3)){
     sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
@@ -248,7 +341,6 @@ get.shoot.predict<-function(df, sp1, sp2, sp3) {
   return(predict)
   
 }
-
 get.root.predict<-function(df, sp1, sp2, sp3) {
   if(missing(sp3)){
     sp1.df<- filter(df, Treatment==sp1) %>% select(Root.Biomass)
@@ -275,12 +367,12 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
 }
 
 
-######### jenny predictions from monocultures for biomass #######
+######### Fig 3 jenny predictions from monocultures for biomass #######
 
 
 ## we expect that a plant makes the same amount of biomass in monoculures vs mixtures
 #example
-#LB biomass = L monoculture/ 2 + B monocultre/2 
+#LB biomass = L monoculture/  2 + B monocultre/2 
 
 #get shoot predictions
 dfb<-dfb %>% group_by(Rep, N)
@@ -325,7 +417,7 @@ dfb1<-dfb1 %>% ungroup()
 as.factor(dfb1$Treatment)
 
 
-###########plot jenny predictions from monocultures for biomass################
+######### Fig 3 plot jenny predictions from monocultures for biomass################
 
 mycols<-c("#365C83FF", "grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
 
@@ -359,33 +451,8 @@ dfb1  %>%
 dev.off()
 
 
-#####anova#########
 
-#GB
-#filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-
-
-
-######### jenny predictions from monocultures for Nfix#########
+######### Fig 3 jenny predictions from monocultures for Nfix######
  
 mycols4 <- c("grey", "#AD5A6BFF", "#E3C1CBFF", "#384351FF")
 
@@ -421,6 +488,32 @@ ggplot( aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
         plot.title = element_text(hjust = 0.5))+
   scale_fill_manual(values = mycols4)
 dev.off()
+
+
+
+##### fig 3 anova#####
+
+#GB
+#filter
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LB
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LG
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LGB
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
 
 
 
