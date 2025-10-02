@@ -12,7 +12,7 @@
 
 ### Clear workspace ###
 
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
 
 
