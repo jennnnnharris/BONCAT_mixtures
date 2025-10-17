@@ -20,6 +20,13 @@ mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E
 mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 
+mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
+mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+
+
+
 # import data
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
 
@@ -88,7 +95,7 @@ svg(file="activity.species.svg",width = 3, height=3)
 df  %>%  filter(Species1!="Soil") %>%
   ggplot(aes(x=n_species, y=BONCAT_freq )) +
   geom_jitter(width = .2, size=2 )+
-  geom_smooth(method = lm, color= blues[4])+
+  geom_smooth(method = lm, color= "grey")+
   theme_classic(base_size = 14)+
   theme( legend.position="none",
         plot.title = element_text(hjust = 0.5))+
@@ -118,6 +125,7 @@ dev.off()
 
 
 # plot for each treatment
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_activity")
 svg(file="activity.trt.svg",width = 5, height=4)
   df1  %>%
   filter(Treatment!="Soil") %>%

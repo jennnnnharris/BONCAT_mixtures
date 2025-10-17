@@ -29,6 +29,12 @@ mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C
 mycols8<-c("grey", "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
+mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
+mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+
+
 # set shapes
 myshapes <- c(1, 12,15 ,21, 22, 23 , 24)
 myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
@@ -133,7 +139,7 @@ p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   scale_color_manual(values=mycols7) +
   scale_fill_manual(values = mycols7)+
   #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
-  geom_jitter(size=1.5)+
+  geom_jitter(size=1.5, width=.1)+
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
@@ -144,19 +150,19 @@ p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
 #scale_shape_discrete() 
 p1
 
-p2<-rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols7) +
   scale_fill_manual(values = mycols7)+
   #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
-  geom_jitter(size=1.5)+
+  geom_jitter(width = .1,size=1.5)+
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
   ylab("N Asvs")+
-  xlab("")+
-  geom_text(aes(,y=18, label = ifelse(rich$Treatment=="L", "A", "B")), size=10)+
+  xlab("")
+  #geom_text(aes(,y=18, label = ifelse(rich$Treatment=="L", "A", "B")), size=10)
   
 #scale_shape_discrete() 
 p2
@@ -167,13 +173,13 @@ p3<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   scale_color_manual(values=mycols7) +
   scale_fill_manual(values = mycols7)+
   #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
-  geom_jitter(size=1.5)+
+  geom_jitter(size=1.5, width = .1)+
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
   ylab("Chao1 species richness")+
-  xlab("")+
-  geom_text(aes(,y=18, label = ifelse(rich$Treatment=="L", "A", "B")), size=10)+
+  xlab("")
+  #geom_text(aes(,y=18, label = ifelse(rich$Treatment=="L", "A", "B")), size=10)
   
 #scale_shape_discrete() 
 p3
@@ -277,6 +283,8 @@ metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB"
 p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~N*Treatment)
 anova.cca(p1.cap, by="terms")
 
+pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig4_CAP"
+setwd(pathfig4)
 svg("cap.total.svg", width = 6, height = 4)
 plot_ordination(ps1,  p1.cap,color="Treatment")+
    theme_bw()+

@@ -13,12 +13,18 @@ library(tidyverse)
 library(lubridate)
 library(lme4)
 
+
 #import colors
-blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
 mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
+
+mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
+
+
 
 fig2path <-  "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies"
 fig3path <-  "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig3_predict"
@@ -127,6 +133,7 @@ df$Root.to.Shoot <- df$Root.Biomass / df$Shoot.Biomass
 # make treatment and day factors
 df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
+df<-na.omit(df)
 
 ###############plots n species #################
 
@@ -135,8 +142,8 @@ setwd(fig2path)
 #no colors
 p1<-df  %>%
   ggplot(aes(x=n_species, y=Shoot.Biomass )) +
-  #geom_jitter(width = .2, size=.75 )+
-  geom_jitter(size=1)+
+  geom_jitter(width = .1, size=1 )+
+  #geom_jitter(size=1)+
   geom_smooth(method = lm, color=  "grey10" )+
   theme_classic(base_size = 12)+
   theme(lot.title = element_text(hjust = 0.5))+
@@ -147,8 +154,8 @@ p1
 
 p2<-df  %>%
   ggplot(aes(x=n_species, y=Root.Biomass )) +
-  #geom_jitter(width = .2, size=.75 )+
-  geom_jitter(size=1)+
+  geom_jitter(width = .1, size=1 )+
+  #geom_jitter(size=1)+
   geom_smooth(method = lm, color=  "grey10")+
   theme_classic(base_size = 12)+
   theme(lot.title = element_text(hjust = 0.5))+
@@ -169,25 +176,20 @@ dev.off()
 ##with colors#######################3
 p1<-df  %>%
   ggplot(aes(x=n_species, y=Shoot.Biomass, colour = Treatment )) +
-  geom_jitter(size=2)+
+  geom_jitter(width = .1, size=1 )+
   geom_smooth(method = lm, color= "grey5")+
-  theme_classic(base_size = 14)+
-  theme(lot.title = element_text(hjust = 0.5))+
+  theme_classic(base_size = 16)+
   scale_color_manual(values = mycols7)+
   xlab("Number of Species") 
 p1
 
 p2<-df  %>%
   ggplot(aes(x=n_species, y=Root.Biomass, colour = Treatment )) +
-  #geom_jitter(width = .2, size=.75 )+
-  geom_jitter(size=2)+
+  geom_jitter(width = .1, size=1 )+
   geom_smooth(method = lm, color= "grey5")+
-  theme_classic(base_size = 14)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5))+
+  theme_classic(base_size = 16)+
   scale_color_manual(values = mycols7)+
   xlab("Number of Species")
- #geom_text(aes(,y=4, label = ifelse(df$Treatment=="LB", "", "")), size=10)
 p2
 
 

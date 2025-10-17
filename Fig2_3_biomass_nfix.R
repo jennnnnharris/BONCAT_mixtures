@@ -3,7 +3,7 @@
 
 # clear workspace and restart R
 rm(list=ls())
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(readxl)
@@ -13,10 +13,20 @@ library(lme4)
 library(nlme)
 
 #import colors
-blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
-mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#install.packages("viridis")
+#library(viridis)
+
+#mycols7<-c( "#4B2D4BFF", "#02666e", , "#365C83FF",  "#8cbd6a","#916691",  "#384351FF")
+
+#mycols7<- c("#FBA475FF", "#4C84A3FF", "#F46124FF", "#4DACD9FF", "#C2421CFF", "#761445FF", "#FAD457FF")
+#mycols7 <- c("#007FFFFF", "#7FBFFFFF", "#001933FF", "#4C4CFFFF", "#FFEFB2FF", "#A89797FF", "gold")
+#Color,Hex Value
+mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
+
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
+#mycols4 <- c("#FBA475FF",  "#C2421CFF", "#761445FF", "#FAD457FF" )
+
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 
 # load paths
@@ -157,55 +167,43 @@ df.leg$treatment <- factor(df.leg$treatment)
    mutate(n_fix_per_legume = totalN.g.pot.1/n_legume)
 
 
-############## Fig 2  N fix ####################
+############## N fix stats   ####################
   
  #set wd
 setwd(fig2path)
  
  #plot nspecies perc
- setwd(fig2path)
- svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
- ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa)) + 
-   ylab('Nitrogen from Fixation (%)') +
-   xlab("Number of species") +
-   geom_jitter(width = .2, size=1 )+
-   geom_smooth(method = lm, color= "grey10")+
-   theme_classic(base_size = 12)
-  dev.off()
+ #setwd(fig2path)
+ #svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
+ #ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa)) + 
+#   ylab('Nitrogen from Fixation (%)') +
+#   xlab("Number of species") +
+#   geom_jitter(width = .2, size=1 )+
+#   geom_smooth(method = lm, color= "grey10")+
+#   theme_classic(base_size = 12)
+  #dev.off()
 
   # plot nspecies per legume
-  setwd(fig2path)
-  svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
-  ggplot(df.leg, aes(x=spp.number, y=n_fix_per_legume)) + 
-    ylab('grams N fixed per legume') +
-    xlab("Number of species") +
-    geom_jitter(width = .2, size=1 )+
-    geom_smooth(method = lm, color= "grey10")+
-    theme_classic(base_size = 12)
-  dev.off()
-
-  
-  # plot nspecies with colors
- ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa, colour = treatment)) + 
-   ylab('Nitrogen from Fixation (%)') +
-   xlab("Number of species") +
-   geom_jitter(width = .2, size=2 )+
-   geom_smooth(method = lm, color= "grey10")+
-   theme_classic(base_size = 12)+
-   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-         plot.title = element_text(hjust = 0.5))+
-   scale_color_manual(values=mycols4)
+  #setwd(fig2path)
+  #svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
+ # ggplot(df.leg, aes(x=spp.number, y=n_fix_per_legume)) + 
+#    ylab('grams N fixed per legume') +
+#    xlab("Number of species") +
+#    geom_jitter(width = .2, size=1 )+
+#    geom_smooth(method = lm, color= "grey10")+
+#    theme_classic(base_size = 12)
+  #dev.off()
 
  #per legume
- ggplot(df.leg, aes(x=spp.number, y=n_fix_per_legume, colour = treatment)) + 
-   ylab('grams N fixed per legume') +
-   xlab("Number of species") +
-   geom_jitter(width = .2, size=2 )+
-   geom_smooth(method = lm, color= "grey10")+
-   theme_classic(base_size = 12)+
-   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-         plot.title = element_text(hjust = 0.5))+
-   scale_color_manual(values=mycols4)
+# ggplot(df.leg, aes(x=spp.number, y=n_fix_per_legume, colour = treatment)) + 
+#   ylab('grams N fixed per legume') +
+#   xlab("Number of species") +
+#   geom_jitter(width = .2, size=2 )+
+#   geom_smooth(method = lm, color= "grey10")+
+#   theme_classic(base_size = 12)+
+#   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
+#         plot.title = element_text(hjust = 0.5))+
+#   scale_color_manual(values=mycols4)
  
  # linear model
  m1<-lm( perc.Ndfa~spp.number , data= df.leg )
@@ -214,7 +212,7 @@ setwd(fig2path)
  
  
  #plot perc by nspecies
- svg(file="nfix.prec.treatment.svg",width = 2.3, height=2.3)
+ #svg(file="nfix.prec.treatment.svg",width = 2.3, height=2.3)
  ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
    geom_jitter(size=.5)+
@@ -225,9 +223,9 @@ setwd(fig2path)
    scale_fill_manual(values = mycols4)+
    facet_grid( ~spp.number, scales = "free", space = "free")
  
- dev.off() 
+ #dev.off() 
  
- svg(file="nfix.perleg.treatment.svg",width = 2.3, height=2.3)
+ #svg(file="nfix.perleg.treatment.svg",width = 2.3, height=2.3)
  ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
    geom_jitter(size=.5)+
@@ -238,7 +236,7 @@ setwd(fig2path)
    scale_fill_manual(values = mycols4)+
    facet_grid( ~spp.number, scales = "free", space = "free")
  
- dev.off() 
+ #dev.off() 
  
  
  
@@ -250,10 +248,47 @@ setwd(fig2path)
  #plot(one.way.Nadd) #homoscedasticity looks fine
  
  
+ #### figure 2 all #######
  
  
  
-### figure N fixed######
+ p1<- ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa, colour = treatment)) + 
+   ylab('Nitrogen from Fixation (%)') +
+   xlab("Number of species") +
+   geom_jitter(width = .1, size=1.5 )+
+   geom_smooth(method = lm, color= "grey10")+
+   theme_classic(base_size = 12)+
+   scale_color_manual(values=mycols4)
+ #dev.off()
+ p1
+ 
+ p2<-dfb  %>%
+   ggplot(aes(x=n_species, y=Shoot.Biomass, colour = Treatment )) +
+   geom_jitter(width = .1, size=1.5 )+
+   geom_smooth(method = lm, color= "grey5")+
+   theme_classic(base_size = 12)+
+   scale_color_manual(values = mycols7)+
+   xlab("Number of Species")
+
+ p2
+ 
+ p3<-dfb  %>%
+   ggplot(aes(x=n_species, y=Root.Biomass, colour = Treatment )) +
+   geom_jitter(width = .1, size=1.5 )+
+   geom_smooth(method = lm, color= "grey5")+
+   theme_classic(base_size = 12)+
+   scale_color_manual(values = mycols7)+
+   xlab("Number of Species")
+ p3
+ 
+ setwd(fig2path)
+ svg(file="fig2_linegraph_nitrogen_biomass.col.svg",width = 11, height=3)
+ require(gridExtra)
+ #windows(10,3)
+ grid.arrange(p1, p2, p3, ncol=3)
+ dev.off()
+ 
+### supplemnetal figure total  N fixed######
 ggplot(df.leg, aes(x=treatment, y=totalN.mg.g.1, fill=treatment)) + 
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(size=.5)+
@@ -289,7 +324,7 @@ ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
 
 
 
-# Fig 3 write functions
+############### Fig 3 write functions###############
 get.predict<-function(df, sp1, sp2, sp3, trait) {
   if(missing(sp3)){
     sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
@@ -419,11 +454,11 @@ as.factor(dfb1$Treatment)
 
 ######### Fig 3 plot jenny predictions from monocultures for biomass################
 
-mycols<-c("#365C83FF", "grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
-
-setwd(fig3path)
-svg(file="biomass.root.predict.svg",width = 2.8, height=3)
-dfb1  %>% 
+mycols<-c("#365C83FF","grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
+mycols<-   c("#440154",  "grey", "#35b779", "grey", "#90d743", "grey", "#fde725" , "grey")
+#setwd(fig3path)
+#svg(file="biomass.root.predict.svg",width = 2.8, height=3)
+p2<-dfb1  %>% 
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.8 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -432,14 +467,12 @@ dfb1  %>%
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0.5))
-dev.off()
+p2
 
 
-
-
-setwd(fig3path)
-svg(file="biomass.shoot.predict.svg",width = 4, height=3)
-dfb1  %>% 
+#setwd(fig3path)
+#svg(file="biomass.shoot.predict.svg",width = 4, height=3)
+p3<-dfb1  %>% 
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.8 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -447,36 +480,20 @@ dfb1  %>%
   scale_fill_manual(values = mycols)+
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
+        legend.position="none",
         plot.title = element_text(hjust = 0.5))
-dev.off()
+p3
 
 
-
-######### Fig 3 jenny predictions from monocultures for Nfix######
+# Nfix#
  
-mycols4 <- c("grey", "#AD5A6BFF", "#E3C1CBFF", "#384351FF")
+mycols4 <- c("grey", "#35b779", "#90d743", "#fde725")
 
-setwd(fig3path)
-svg(file="nfix.perplant.predict.svg",width = 2.5, height=2.5)
-df.leg %>%
-ggplot(aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
-  geom_jitter(width = .2, size=.8 )+
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols4) +
-  scale_fill_manual(values = mycols4)+
-  ylab("grams of nitrogen fixed per legume") +
-  theme_classic(base_size = 12)+
-  theme(legend.position = "none", 
-  axis.text.x = element_text(angle=60, hjust=1),
-      plot.title = element_text(hjust = 0.5))
-  
-dev.off()
-
-  
 #####figure percent N ###
-setwd(fig3path)
-svg(file="nfix.percent.predict.svg",width = 2.5, height=2.5)
-df.leg %>%
+#svg(file="nfix.percent.predict.svg",width = 2.5, height=2.5)
+
+
+p1<-df.leg %>%
 ggplot( aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(width = .2, size=.8 )+
@@ -487,6 +504,13 @@ ggplot( aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
         axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5))+
   scale_fill_manual(values = mycols4)
+p1
+
+setwd(fig3path)
+svg(file="fig3_predict.svg",width = 10, height=3)
+require(gridExtra)
+windows(10,3)
+grid.arrange(p1, p2, p3, ncol=3)
 dev.off()
 
 
