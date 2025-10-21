@@ -28,14 +28,8 @@ library(paletteer)
 
 # colors
 mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-#mycols8<-c("grey", "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
-#mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
-#mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#f7b307")
-#mycols4 <- c("#440154","#35b779", "#90d743", "#f7b307")
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-#paletteer_d("ggsci::nrc_npg")
-#paletteer_d("ggthemes::Red_Blue_Brown")
+
 mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
 
 

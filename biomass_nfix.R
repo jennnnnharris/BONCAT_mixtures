@@ -67,11 +67,12 @@ setwd(fig2path)
 p1<-df  %>%
   ggplot(aes(x=n_species, y=Shoot.Biomass )) +
   geom_jitter(width = .1, size=1 )+
-  #geom_jitter(size=1)+
   geom_smooth(method = lm, color=  "grey10" )+
   theme_classic(base_size = 12)+
   theme(lot.title = element_text(hjust = 0.5))+
-  xlab("Number of Species") 
+  xlab("Number of Species") +
+  annotate("text", x =2.4, y = 4, label = "p=0.461", color = "black", size = 3.4)
+
 #scale_color_manual(values = mycols7)
 #geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
 p1
@@ -83,7 +84,10 @@ p2<-df  %>%
   geom_smooth(method = lm, color=  "grey10")+
   theme_classic(base_size = 12)+
   theme(lot.title = element_text(hjust = 0.5))+
-  xlab("Number of Species") 
+  xlab("Number of Species") +
+  annotate("text", x =2.4, y = 2, label = "p<0.001
+            Rsquared=.14 ", color = "black", size = 3.4)
+
 #scale_color_manual(values = mycols7)
 #geom_text(aes(,y=4, label = ifelse(df$Treatment=="LB", "", "")), size=10)
 p2
@@ -93,7 +97,7 @@ setwd(fig2path)
 svg(file="biomass.species.svg",width = 5, height=2.5)
 require(gridExtra)
 #windows(2,6)
-grid.arrange(p1, p2, ncol=2)
+grid.arrange(p2, p1, ncol=2)
 dev.off()
 
 
@@ -136,7 +140,7 @@ p1<-df  %>% filter(n_species!="NA") %>%
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
         plot.title = element_text(hjust = 0, size=14))+
   facet_grid( ~n_species, scales = "free", space = "free")+
-  xlab("Treatment") 
+  xlab("composition") 
 p1
 setwd(fig2path)
 svg(file="biomass.root.trt.svg",width = 2.4, height=2.5)
@@ -145,7 +149,7 @@ dev.off()
 
 
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_liana_kayla")
+
 p2<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.5 )+
@@ -156,16 +160,13 @@ p2<-df  %>% filter(n_species!="NA") %>%
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0, size=14))+
   facet_grid( ~n_species, scales = "free", space = "free")+
-  xlab("Treatment")
+  xlab("composition")
 
 p2
 
-
-
-#setwd(fig2path)
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
 svg(file="biomass.shoot.trt.svg",width = 3.3, height=2.5)
 p2
-
 dev.off()
 
 
@@ -340,19 +341,27 @@ df.leg$treatment <- factor(df.leg$treatment)
 ############## N fix figures ####################
   
  #set wd
-setwd(fig2path)
- 
+p1<- ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa)) + 
+   ylab('Nitrogen from Fixation (%)') +
+   xlab("Number of species") +
+   geom_jitter(width = .2, size=1 )+
+   geom_smooth(method = lm, color= "grey10")+
+   theme_classic(base_size = 12)+
+   annotate("text", x =2.3, y = 65, label = "p<0.001
+            Rsquared=.43 ", color = "black", size = 3.4)
+  
+p1
  #plot nspecies perc
- #setwd(fig2path)
- #svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
- #ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa)) + 
-#   ylab('Nitrogen from Fixation (%)') +
-#   xlab("Number of species") +
-#   geom_jitter(width = .2, size=1 )+
-#   geom_smooth(method = lm, color= "grey10")+
-#   theme_classic(base_size = 12)
-  #dev.off()
-
+  setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
+ svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
+ p1
+ dev.off()
+ # linear model
+ m1<-lm( perc.Ndfa~spp.number , data= df.leg )
+ 
+ summary(m1)
+ #plot(m1)
+   
   # plot nspecies per legume
   #setwd(fig2path)
   #svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
@@ -375,11 +384,7 @@ setwd(fig2path)
 #         plot.title = element_text(hjust = 0.5))+
 #   scale_color_manual(values=mycols4)
  
- # linear model
- m1<-lm( perc.Ndfa~spp.number , data= df.leg )
- summary(m1)
- #plot(m1)
- 
+
  
  
 p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
@@ -390,10 +395,11 @@ p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
    scale_fill_manual(values = mycols4)+
-   facet_grid( ~spp.number, scales = "free", space = "free")
+   facet_grid( ~spp.number, scales = "free", space = "free")+
+    xlab("composition")
 p1
 #plot perc by nspecies
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_liana_kayla")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
  svg(file="nfix.percent.treatment.svg",width = 2.3, height=2.3) 
  p1
  dev.off() 
@@ -421,65 +427,8 @@ setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burg
  #plot(one.way.Nadd) #homoscedasticity looks fine
  
  
- #### figure 2 all #######
- 
- 
- 
- p1<- ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa, colour = treatment)) + 
-   ylab('Nitrogen from Fixation (%)') +
-   xlab("Number of species") +
-   geom_jitter(width = .1, size=1.5 )+
-   geom_smooth(method = lm, color= "grey10")+
-   theme_classic(base_size = 12)+
-   scale_color_manual(values=mycols4)+
-   annotate("text", x =2.4, y = 65, label = "p<0.001
-            Rsquared=.43 ", color = "black", size = 3.4)
- 
- p1
- 
- 
- 
- p2<-dfb  %>%
-   ggplot(aes(x=n_species, y=Shoot.Biomass, colour = Treatment )) +
-   geom_jitter(width = .1, size=1.5 )+
-   geom_smooth(method = lm, color= "grey5")+
-   theme_classic(base_size = 12)+
-   scale_color_manual(values = mycols7)+
-   xlab("Number of Species")+
-   annotate("text", x =2.4, y = 4, label = "p=0.461", color = "black", size = 3.4)
- 
-p2
- 
- m1<-lm( Shoot.Biomass~n_species , data= dfb )
- summary(m1)
- 
- 
- p3<-dfb  %>%
-   ggplot(aes(x=n_species, y=Root.Biomass, colour = Treatment )) +
-   geom_jitter(width = .1, size=1.5 )+
-   geom_smooth(method = lm, color= "grey5")+
-   theme_classic(base_size = 12)+
-   scale_color_manual(values = mycols7)+
-   xlab("Number of Species")+
-   annotate("text", x =2.4, y = 2, label = "p<0.001
-            Rsquared=.14 ", color = "black", size = 3.4)
- p3 
- 
- m1<-lm( Root.Biomass~n_species , data= dfb )
- summary(m1)
- 
- 
 
- 
- setwd(fig2path)
- svg(file="fig2_linegraph.svg",width = 12, height=3)
- require(gridExtra)
- #windows(10,3)
- grid.arrange(p1, p2, p3, ncol=3)
- dev.off()
- 
-### some other N fixed figures ??######
-ggplot(df.leg, aes(x=treatment, y=totalN.mg.g.1, fill=treatment)) + 
+ ggplot(df.leg, aes(x=treatment, y=totalN.mg.g.1, fill=treatment)) + 
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(size=.5)+
   ylab('Total Nitrogen Fixed per gram of soil') +
