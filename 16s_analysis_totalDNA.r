@@ -11,7 +11,7 @@
 ######## 1. Initial Setup ##################
 
 ### Clear workspace ###
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
 
 
@@ -23,24 +23,20 @@ library(lubridate)
 library(phyloseq)
 library(MicEco)
 library(multcompView)
-
-install.packages("paletteer")
-library("paletteer")
+library(paletteer)
 
 
 # colors
 mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-mycols8<-c("grey", "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#mycols8<-c("grey", "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
-
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-
 #mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
 #mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#f7b307")
 #mycols4 <- c("#440154","#35b779", "#90d743", "#f7b307")
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 #paletteer_d("ggsci::nrc_npg")
 #paletteer_d("ggthemes::Red_Blue_Brown")
+mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
 
 
 # set shapes
@@ -75,8 +71,20 @@ asvs<-rrarefy(asvs, min.s)
 # order metadata
 metadat<-as.data.frame(metadat[order(metadat$SampleID),])
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-
 row.names(metadat) <- metadat$SampleID
+# make composition column
+
+
+# make composition var
+metadat$composition <- metadat$Treatment
+metadat$composition<-gsub("L", "Legume", metadat$composition)
+metadat$composition<-gsub("G", "Grass", metadat$composition)
+metadat$composition<-gsub("B", "Brassica", metadat$composition)
+metadat$composition<-gsub("LegumeBrassica", "Legume_Brassica", metadat$composition)
+metadat$composition<-gsub("LegumeGrass", "Legume_Grass", metadat$composition)
+metadat$composition<-gsub("GrassBrassica", "Grass_Brassica", metadat$composition)
+metadat$composition 
+metadat$composition<- factor(metadat$composition, levels = c("Soil", "Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
 
 
 #make taxon matrix row names OTUs
@@ -156,7 +164,7 @@ lab <- gsub("X", "AB", lab)
 lab
 
 p1<-rich%>%  
-  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
+  ggplot(aes(x=composition, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols7) +
   scale_fill_manual(values = mycols7)+
@@ -188,7 +196,7 @@ lab<- gsub("Z", "A", lab)
 
 
 p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
-  ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
+  ggplot(aes(x=composition, y=Observed,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols7) +
   scale_fill_manual(values = mycols7)+
@@ -204,7 +212,7 @@ p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
 #scale_shape_discrete() 
 p2
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_diversity")
-svg(file="diversity.total.svg",width = 10, height=4)
+svg(file="diversity.total.svg",width = 10, height=6)
 require(gridExtra)
 #windows(10,4)
 grid.arrange(p1, p2, ncol=2)
@@ -327,20 +335,27 @@ anova.cca(p1.cap, by="terms")
 p1.cap
 
 
+#col
+mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
+mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "white", "white", "white", "white" )
+mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "white" )
 
-# save for legend
-pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig4_CAP"
-setwd(pathfig4)
-svg("cap.treatment.red.svg", width = 6, height = 4)
-plot_ordination(ps1,  p1.cap,color="Treatment")+
+# cap plot total
+p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
   theme_bw()+
   geom_point(aes(shape = as.factor(N) ), size=2.5)+
   stat_ellipse(aes(group=Treatment), linetype=1)+
   theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
         legend.position="left")+
-  scale_color_manual(values =  mycols7, name="Treatment")+
+  scale_color_manual(values =  mycols7, name="composition")+
   scale_shape_discrete(name= "Nitrogen")
-  #ggtitle("A  All cover crops")
+#ggtitle("A  All cover crops")
+p1
+
+pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig4_CAPtotal"
+setwd(pathfig4)
+svg("cap.total.treatment.monopair.svg", width = 8 , height = 4)
+p1
 dev.off()
 
 # Legume present# #########

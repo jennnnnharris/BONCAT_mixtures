@@ -3,7 +3,7 @@
 
 # clear workspace and restart R
 rm(list=ls())
-#rstudioapi::restartSession(clean = TRUE)
+rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(readxl)
@@ -12,17 +12,13 @@ library(lubridate)
 library(lme4)
 library(nlme)
 
-#mycols7<-c( "#4B2D4BFF", "#02666e", , "#365C83FF",  "#8cbd6a","#916691",  "#384351FF")
-#mycols7<- c("#FBA475FF", "#4C84A3FF", "#F46124FF", "#4DACD9FF", "#C2421CFF", "#761445FF", "#FAD457FF")
-#mycols7 <- c("#007FFFFF", "#7FBFFFFF", "#001933FF", "#4C4CFFFF", "#FFEFB2FF", "#A89797FF", "gold")
-#Color,Hex Value
-#mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-#mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
-#mycols4 <- c("#FBA475FF",  "#C2421CFF", "#761445FF", "#FAD457FF" )
+#old cols:
+#mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+
+#current cols"
 mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
 mycols4<-c("#466F9DFF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 
 # load paths
@@ -148,6 +144,8 @@ p1
 dev.off()
 
 
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_liana_kayla")
 p2<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.5 )+
@@ -158,12 +156,13 @@ p2<-df  %>% filter(n_species!="NA") %>%
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0, size=14))+
   facet_grid( ~n_species, scales = "free", space = "free")+
-  xlab("Treatment") 
+  xlab("Treatment")
+
 p2
 
 
 
-setwd(fig2path)
+#setwd(fig2path)
 svg(file="biomass.shoot.trt.svg",width = 3.3, height=2.5)
 p2
 
@@ -382,9 +381,8 @@ setwd(fig2path)
  #plot(m1)
  
  
- #plot perc by nspecies
- #svg(file="nfix.prec.treatment.svg",width = 2.3, height=2.3)
- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
+ 
+p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
    geom_jitter(size=.5)+
    ylab('Nitrogen from Fixation (%)') +
@@ -393,8 +391,12 @@ setwd(fig2path)
    theme(legend.position = "none")+
    scale_fill_manual(values = mycols4)+
    facet_grid( ~spp.number, scales = "free", space = "free")
- 
- #dev.off() 
+p1
+#plot perc by nspecies
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_liana_kayla")
+ svg(file="nfix.percent.treatment.svg",width = 2.3, height=2.3) 
+ p1
+ dev.off() 
  
  #svg(file="nfix.perleg.treatment.svg",width = 2.3, height=2.3)
  ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
@@ -509,287 +511,5 @@ ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
   theme(legend.position = "none")+
   scale_fill_manual(values = mycols4)+
   facet_grid( ~spp.number, scales = "free", space = "free")
-
-
-
-############### Fig 3 write functions###############
-get.predict<-function(df, sp1, sp2, sp3, trait) {
-  if(missing(sp3)){
-    sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
-    #print(sp1.df)
-    sp1.predict<-sp1.df/2
-    print(sp1.predict)
-    sp2.df<-filter(df, Treatment==sp2) %>% select(all_of(trait))
-    sp2.predict<-sp2.df /2
-    print(sp2.predict)
-    predict <- sp1.predict + sp2.predict
-    print(predict)
-    #return(predict)
-  }
-  else {
-    print(paste("the 3rd species is",sp3))
-    sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
-    sp1.predict<-sp1.df/2
-    sp2.df<-filter(df, Treatment==sp2)
-    sp2.predict<-sp2.df$trait/2
-    sp3.df<-filter(df, Treatment==sp3)
-    sp3.predict<-sp3.df$trait/2
-    predict <- sp1.predict + sp2.predict + sp3.predict
-    print(predict)
-    return(predict)
-  }
-  
-}
-get.shoot.predict<-function(df, sp1, sp2, sp3) {
-  if(missing(sp3)){
-    sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
-    sp1.predict<-sp1.df$Shoot.Biomass/3
-    sp2.df<-filter(df, Treatment==sp2)
-    sp2.predict<-sp2.df$Shoot.Biomass/3
-    predict <- sp1.predict + sp2.predict
-    print(predict)
-    return(predict)
-  }
-  else
-    
-    print(paste("the 3rd species is",sp3))
-  sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
-  sp1.predict<-sp1.df$Shoot.Biomass/2
-  sp2.df<-filter(df, Treatment==sp2)
-  sp2.predict<-sp2.df$Shoot.Biomass/2
-  sp3.df<-filter(df, Treatment==sp3)
-  sp3.predict<-sp3.df$Shoot.Biomass/2
-  predict <- sp1.predict + sp2.predict + sp3.predict
-  print(predict)
-  return(predict)
-  
-}
-get.root.predict<-function(df, sp1, sp2, sp3) {
-  if(missing(sp3)){
-    sp1.df<- filter(df, Treatment==sp1) %>% select(Root.Biomass)
-    sp1.predict<-sp1.df$Root.Biomass/3
-    sp2.df<-filter(df, Treatment==sp2)
-    sp2.predict<-sp2.df$Root.Biomass/3
-    predict <- sp1.predict + sp2.predict
-    print(predict)
-    return(predict)
-  }
-  else
-    
-    print(paste("the 3rd species is",sp3))
-  sp1.df<- filter(df, Treatment==sp1) %>% select(Root.Biomass)
-  sp1.predict<-sp1.df$Root.Biomass/2
-  sp2.df<-filter(df, Treatment==sp2)
-  sp2.predict<-sp2.df$Root.Biomass/2
-  sp3.df<-filter(df, Treatment==sp3)
-  sp3.predict<-sp3.df$Root.Biomass/2
-  predict <- sp1.predict + sp2.predict + sp3.predict
-  print(predict)
-  return(predict)
-  
-}
-
-
-######### Fig 3 jenny predictions from monocultures for biomass #######
-
-
-## we expect that a plant makes the same amount of biomass in monoculures vs mixtures
-#example
-#LB biomass = L monoculture/  2 + B monocultre/2 
-
-#get shoot predictions
-dfb<-dfb %>% group_by(Rep, N)
-dfb
-
-
-
-GB<-get.shoot.predict(dfb, "G", "B") 
-LB<-get.shoot.predict(dfb, "L", "B") 
-LG<-get.shoot.predict(dfb, "L", "G") 
-LGB<-get.shoot.predict(dfb, "L", "G", "B")  
-Shoot.Biomass<- round(as.numeric(c(GB, LB, LG, LGB)), 2)
-Shoot.Biomass
-Treatment<-c(rep("GB.predict", n_groups(dfb)), rep("LB.predict", n_groups(dfb)), rep("LG.predict", n_groups(dfb)), rep("LGB.predict", n_groups(dfb)) )
-Treatment
-predict <- as.data.frame(cbind(Treatment, Shoot.Biomass))
-predict$Shoot.Biomass<-as.numeric(predict$Shoot.Biomass)
-predict
-
-#get root predictions
-
-GB<-get.root.predict(dfb, "G", "B") 
-LB<-get.root.predict(dfb, "L", "B") 
-LG<-get.root.predict(dfb, "L", "G") 
-LGB<-get.root.predict(dfb, "L", "G", "B")  
-Root.Biomass<- round(as.numeric(c(GB, LB, LG, LGB)), 2)
-
-predict<- cbind(predict, Root.Biomass)
-predict$Root.Biomass<-as.numeric(predict$Root.Biomass)
-predict
-
-
-## add to dfb
-dfb1<-dfb %>% filter(n_species!="1")
-mixtures<-dfb %>% filter(n_species!="1")
-47*2
-
-dfb1<-full_join(dfb1, predict) 
-dfb1<-dfb1 %>% ungroup()
-
-
-as.factor(dfb1$Treatment)
-
-
-######### Fig 3 plot jenny predictions from monocultures for biomass################
-
-mycols<-c("#365C83FF","grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
-mycols<-   c("#440154",  "grey", "#35b779", "grey", "#90d743", "grey", "#fde725" , "grey")
-#setwd(fig3path)
-#svg(file="biomass.root.predict.svg",width = 2.8, height=3)
-label <- dfb1$Treatment
-label<- gsub("L", "" ,dfb1$label )
-label<- gsub("G", "" ,dfb1$label )
-label <- gsub("B", "" ,dfb1$label )
-label <- gsub(".predict", "*" ,dfb1$label )
-
-p2<-dfb1  %>% 
-  ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=.8 )+
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 12)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
-  
-  geom_text(y=6, label =label , nudge_x = -.8, size=7)
-
-  
-p2
-
-label <- dfb1$Treatment
-label<- gsub("L", "" ,dfb1$label )
-label<- gsub("G", "" ,dfb1$label )
-label <- gsub("B", "" ,dfb1$label )
-label <- gsub(".predict", "*" ,dfb1$label )
-
-
-#setwd(fig3path)
-#svg(file="biomass.shoot.predict.svg",width = 4, height=3)
-p3<-dfb1  %>% 
-  ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=.8 )+
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 12)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
-  geom_text(y=8, label =label , nudge_x = -.8, size=7)
-
-p3
-
-
-# Nfix#
- 
-
-#####figure percent N ###
-#svg(file="nfix.percent.predict.svg",width = 2.5, height=2.5)
-# rename
-df1<-df.leg %>% filter(treatment=="L")
-df1$treatment<-gsub("L", "L.predict", df1$treatment )
-m<-mean(df1$perc.Ndfa)
-
-df2<-df.leg %>% filter(treatment!="L")
-df.leg1<-rbind(df1, df2)
-# set cols
-mycols4 <- c("grey", "#35b779", "#90d743", "#fde725")
-
-lab <- df.leg1$treatment
-lab<- gsub("L.predict", "" , lab )
-lab<- gsub("LGB", "*" , lab  )
-lab <- gsub("LB", "*" , lab )
-lab <- gsub("LG", "*" , lab )
-lab
-
-
-p1<-df.leg1 %>%
-ggplot( aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(width = .2, size=.8 )+
-  ylab('Nitrogen from Fixation (%)') +
-  xlab("Treatment") +
-  theme_classic(base_size = 12) +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5))+
-  scale_fill_manual(values = mycols4)+
-  geom_hline(yintercept = m, color = "grey", linewidth = 1.5, linetype = "dashed")+
-  annotate("text", x =3.5, y = 70, label = "   prediction from
-           monoculture", color = "black", size = 3.4)+
-  geom_text(y=90, label =lab , nudge_x = .1 , size=7)
-  
-
-  
-p1
-
-setwd(fig3path)
-svg(file="fig3_predict.svg",width = 10, height=3)
-require(gridExtra)
-#windows(10,3)
-grid.arrange(p1, p2, p3, ncol=3)
-dev.off()
-
-
-
-##### fig 3 anova#####
-
-
-#GB
-#filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-# shoots
-#GB
-#filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-
-
 
 
