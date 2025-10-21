@@ -327,16 +327,20 @@ as.factor(dfb1$Treatment)
 
 
 ######### Fig 3 plot jenny predictions from monocultures for biomass################
-
+#old
 mycols<-c("#365C83FF","grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
-mycols<-   c("#440154",  "grey", "#35b779", "grey", "#90d743", "grey", "#fde725" , "grey")
+# new
+mycols<-c("#FEB5A2FF","grey" , "#9D7660FF", "grey", "#D7B5A6FF", "grey", "#3896C4FF" , "grey")
+
+
 #setwd(fig3path)
 #svg(file="biomass.root.predict.svg",width = 2.8, height=3)
 label <- dfb1$Treatment
-label<- gsub("L", "" ,dfb1$label )
-label<- gsub("G", "" ,dfb1$label )
-label <- gsub("B", "" ,dfb1$label )
-label <- gsub(".predict", "*" ,dfb1$label )
+label<- gsub("L", "" ,label )
+label<- gsub("G", "" ,label )
+label <- gsub("B", "" ,label )
+label <- gsub(".predict", "*" ,label )
+label
 
 p2<-dfb1  %>% 
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
@@ -354,10 +358,10 @@ p2<-dfb1  %>%
 p2
 
 label <- dfb1$Treatment
-label<- gsub("L", "" ,dfb1$label )
-label<- gsub("G", "" ,dfb1$label )
-label <- gsub("B", "" ,dfb1$label )
-label <- gsub(".predict", "*" ,dfb1$label )
+label<- gsub("L", "" ,label )
+label<- gsub("G", "" ,label )
+label <- gsub("B", "" ,label )
+label <- gsub(".predict", "*" ,label )
 
 
 #setwd(fig3path)
