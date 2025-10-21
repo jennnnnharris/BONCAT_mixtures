@@ -12,10 +12,6 @@ library(lubridate)
 library(lme4)
 library(nlme)
 
-#import colors
-#install.packages("viridis")
-#library(viridis)
-
 #mycols7<-c( "#4B2D4BFF", "#02666e", , "#365C83FF",  "#8cbd6a","#916691",  "#384351FF")
 #mycols7<- c("#FBA475FF", "#4C84A3FF", "#F46124FF", "#4DACD9FF", "#C2421CFF", "#761445FF", "#FAD457FF")
 #mycols7 <- c("#007FFFFF", "#7FBFFFFF", "#001933FF", "#4C4CFFFF", "#FFEFB2FF", "#A89797FF", "gold")
@@ -66,7 +62,8 @@ head(dfb)
 
 ###biomass figures ##########
 
-###############plots n species #################
+
+# n species###
 
 setwd(fig2path)
 
@@ -130,12 +127,10 @@ require(gridExtra)
 #windows(2,6)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
-#####################bar plot for each treatment####
+###bar plot for each treatment##
 
 
-setwd(fig2path)
-svg(file="biomass.root.trt.svg",width = 2.4, height=2.5)
-df  %>% filter(n_species!="NA") %>%
+p1<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -146,12 +141,14 @@ df  %>% filter(n_species!="NA") %>%
         plot.title = element_text(hjust = 0, size=14))+
   facet_grid( ~n_species, scales = "free", space = "free")+
   xlab("Treatment") 
-
+p1
+setwd(fig2path)
+svg(file="biomass.root.trt.svg",width = 2.4, height=2.5)
+p1
 dev.off()
 
-setwd(fig2path)
-svg(file="biomass.shoot.trt.svg",width = 3.3, height=2.5)
-df  %>% filter(n_species!="NA") %>%
+
+p2<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -162,9 +159,14 @@ df  %>% filter(n_species!="NA") %>%
         plot.title = element_text(hjust = 0, size=14))+
   facet_grid( ~n_species, scales = "free", space = "free")+
   xlab("Treatment") 
-#ggtitle("A Root biomass")
-#geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
-#geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LG", "*", "")), size=10)
+p2
+
+
+
+setwd(fig2path)
+svg(file="biomass.shoot.trt.svg",width = 3.3, height=2.5)
+p2
+
 dev.off()
 
 
