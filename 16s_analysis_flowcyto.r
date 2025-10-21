@@ -25,18 +25,21 @@ library(readxl)
 library(lubridate)
 library(phyloseq)
 library(MicEco)
-
+library(multcompView)
 
 # set colors
-blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
-mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-mycols8<-c("grey", "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
+#mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#mycols8<-c("grey", "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+#mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 #mycols3<- c(  "#f4f1bb", "#ed6a5a","#9bc1bc")
 #mycols3<- c( "#006d77",  "#f4d35e", "#e94f37")
 
+mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
+mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 
 #####Import data#####
@@ -141,7 +144,7 @@ rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB"
 rich$Fraction   <- factor(rich$Fraction, levels= c("Active", "Inactive"))
 
 #BCAT_73_S35 is kind of a weird outlier
-#rich<-rich[which(rich$SampleID!="BCAT_73_S35"),]
+rich<-rich[which(rich$SampleID!="BCAT_73_S35"),]
 
 
 ##plots######
@@ -157,7 +160,7 @@ p1<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("Shannon Diversity")+
+  ylab("Active Shannon Diversity")+
   xlab("")
  #scale_shape_discrete() 
 p1
@@ -172,7 +175,7 @@ p2<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("N Asvs")+
+  ylab("Active Number ASVS")+
   xlab("")
   #scale_shape_discrete() 
 p2
@@ -187,18 +190,17 @@ p3<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("Chao1 species richness")+
+  ylab("active Chao1 species richness")+
   xlab("")
   #scale_shape_discrete() 
 p3
 
-pathfig3 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Figure3_activitydiversity"
-setwd(pathfig3)
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_diversity")
 svg(file="diversity.fc.svg",width = 10, height=4)
 
 require(gridExtra)
 #windows(6,8)
-grid.arrange(p1, p3, ncol=2)
+grid.arrange(p1, p2, ncol=2)
 dev.off()
 
 
@@ -210,11 +212,28 @@ dev.off()
 rich <- rich %>% filter(Fraction=="Active") %>% filter(Treatment!="Soil")
 rich$Treatment   <- factor(rich$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
-#Shannon
-m1<-lm(Shannon ~ Treatment,  data = rich)
-summary(m1)
+# 1. Shannon ANOVA 
+anova1<- aov(Shannon~ Treatment, data = rich)
+summary(anova1)
+# 2. Run the Tukey HSD test on the ANOVA model
+tukey_output <- TukeyHSD(anova1)
 
-#observed
+# The 'tukey_output' shows the pairwise comparisons and p-values
+print(tukey_output)
+
+# 3. Extract the p-values for the factor of interest
+p_values <- tukey_output$Treatment[, 4]
+
+# 4. Generate the grouping letters using multcompLetters()
+# The 'multcompLetters()' function takes a named vector of p-values
+cld <- multcompLetters(p_values)
+
+# 5. Print the results
+print(cld)
+
+
+
+#observed ANOVA
 m1<-lm(Observed ~ Treatment,  data = rich)
 summary(m1)
 
@@ -229,26 +248,18 @@ tukey.a1 <- TukeyHSD(anova1)
 print(a1) # all difference except LG-LB and LGB-LG
 plot(anova1) #homoscedasticity looks fine
 
+# n species
+m1<-lm(Shannon ~ rich$n_species,  data = rich)
+summary(m1)
+m1<-lm(Observed ~ rich$n_species,  data = rich)
+summary(m1)
 m1<-lm(Chao1 ~ rich$n_species,  data = rich)
 summary(m1)
 
-###PCOA set shapes and cols######
-  
 
-  #mycols8<- c( "grey", "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A",  "gold")
-  #mycols7<- c( "#1F78B4",  "#eb05db", "#33A02C", "#FF7F00","#1a635a", "#6A3D9A",  "gold")
-  #antique<-c("#855C75FF", "#D9AF6BFF", "#AF6458FF", "#736F4CFF", "#526A83FF", "#625377FF", "#68855CFF","#9C9C5EFF", "#A06177FF", "#8C785DFF", "#467378FF", "#7C7C7CFF")
-  #mycols7 <- c("#855C75FF", "#D9AF6BFF", "#AF6458FF", "#736F4CFF", "#526A83FF", "#625377FF", "#68855CFF")
-  #mycols7 <-c("#4B2D4BFF", "#3C3C5AFF", "#4B6987FF", "#789696FF", "#968787FF", "#D2C3C3FF", "#875A2DFF", "#873C3CFF")
-  #mycols7<-c("#78A5C3FF",  "#3C3C5AFF", "#5A784BFF", "#E1D2D2FF", "#694B5AFF", "#A55A2DFF", "#873C3CFF")
-  #30025c
-  #690061
-  #970860
-  #bd2d5b
-  #db5255
-  #f17951
-  #ffa251
-  #mycols7<-c("#E3C1CBFF", "#AD5A6BFF", "#C993A2FF", "#365C83FF", "#384351FF", "#4D8F8BFF", "#CDD6ADFF")
+
+###PCOA set shapes and cols######
+    
   
   
   myshapes <- c(1, 12,15 ,21, 22, 23 , 24)

@@ -22,6 +22,10 @@ library(readxl)
 library(lubridate)
 library(phyloseq)
 library(MicEco)
+library(multcompView)
+
+install.packages("paletteer")
+library("paletteer")
 
 
 # colors
@@ -29,10 +33,14 @@ mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C
 mycols8<-c("grey", "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
-mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
-mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
 
+#mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
+#mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#f7b307")
+#mycols4 <- c("#440154","#35b779", "#90d743", "#f7b307")
+#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+#paletteer_d("ggsci::nrc_npg")
+#paletteer_d("ggthemes::Red_Blue_Brown")
 
 
 # set shapes
@@ -132,8 +140,22 @@ rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   
 
 # Treatment effect?
+# shannon diversity letters
+rich<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil")
+  
+lab<-as.character(rich$Treatment)
+lab<- gsub("LGB", "X", lab)
+lab <- gsub("LG", "B", lab)
+lab <- gsub("LB", "B", lab)
+lab <- gsub("GB", "B", lab)
+lab
+lab <- gsub("L", "Y", lab) 
+lab <- gsub("G", "B", lab) 
+lab <- gsub("Y", "A", lab) 
+lab <- gsub("X", "AB", lab) 
+lab
 
-p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+p1<-rich%>%  
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols7) +
@@ -143,12 +165,27 @@ p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("Shannon Diversity")+
-  #geom_text(aes(,y=8, label = ifelse(Treatment=="L", "A", "B")), size=10)+
+  ylab("Total DNA Shannon Diversity")+
+  geom_text(y=7.9, label = lab, size=5)+
   xlab("")
-
-#scale_shape_discrete() 
+  #scale_shape_discrete() 
 p1
+
+#label for observed
+
+lab<-as.character(rich$Treatment)
+lab<- gsub("LGB", "X", lab)
+lab<- gsub("LB", "Y", lab)
+lab<- gsub("GB", "Y", lab)
+lab<- gsub("LG", "Y", lab)
+lab<- gsub("B", "Y", lab)
+lab<- gsub("G", "X", lab)
+lab<- gsub("L", "Z", lab)
+#sub letters
+lab<- gsub("X", "AB", lab)
+lab<- gsub("Y", "B", lab)
+lab<- gsub("Z", "A", lab)
+
 
 p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
@@ -160,35 +197,17 @@ p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("N Asvs")+
-  xlab("")
-  #geom_text(aes(,y=18, label = ifelse(rich$Treatment=="L", "A", "B")), size=10)
+  ylab("Total DNA Number of Asvs")+
+  xlab("")+
+  geom_text(y= 5100, label = lab, size=5)
   
 #scale_shape_discrete() 
 p2
-
-p3<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
-  ggplot(aes(x=Treatment, y=Chao1,  fill=Treatment))+
-  geom_boxplot(alpha=.6, outlier.shape = NA) +
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
-  #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
-  geom_jitter(size=1.5, width = .1)+
-  theme_classic(base_size = 16)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("Chao1 species richness")+
-  xlab("")
-  #geom_text(aes(,y=18, label = ifelse(rich$Treatment=="L", "A", "B")), size=10)
-  
-#scale_shape_discrete() 
-p3
-
-pathfig3 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Figure3_activitydiversity"
-setwd(pathfig3)
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_diversity")
 svg(file="diversity.total.svg",width = 10, height=4)
 require(gridExtra)
-grid.arrange(p1, p3, ncol=2)
+#windows(10,4)
+grid.arrange(p1, p2, ncol=2)
 dev.off()
 
 
@@ -213,33 +232,53 @@ summary(m1)
 # Analysis of variance 
 anova1<- aov(Shannon ~ Treatment, data = rich)
 summary(anova1)
+library(multcompView)
 tukey.a1 <- TukeyHSD(anova1)
+
 print(tukey.a1) # all difference except LG-LB and LGB-LG
 plot(anova1) #homoscedasticity looks fine
 
-#observed
-m1<-lm(Observed ~ Treatment,  data = rich)
-summary(m1)
+##observed ANOVA
 
-#chao1
-m1<-lm(Chao1 ~ Treatment,  data = rich)
-summary(m1)
+# #chao1 Analysis of variance 
+anova1<- aov(Observed ~ Treatment, data = rich)
+summary(anova1)
+# 3. Run the Tukey HSD test on the ANOVA model
+tukey_output <- TukeyHSD(anova1)
+
+# The 'tukey_output' shows the pairwise comparisons and p-values
+print(tukey_output)
+
+# 4. Extract the p-values for the factor of interest
+p_values <- tukey_output$Treatment[, 4]
+
+# 5. Generate the grouping letters using multcompLetters()
+# The 'multcompLetters()' function takes a named vector of p-values
+cld <- multcompLetters(p_values)
+
+# 6. Print the results
+print(cld)
 
 
-# Analysis of variance 
+
+##chao1 Analysis of variance 
 anova1<- aov(Chao1 ~ Treatment, data = rich)
 summary(anova1)
+# 3. Run the Tukey HSD test on the ANOVA model
+tukey_output <- TukeyHSD(anova1)
 
-tukey.a1 <- TukeyHSD(anova1)
-print(tukey.a1) # all difference except LG-LB and LGB-LG
-plot(anova1) #homoscedasticity looks fine
+# The 'tukey_output' shows the pairwise comparisons and p-values
+print(tukey_output)
 
-m1<-lm(Chao1 ~ rich$n_species,  data = rich)
-summary(m1)
+# 4. Extract the p-values for the factor of interest
+p_values <- tukey_output$Treatment[, 4]
 
-# everything is different from L so drop that out
-rich <- rich %>% filter(Treatment!="L") 
-rich$Treatment   <- factor(rich$Treatment, levels= c("G", "B", "GB", "LB", "LG", "LGB"))
+# 5. Generate the grouping letters using multcompLetters()
+# The 'multcompLetters()' function takes a named vector of p-values
+cld <- multcompLetters(p_values)
+
+# 6. Print the results
+print(cld)
 
 ######## 3. Filtering rare taxa ##################
 
@@ -279,129 +318,141 @@ metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil")
 metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 #overall L+B+G
-#p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~N*Grass*Legume*Brassicae)
+#p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Grass*Legume*Brassicae)
 p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~N*Treatment)
 anova.cca(p1.cap, by="terms")
 
+
+
+p1.cap
+
+
+
+# save for legend
 pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig4_CAP"
 setwd(pathfig4)
-svg("cap.total.svg", width = 6, height = 4)
+svg("cap.treatment.red.svg", width = 6, height = 4)
 plot_ordination(ps1,  p1.cap,color="Treatment")+
-   theme_bw()+
-  geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-        legend.position="left")+
-  scale_color_manual(values =  mycols7, name="Treatment")+
-  scale_shape_discrete(name= "Nitrogen")
-dev.off()                     
-
-
-# facet wrap ##
-pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig4_CAP"
-setwd(pathfig4)
-
-svg("cap.facet.total.svg", width = 4, height = 8)
-plot_ordination(ps1,  p1.cap,color="Treatment")+
-  facet_wrap(~n_species, ncol=1)+
   theme_bw()+
   geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
   theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
         legend.position="left")+
   scale_color_manual(values =  mycols7, name="Treatment")+
   scale_shape_discrete(name= "Nitrogen")
+  #ggtitle("A  All cover crops")
 dev.off()
 
-
-# monocultures #
+# Legume present# #########
 
 # subset data
-ps1 <-subset_samples(ps, n_species == "1")
+ps1 <-subset_samples(ps, Legume == "1")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
 
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & n_species == "1" )
+metadat2<-filter(metadat, Fraction=="Total" & Legume == "1" )
 #set factors 
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "LB", "LG", "LGB"))
 
 #cap
 p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
 anova.cca(p1.cap, by="terms")
 
-svg("cap.1species.svg", width = 6, height = 4)
-plot_ordination(ps1,  p1.cap,color="Treatment")+
+p2<-plot_ordination(ps1,  p1.cap, color="Treatment", )+
   theme_bw()+
   geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  
+  #stat_ellipse(    geom = "polygon",aes(fill = Treatment),alpha = 0.25,level = 0.95 )+  
   theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-        legend.position="left")+
-  scale_color_manual(values =  mycols7, name="Treatment")+
-  scale_shape_discrete(name= "Nitrogen")
-dev.off()                     
+        legend.position="none")+
+  scale_color_manual(values =  mycols4, name="Treatment")+
+  scale_fill_manual(values =  mycols4, name="Treatment")+
+    
+  scale_shape_discrete(name= "Nitrogen")+
+  
+  ggtitle("C Legume")
+p2
 
 
 
-# pairwise #
+
+
+# Grass# #####
 # subset  data
-ps1 <-subset_samples(ps, n_species == "2" & Treatment!="Soil")
+ps1 <-subset_samples(ps, Grass=="1")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & n_species == "2" & Treatment!="Soil" )
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2<-filter(metadat, Fraction=="Total" & Grass=="1"  )
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "G", "GB",  "LG", "LGB"))
 
 #cap
 p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
 anova.cca(p1.cap, by="terms")
 
-svg("cap.2species.svg", width = 6, height = 4)
-plot_ordination(ps1,  p1.cap,color="Treatment")+
+
+mycols4<- c( "#443983", "#21918c", "#90d743",  "#f7b307")
+
+p3<-plot_ordination(ps1,  p1.cap, color="Treatment", )+
   theme_bw()+
   geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  
+  #stat_ellipse(    geom = "polygon",aes(fill = Treatment),alpha = 0.25,level = 0.95 )+  
   theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-        legend.position="left")+
-  scale_color_manual(values =  mycols7, name="Treatment")+
-  scale_shape_discrete(name= "Nitrogen")
-dev.off() 
+        legend.position="none")+
+  scale_color_manual(values =  mycols4, name="Treatment")+
+  scale_fill_manual(values =  mycols4, name="Treatment")+
+  
+  scale_shape_discrete(name= "Nitrogen") +
+  ggtitle("C Grass")
+p3
 
 
-
-# monocultures + pairwise #
+# Brass ###########
 
 # subset data
-ps1 <-subset_samples(ps, n_species != "3" & Treatment!="Soil")
+ps1 <-subset_samples(ps, Brassicae=="1")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
-metadat2<-filter(metadat, Fraction=="Total" & n_species != "3" & Treatment!="Soil" )
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2<-filter(metadat, Fraction=="Total" & Brassicae=="1" )
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "B", "GB", "LB",  "LGB"))
 
 # cap
 p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
 anova.cca(p1.cap, by="terms")
 
-#alt colors
-mycols7<-c( "grey", "grey", "grey", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#Brass colors
+
+mycols4<- c( "#31688e", "#21918c", "#35b779",  "#f7b307")
 
 
-svg("cap.grey.2species.svg", width = 6, height = 4)
-plot_ordination(ps1,  p1.cap,color="Treatment")+
+p4<-plot_ordination(ps1,  p1.cap, color="Treatment", )+
   theme_bw()+
   geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  
+  #stat_ellipse(    geom = "polygon",aes(fill = Treatment),alpha = 0.25,level = 0.95 )+  
   theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-        legend.position="left")+
-  scale_color_manual(values =  mycols7, name="Treatment")+
-  scale_shape_discrete(name= "Nitrogen")
-dev.off()                     
+        legend.position="none")+
+  scale_color_manual(values =  mycols4, name="Treatment")+
+  scale_fill_manual(values =  mycols4, name="Treatment")+
+  
+  scale_shape_discrete(name= "Nitrogen")  +
+  ggtitle("D Brassicae")
+p4
 
 
 
 
-
-
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig4_CAP")
+svg(file="CAP.total.svg",width = 6, height=2.5)
+require(gridExtra)
+#windows(10,10)
+grid.arrange( p2, p3, p4, ncol=3)
+dev.off()
 
 
 
