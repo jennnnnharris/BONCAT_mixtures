@@ -13,12 +13,12 @@ library(lme4)
 library(nlme)
 
 #old cols:
-#mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-#mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
 #current cols"
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-mycols4<-c("#466F9DFF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
+#mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
+#mycols4<-c("#466F9DFF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 
 # load paths
@@ -158,15 +158,23 @@ p2<-df  %>% filter(n_species!="NA") %>%
   scale_fill_manual(values = mycols7)+
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0, size=14))+
+        plot.title = element_text(hjust = 0, size=14),
+        legend.position = "none")+
   facet_grid( ~n_species, scales = "free", space = "free")+
   xlab("composition")
 
 p2
 
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
-svg(file="biomass.shoot.trt.svg",width = 3.3, height=2.5)
+svg(file="biomass.shoot.trt.svg",width = 2.5, height=2.5)
 p2
+dev.off()
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
+svg(file="biomass.all.trt.svg",width = 5.2, height=2.5)
+require(gridExtra)
+#windows(2,6)
+grid.arrange(p1, p2, ncol=2)
 dev.off()
 
 

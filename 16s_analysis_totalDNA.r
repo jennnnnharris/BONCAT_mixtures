@@ -28,9 +28,9 @@ library(paletteer)
 
 # colors
 mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+mycols7v<-c( "#715b8a", "#4D8F8BFF", "#b1de64", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
 
 
 # set shapes
@@ -158,7 +158,8 @@ lab <- gsub("X", "AB", lab)
 lab
 
 p1<-rich%>%  
-  ggplot(aes(x=composition, y=Shannon,  fill=Treatment))+
+#filter(N=="0") %>%
+  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols7) +
   scale_fill_manual(values = mycols7)+
@@ -168,7 +169,7 @@ p1<-rich%>%
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5),legend.position="none")+
   ylab("Total DNA Shannon Diversity")+
-  geom_text(y=7.9, label = lab, size=5)+
+ geom_text(y=7.9, label = lab, size=5)+
   xlab("")
   #scale_shape_discrete() 
 p1
@@ -218,13 +219,15 @@ dev.off()
 
 
 # remove soil
-rich <- rich %>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") 
+rich <- rich %>% filter(Fraction=="Total") %>% filter(Treatment!="Soil")
 rich$Treatment   <- factor(rich$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 rich$N <- factor(rich$N, levels= c("0", "1"))
 
 
 # Shannon
-m1<-lm(Shannon ~ N,  data = rich)
+rich1<-rich%>%  
+  filter(N=="1")
+m1<-lm(Shannon ~ N,  data = rich1)
 summary(m1)
 
 m1<-lm(Shannon ~ Treatment*N,  data = rich)
@@ -330,9 +333,13 @@ p1.cap
 
 
 #col
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "white", "white", "white", "white" )
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "white" )
+# colors
+mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
+mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262", "#c77597",  "white")
+
+#mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "white", "white", "white",  "#384351FF")
+mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+
 
 # cap plot total
 p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
@@ -347,8 +354,7 @@ p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
 p1
 
 pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig4_CAPtotal"
-setwd(pathfig4)
-svg("cap.total.treatment.monopair.svg", width = 8 , height = 4)
+svg("cap.total.treatment3.svg", width = 8 , height = 4)
 p1
 dev.off()
 

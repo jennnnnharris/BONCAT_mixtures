@@ -14,16 +14,11 @@ library(lubridate)
 
 
 # set colors
-#blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
-#mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-#mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
-#mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
-#mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+#mycols7vivid<-c( "#715b8a", "#4D8F8BFF", "#b1de64", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
+#mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )#
 
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
+#mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
 
 
 
@@ -148,7 +143,7 @@ lab<-gsub("L", "A", lab)
 
 p1<-df1  %>%
   filter(Treatment!="Soil") %>%
-  ggplot(aes(x=composition, y=BONCAT_freq, fill = Treatment)) +
+  ggplot(aes(x=Treatment, y=BONCAT_freq, fill = Treatment)) +
   geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=mycols7) +
@@ -158,13 +153,13 @@ p1<-df1  %>%
         plot.title = element_text(hjust = 0))+
   ylab("percent active")+
   xlab("")+
-  facet_grid( ~n_species, scales = "free", space = "free")+
+  #facet_grid( ~n_species, scales = "free", space = "free")+
   geom_text(y=18, label = lab, size=5)
 p1
 
 # plot for each treatment
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_activity")
-svg(file="activity.trt.svg",width = 7, height=5)
+svg(file="activity.trt.lil.svg",width = 4, height=3)
 p1  
 dev.off()  
 #

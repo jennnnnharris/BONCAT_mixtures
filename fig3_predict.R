@@ -17,15 +17,17 @@ library(nlme)
 #library(viridis)
 
 #mycols7<-c( "#4B2D4BFF", "#02666e", , "#365C83FF",  "#8cbd6a","#916691",  "#384351FF")
+mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+mycols7vivid<-c( "#715b8a", "#4D8F8BFF", "#b1de64", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
+
+mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )#
+
 #mycols7<- c("#FBA475FF", "#4C84A3FF", "#F46124FF", "#4DACD9FF", "#C2421CFF", "#761445FF", "#FAD457FF")
-#mycols7 <- c("#007FFFFF", "#7FBFFFFF", "#001933FF", "#4C4CFFFF", "#FFEFB2FF", "#A89797FF", "gold")
-#Color,Hex Value
-#mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-#mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
-#mycols4 <- c("#FBA475FF",  "#C2421CFF", "#761445FF", "#FAD457FF" )
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-mycols4<-c("#466F9DFF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
+
+
+
+#mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
+#mycols4<-c("#466F9DFF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
 
 #df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
 
@@ -66,137 +68,6 @@ head(dfb)
 
 
 
-#### import nfix data and process####
-setwd(nfixpath)
-df <- read.csv("merged.plate.ghbiomass.sheet.csv", header=T, stringsAsFactors = F) # fix data
-
-
-### Take average of δ15N triticale monoculture across all 6 pots for 
-# δ15Nref (standard background δ15N reference) 
-# Select for only monoculture and triticale
-# reference = Tricale monculture with nitrogen, which should have 
-# pretty much zero nitrogen from fixation. 
-tnref <- df[df$spp.number %in% "1", ] 
-tnref1 <- tnref[tnref$treatment %in% "G", ]
-tnrefN <- tnref1[tnref1$nitrogen.added %in% "Y", ]
-# Where duplicate take average so one reference not over weighted
-tnrefN.avg <- tnrefN %>%
-  group_by(pot.number, rep) %>%
-  summarise(avg.δ15N = mean(δ15Nvs.At.Air))
-# Take average across all reps
-δ15Nref <- mean(tnrefN.avg$avg.δ15N)
-
-## Repeat with noN addition samples
-tnrefnoN <- tnref1[tnref1$nitrogen.added %in% "N", ]
-# Where duplicate take average so one reference not over weighted
-tnrefnoN.avg <- tnrefnoN %>%
-  group_by(pot.number, rep) %>%
-  summarise(avg.δ15N = mean(δ15Nvs.At.Air))
-# Take average across all reps
-δ15Nref.noNadd <- mean(tnrefnoN.avg$avg.δ15N)
-
-## Divide the df into nitrogen added and no nitrogen added
-dfNadd <- df[df$nitrogen.added %in% "Y", ]
-dfnoNadd <- df[df$nitrogen.added %in% "N", ]
-
-#Calculate %Ndfa with for legumes only ##
-## N addition first
-dfNadd.leg <- dfNadd[dfNadd$spp.type %in% "legume", ]
-# Equation: %Ndfa = 100[(δ15Nref - δ15Nleg) / (δ15Nref - B)]
-dfNadd.leg$perc.Ndfa <- 100*((δ15Nref - dfNadd.leg$δ15Nvs.At.Air) / (δ15Nref - dfNadd.leg$B))
-
-# Calculate the average for each treatment
-dfNadd.leg.trtavg <- dfNadd.leg %>%
-  group_by(treatment) %>%
-  summarise(avg.perc.Ndfa = mean(perc.Ndfa))
-
-# Calculating how much of total plant nitrogen from BNF in g/pot (need to update this with soil volume info)
-# BNF (g pot-1) = biomass (g plot-1) • plant N concentration (%)/100 • %Ndfa/100
-dfNadd.leg$BNF.g.plot.1 <- dfNadd.leg$stem.biomass.g * (dfNadd.leg$perc.N/100) * (dfNadd.leg$perc.Ndfa/100)
-# How much total N in each pot in g
-dfNadd.leg$totalN.g.pot.1 <- NA  
-dfNadd.leg$totalN.g.pot.1 <- dfNadd.leg$stem.biomass.g * (dfNadd.leg$perc.N/100) 
-# Soil N retention in g.pot
-dfNadd.leg$soilNret.g.pot.1 <- NA  
-dfNadd.leg$soilNret.g.pot.1 <- dfNadd.leg$totalN.g.pot.1 - dfNadd.leg$BNF.g.plot.1
-
-
-
-## No N addition 
-dfnoNadd.leg <- dfnoNadd[dfnoNadd$spp.type %in% "legume", ]
-# Equation: %Ndfa = 100[(δ15Nref - δ15Nleg) / (δ15Nref - B)]
-dfnoNadd.leg$perc.Ndfa <- 100*((δ15Nref - dfnoNadd.leg$δ15Nvs.At.Air) / (δ15Nref - dfnoNadd.leg$B))
-
-# Calculate the average for each treatment
-dfnoNadd.leg.trt.avg <- dfnoNadd.leg %>%
-  group_by(treatment) %>%
-  summarise(avg.perc.Ndfa = mean(perc.Ndfa))
-# average %Ndfa the same in LGB with and without N addition, all others higher without N added
-
-# Calculating how much of total plant nitrogen from BNF in g/pot (need to update this with soil volume info)
-# BNF (g pot-1) = biomass (g plot-1) • plant N concentration (%)/100 • %Ndfa/100
-dfnoNadd.leg$BNF.g.plot.1 <- dfnoNadd.leg$stem.biomass.g * (dfnoNadd.leg$perc.N/100) * (dfnoNadd.leg$perc.Ndfa/100)
-# How much total N in each pot in g
-dfnoNadd.leg$totalN.g.pot.1 <- NA  
-dfnoNadd.leg$totalN.g.pot.1 <- dfnoNadd.leg$stem.biomass.g * (dfnoNadd.leg$perc.N/100) 
-# Soil N retention in g.pot
-dfnoNadd.leg$soilNret.g.pot.1 <- NA  
-dfnoNadd.leg$soilNret.g.pot.1 <- dfnoNadd.leg$totalN.g.pot.1 - dfnoNadd.leg$BNF.g.plot.1
-
-# Calculate biomass N in mg N /g soil #
-# No added 
-# converting from g/pot to mg N / g soil
-# soil mass in g = 3 liters soil * 1.3 g/mL (approximate soil density) * 1000
-dfNadd.leg$BNF.mg.g.1 <- NA  
-dfNadd.leg$BNF.mg.g.1 <- (dfNadd.leg$BNF.g.plot.1*1000)/3900
-dfNadd.leg$soilNret.mg.g.1 <- NA  
-dfNadd.leg$soilNret.mg.g.1 <- (dfNadd.leg$soilNret.g.pot.1*1000)/3900
-dfNadd.leg$totalN.mg.g.1 <- NA  
-dfNadd.leg$totalN.mg.g.1 <- (dfNadd.leg$totalN.g.pot.1*1000)/3900
-
-# No N
-dfnoNadd.leg$BNF.mg.g.1 <- NA  
-dfnoNadd.leg$BNF.mg.g.1 <- (dfnoNadd.leg$BNF.g.plot.1*1000)/3900
-dfnoNadd.leg$soilNret.mg.g.1 <- NA  
-dfnoNadd.leg$soilNret.mg.g.1 <- (dfnoNadd.leg$soilNret.g.pot.1*1000)/3900
-dfnoNadd.leg$totalN.mg.g.1 <- NA  
-dfnoNadd.leg$totalN.mg.g.1 <- (dfnoNadd.leg$totalN.g.pot.1*1000)/3900
-
-
-# now we have a few data dataframes
-head(dfnoNadd.leg)
-head(dfNadd.leg)
-
-#put together N+ and N- ##
-dfNadd.leg
-dfnoNadd.leg
-df.leg<-rbind(dfnoNadd.leg, dfNadd.leg)
-df.leg$treatment <- factor(df.leg$treatment)
-
-# calcluated the amount fo N fixed per plant
-df.leg<-df.leg%>%
-  mutate(n_legume = recode(spp.number,
-                           "1" = 6,
-                           "2" = 3,
-                           "3" =2)) %>%
-  mutate(n_fix_per_legume = totalN.g.pot.1/n_legume)
-
-# make composition var
-df.leg$composition <- df.leg$treatment
-df.leg$composition<-gsub("L", "Legume", df.leg$composition)
-df.leg$composition<-gsub("G", "Grass", df.leg$composition)
-df.leg$composition<-gsub("B", "Brassica", df.leg$composition)
-df.leg$composition<-gsub("LegumeBrassica", "Legume_Brassica", df.leg$composition)
-df.leg$composition<-gsub("LegumeGrass", "Legume_Grass", df.leg$composition)
-df.leg$composition<-gsub("GrassBrassica", "Grass_Brassica", df.leg$composition)
-df.leg$composition 
-df.leg$composition<- factor(df.leg$composition, levels = c( "Legume", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
-
-
-
-
-
-
 
 ############### Fig 3 write functions###############
 get.predict<-function(df, sp1, sp2, sp3, trait) {
@@ -215,11 +86,11 @@ get.predict<-function(df, sp1, sp2, sp3, trait) {
   else {
     print(paste("the 3rd species is",sp3))
     sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
-    sp1.predict<-sp1.df/2
+    sp1.predict<-sp1.df/3
     sp2.df<-filter(df, Treatment==sp2)
-    sp2.predict<-sp2.df$trait/2
+    sp2.predict<-sp2.df$trait/3
     sp3.df<-filter(df, Treatment==sp3)
-    sp3.predict<-sp3.df$trait/2
+    sp3.predict<-sp3.df$trait/3
     predict <- sp1.predict + sp2.predict + sp3.predict
     print(predict)
     return(predict)
@@ -229,9 +100,9 @@ get.predict<-function(df, sp1, sp2, sp3, trait) {
 get.shoot.predict<-function(df, sp1, sp2, sp3) {
   if(missing(sp3)){
     sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
-    sp1.predict<-sp1.df$Shoot.Biomass/3
+    sp1.predict<-sp1.df$Shoot.Biomass/2
     sp2.df<-filter(df, Treatment==sp2)
-    sp2.predict<-sp2.df$Shoot.Biomass/3
+    sp2.predict<-sp2.df$Shoot.Biomass/2
     predict <- sp1.predict + sp2.predict
     print(predict)
     return(predict)
@@ -240,11 +111,11 @@ get.shoot.predict<-function(df, sp1, sp2, sp3) {
     
     print(paste("the 3rd species is",sp3))
   sp1.df<- filter(df, Treatment==sp1) %>% select(Shoot.Biomass)
-  sp1.predict<-sp1.df$Shoot.Biomass/2
+  sp1.predict<-sp1.df$Shoot.Biomass/3
   sp2.df<-filter(df, Treatment==sp2)
-  sp2.predict<-sp2.df$Shoot.Biomass/2
+  sp2.predict<-sp2.df$Shoot.Biomass/3
   sp3.df<-filter(df, Treatment==sp3)
-  sp3.predict<-sp3.df$Shoot.Biomass/2
+  sp3.predict<-sp3.df$Shoot.Biomass/3
   predict <- sp1.predict + sp2.predict + sp3.predict
   print(predict)
   return(predict)
@@ -253,9 +124,9 @@ get.shoot.predict<-function(df, sp1, sp2, sp3) {
 get.root.predict<-function(df, sp1, sp2, sp3) {
   if(missing(sp3)){
     sp1.df<- filter(df, Treatment==sp1) %>% select(Root.Biomass)
-    sp1.predict<-sp1.df$Root.Biomass/3
+    sp1.predict<-sp1.df$Root.Biomass/2
     sp2.df<-filter(df, Treatment==sp2)
-    sp2.predict<-sp2.df$Root.Biomass/3
+    sp2.predict<-sp2.df$Root.Biomass/2
     predict <- sp1.predict + sp2.predict
     print(predict)
     return(predict)
@@ -264,11 +135,11 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
     
     print(paste("the 3rd species is",sp3))
   sp1.df<- filter(df, Treatment==sp1) %>% select(Root.Biomass)
-  sp1.predict<-sp1.df$Root.Biomass/2
+  sp1.predict<-sp1.df$Root.Biomass/3
   sp2.df<-filter(df, Treatment==sp2)
-  sp2.predict<-sp2.df$Root.Biomass/2
+  sp2.predict<-sp2.df$Root.Biomass/3
   sp3.df<-filter(df, Treatment==sp3)
-  sp3.predict<-sp3.df$Root.Biomass/2
+  sp3.predict<-sp3.df$Root.Biomass/3
   predict <- sp1.predict + sp2.predict + sp3.predict
   print(predict)
   return(predict)
@@ -277,6 +148,7 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
 
 
 ######### Fig 3 jenny predictions from monocultures for biomass #######
+
 
 
 ## we expect that a plant makes the same amount of biomass in monoculures vs mixtures
@@ -330,7 +202,7 @@ as.factor(dfb1$Treatment)
 #old
 mycols<-c("#365C83FF","grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
 # new
-mycols<-c("#FEB5A2FF","grey" , "#9D7660FF", "grey", "#D7B5A6FF", "grey", "#3896C4FF" , "grey")
+#mycols<-c("#FEB5A2FF","grey" , "#9D7660FF", "grey", "#D7B5A6FF", "grey", "#3896C4FF" , "grey")
 
 
 #setwd(fig3path)
@@ -373,16 +245,85 @@ p3<-dfb1  %>%
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
   theme_classic(base_size = 12)+
+  #geom_text(y=8, label =label , nudge_x = -.8, size=7)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
-  geom_text(y=8, label =label , nudge_x = -.8, size=7)
+        plot.title = element_text(hjust = 0.5))
 
 p3
 
 
 # Nfix#
 
+### example calculation  #####
+
+
+mycols7<-c("#466F9DFF", "#91B3D7FF",  "white", "white", "white", "#D7B5A6FF", "#3896C4FF" )
+
+p1<-df  %>% filter(n_species!="NA") %>%
+  filter(Treatment!= "LGB") %>%
+  ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
+  geom_jitter(width = .2, size=.5 )+
+  geom_boxplot(alpha=.7, outlier.shape = NA)+
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = mycols7)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
+        plot.title = element_text(hjust = 0, size=14))+
+    xlab("") 
+p1
+
+
+# caculated half for L
+sp1.df<- filter(df, Treatment=="L") %>% select(Root.Biomass)
+sp1.predict<-sp1.df$Root.Biomass/2
+Root.Biomass<-sp1.predict
+Treatment <- rep("half_L", length(Root.Biomass))
+halfl<-data.frame(Treatment, Root.Biomass)
+df1<-full_join(df, halfl)
+df1<-df1 %>% filter(Treatment!="LGB" & Treatment!="LB" & Treatment!="B")
+df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "GB", "LG"))
+
+
+# caculated half for G
+sp1.df<- filter(df, Treatment=="G") %>% select(Root.Biomass)
+sp1.predict<-sp1.df$Root.Biomass/2
+Root.Biomass<-sp1.predict
+Treatment <- rep("half_G", length(Root.Biomass))
+halfg<-data.frame(Treatment, Root.Biomass)
+df1<-full_join(df1, halfg)
+df1<-df1 %>% filter(Treatment!="GB")
+df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "half_G", "LG"))
+as.factor(df1$Treatment)
+
+
+
+# caculated LG 
+sp1<- filter(df1, Treatment=="half_L") %>% select(Root.Biomass)
+sp2<- filter(df1, Treatment=="half_G") %>% select(Root.Biomass)
+
+LG.predict <- sp1$Root.Biomass + sp2$Root.Biomass
+Root.Biomass<-LG.predict
+Treatment <- rep("LG.predict", length(Root.Biomass))
+predict<-data.frame(Treatment, Root.Biomass)
+df1<-full_join(df1, predict)
+df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "half_G", "LG.predict", "LG"))
+as.factor(df1$Treatment)
+
+
+mycols7<-c( "#715b8a", "#4D8F8BFF", "grey", "grey", "grey", "#AD5A6BFF") 
+
+p1<-df1  %>% 
+  ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
+  geom_jitter(width = .2, size=.5 )+
+  geom_boxplot(alpha=.7, outlier.shape = NA)+
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = mycols7)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
+        plot.title = element_text(hjust = 0, size=14))+
+  xlab("") 
+p1
 
 #####figure percent N ###
 #svg(file="nfix.percent.predict.svg",width = 2.5, height=2.5)
