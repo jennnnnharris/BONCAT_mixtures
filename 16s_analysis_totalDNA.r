@@ -27,12 +27,16 @@ library(paletteer)
 
 
 # colors
-mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-mycols7v<-c( "#715b8a", "#97c9c7", "#b1de64", "#365C83FF", "#bd0262", "#e8bad7",  "#384351FF")
-mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
-mycols <- c("#29224C", "#44AA99","#88CCEE",
-            "#DDCC77", "#CC6677","#AA4499"  ,"#882255")
+mycols <- c(
+  "#2107EA", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000", # golden yellow
+  "#865338" # medium mocha brown
+)
 
 # set shapes
 myshapes <- c(1, 12,15 ,21, 22, 23 , 24)
@@ -53,8 +57,17 @@ metadat<-read.csv("metadat.csv", header = T)
 asvs[1:5,1:5]#taxa are columns
 asvs<-t(asvs)
 
+# order metadata
+metadat<-as.data.frame(metadat[order(metadat$SampleID),])
+metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+row.names(metadat) <- metadat$SampleID
+
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
+# select only total dna
+asvs <-asvs[which(metadat$Fraction=="Total" ),] 
+metadat <- metadat %>% filter(Fraction=="Total" )
+
 
 #get min number of reads in a sample
 min.s<-min(rowSums(asvs))
@@ -62,12 +75,6 @@ min.s<-min(rowSums(asvs))
 ### Rarefy to obtain even numbers of reads by sample ###
 set.seed(336)
 asvs<-rrarefy(asvs, min.s)
-
-# order metadata
-metadat<-as.data.frame(metadat[order(metadat$SampleID),])
-metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-row.names(metadat) <- metadat$SampleID
-# make composition column
 
 
 # make composition var
@@ -107,7 +114,7 @@ ps
 ps<-subset_samples(ps, Fraction=="Total")
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
-# 218 k asvs
+# 220 k asvs
 
 
 
@@ -162,8 +169,8 @@ p1<-rich%>%
 #filter(N=="0") %>%
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
   #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
   geom_jitter(size=1.5, width=.1)+
   theme_classic(base_size = 16)+
@@ -192,10 +199,9 @@ lab<- gsub("Z", "A", lab)
 
 
 p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
-  ggplot(aes(x=composition, y=Observed,  fill=Treatment))+
+  ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+  scale_fill_manual(values = mycols)+
   #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
   geom_jitter(width = .1,size=1.5)+
   theme_classic(base_size = 16)+
@@ -332,13 +338,13 @@ p1.cap
 
 #col
 # colors
-mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
-mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262","#e8bad2" ,  "white")
-mycols7<-c( "#715b8a", "#63a4b8", "#b1de64", "#183e80", "#bd0262", "#e8bad7",  "#384351FF")
-mycols <- c("#882255", "#AA4499", "#CC6677","#DDCC77", "#88CCEE", "#44AA99", "#29224C" )
+#mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
+#mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262","#e8bad2" ,  "white")
+#mycols7<-c( "#715b8a", "#63a4b8", "#b1de64", "#183e80", "#bd0262", "#e8bad7",  "#384351FF")
+#mycols <- c("#882255", "#AA4499", "#CC6677","#DDCC77", "#88CCEE", "#44AA99", "#29224C" )
 
 #mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "white", "white", "white",  "#384351FF")
-mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+#mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
 
 # cap plot total
@@ -449,8 +455,8 @@ pairwise_results$LG_vs_LB
   variance_explained2<-perc.exp[2]
   
 #plot
-  ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
-           ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
+  ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA ",xlab=paste("PCoA1 (",round(variance_explained1,2),"% variance explained)"),
+           ylab=paste("PCoA2 (",round(variance_explained2,2),"% variance explained)"))
   points(otus.p, 
          col= mycols[metadat2$Treatment],
          pch= c(22,24)[as.factor(metadat2$N)],
@@ -490,7 +496,10 @@ print(pcoa_plot)
   
 ######PCOA nitrogen + no nitrogen########
 
-
+mycols2 <- c(
+  "grey",   # grey
+  "#096077" # teal
+)
 # plot with ggplot
 ggplot(df, aes(x = PCoA1, y = PCoA2, color = as.factor(N))) +
   geom_point(aes(shape = as.factor(N) ), size=3)+
@@ -500,7 +509,7 @@ ggplot(df, aes(x = PCoA1, y = PCoA2, color = as.factor(N))) +
        y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
   theme_minimal() +
   coord_fixed(ratio=1)+  # Ensure the axes are scaled equally (important for ordination plots)
-  scale_color_manual(values =  mycols, name="composition")+
+  scale_color_manual(values =  mycols2, name="Nitrogen")+
   stat_ellipse(aes(group=as.factor(N)), linetype=1)+
   theme(text=element_text(size=12), strip.text.x=element_text(size=12),
         legend.position="left")
@@ -521,12 +530,22 @@ ordiellipse(otus.pcoa, as.factor(metadat2$N),
             col= mycols7,
             alpha = 30)
 
+####### PCOA PLOTS jsut monocultures #####
+df %>% filter( n_species==1) %>%
+  ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
+  geom_point(aes(shape = as.factor(N) ), size=3)+
+  labs(title = "PCoA of Bray-Curtis Dissimilarities :
+    total composition*N",
+       x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
+       y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
+  theme_minimal() +
+  coord_fixed(ratio=1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
+  scale_color_manual(values =  mycols, name="composition")+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  theme(text=element_text(size=12), strip.text.x=element_text(size=12),
+        legend.position="left")
 
-# Display the plot
-print(pcoa_plot) 
-
-
-####### PCOA PLOTS just legumes #####
+####### PCOA PLOTS facet wrap#####
 df %>%
 ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
   geom_point(aes(shape = as.factor(N) ), size=3)+
@@ -541,7 +560,7 @@ ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
   theme(text=element_text(size=12), strip.text.x=element_text(size=12),
         legend.position="left")+
   facet_wrap(~Legume, ncol=2)
-
+ev.off()
 
 
 

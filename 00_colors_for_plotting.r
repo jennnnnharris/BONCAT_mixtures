@@ -114,3 +114,43 @@ blues = c(
   "#5D6E7D",  # Grayish blue for moderate increase
   "#2F4A60"   # Dark blue-teal for the highest value (4)
 )
+
+
+IBM <- c(
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000" # golden yellow
+)
+
+IBM7 <- c(
+  "#2107EA", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000", # golden yellow
+  "#865338" # medium mocha brown
+)
+
+
+muted<-c(
+  "#4B2D4BFF",
+  "#4D8F8BFF",
+  "#CDD6ADFF",
+  "#365C83FF", 
+  "#AD5A6BFF", 
+  "#E3C1CBFF",
+  "#384351FF"
+  )
+
+vibrant <- c(
+ "#715b8a",
+ "#97c9c7",
+ "#b1de64",
+ "#365C83FF",
+ "#bd0262",
+ "#e8bad7",
+ "#384351FF")
+

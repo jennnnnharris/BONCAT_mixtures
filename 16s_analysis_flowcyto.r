@@ -28,18 +28,15 @@ library(MicEco)
 library(multcompView)
 
 # set colors
-#blues<-c( "#9CA9BAFF", "#5480B5FF", "#3D619DFF", "#405A95FF", "#345084FF")
-#mycols7<-c( "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-#mycols8<-c("grey", "#4B2D4BFF", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-#mycols4 <- c("#4B2D4BFF",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
-#mycols3<- c(  "#f4f1bb", "#ed6a5a","#9bc1bc")
-#mycols3<- c( "#006d77",  "#f4d35e", "#e94f37")
-
-mycols7<- c("#440154", "#443983","#31688e", "#21918c", "#35b779", "#90d743", "#fde725")
-mycols4 <- c("#440154","#35b779", "#90d743", "#fde725")
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+mycols <- c( #IBM colors
+  "#2107EA", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000", # golden yellow
+  "#865338" # medium mocha brown
+)
 
 
 #####Import data#####
@@ -54,6 +51,10 @@ metadat<-read.csv("metadat.csv", header = T)
 asvs[1:5,1:5]#taxa are columns
 asvs<-t(asvs)
 
+## order metadata
+metadat<-as.data.frame(metadat[order(metadat$SampleID),])
+row.names(metadat) <- metadat$SampleID
+metadat
 
 ####filter for just flow cyto samples #
 asvs<-asvs[which(metadat$Fraction!="Total"),]
@@ -63,22 +64,17 @@ metadat<-metadat[which(metadat$Fraction!="Total"),]
 dim(metadat)
 
 
+
+#make taxon matrix row names OTUs
+#taxon[1:5,1:5]
+row.names(taxon) <- taxon$Feature.ID
+
 #get min number of reads in a sample
 min.s<-min(rowSums(asvs))
 
 ### Rarefy to obtain even numbers of reads by sample ###
 set.seed(336)
 asvs.r<-rrarefy(asvs, min.s)
-
-
-## order metadata
-metadat<-as.data.frame(metadat[order(metadat$SampleID),])
-row.names(metadat) <- metadat$SampleID
-metadat
-
-#make taxon matrix row names OTUs
-#taxon[1:5,1:5]
-row.names(taxon) <- taxon$Feature.ID
 
 # import it phyloseq
 Workshop_OTU <- otu_table(as.matrix(asvs.r), taxa_are_rows = FALSE)
@@ -144,7 +140,7 @@ rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB"
 rich$Fraction   <- factor(rich$Fraction, levels= c("Active", "Inactive"))
 
 #BCAT_73_S35 is kind of a weird outlier
-rich<-rich[which(rich$SampleID!="BCAT_73_S35"),]
+#rich<-rich[which(rich$SampleID!="BCAT_73_S35"),]
 
 
 ##plots######
@@ -153,8 +149,8 @@ rich<-rich[which(rich$SampleID!="BCAT_73_S35"),]
 p1<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+ # scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
   #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
   geom_jitter(size=1.5)+
   theme_classic(base_size = 16)+
@@ -168,8 +164,8 @@ p1
 p2<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
   #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
   geom_jitter(size=1.5)+
   theme_classic(base_size = 16)+
@@ -183,8 +179,8 @@ p2
 p3<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=Chao1,  fill=Treatment))+
   geom_boxplot(alpha=.6, outlier.shape = NA) +
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
   #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
   geom_jitter(size=1.5)+
   theme_classic(base_size = 16)+
