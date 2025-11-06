@@ -28,10 +28,11 @@ library(paletteer)
 
 # colors
 mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-mycols7v<-c( "#715b8a", "#4D8F8BFF", "#b1de64", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
+mycols7v<-c( "#715b8a", "#97c9c7", "#b1de64", "#365C83FF", "#bd0262", "#e8bad7",  "#384351FF")
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
-
+mycols <- c("#29224C", "#44AA99","#88CCEE",
+            "#DDCC77", "#CC6677","#AA4499"  ,"#882255")
 
 # set shapes
 myshapes <- c(1, 12,15 ,21, 22, 23 , 24)
@@ -304,12 +305,12 @@ ps
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
 #1696 asvs
-
+rich<-0
 ## plot
 #plot(sort(taxa_sums(total), TRUE), type="h", ylim=c(0, 8000))
 
 
-######## 4. CAP ##################
+######## 4. CAP -L G B - ##################
 
 # Constrained ordination
 # Perform vegdist analysis of BC distances #
@@ -327,15 +328,14 @@ metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB"
 p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~N*Treatment)
 anova.cca(p1.cap, by="terms")
 
-
-
 p1.cap
-
 
 #col
 # colors
 mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
-mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262", "#c77597",  "white")
+mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262","#e8bad2" ,  "white")
+mycols7<-c( "#715b8a", "#63a4b8", "#b1de64", "#183e80", "#bd0262", "#e8bad7",  "#384351FF")
+mycols <- c("#882255", "#AA4499", "#CC6677","#DDCC77", "#88CCEE", "#44AA99", "#29224C" )
 
 #mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "white", "white", "white",  "#384351FF")
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
@@ -348,9 +348,9 @@ p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
   stat_ellipse(aes(group=Treatment), linetype=1)+
   theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
         legend.position="left")+
-  scale_color_manual(values =  mycols7, name="composition")+
-  scale_shape_discrete(name= "Nitrogen")
-#ggtitle("A  All cover crops")
+  scale_color_manual(values =  mycols, name="composition")+
+  scale_shape_discrete(name= "Nitrogen")+
+ggtitle("model: composition * N")
 p1
 
 pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig4_CAPtotal"
@@ -358,405 +358,191 @@ svg("cap.total.treatment3.svg", width = 8 , height = 4)
 p1
 dev.off()
 
-# Legume present# #########
+#species scores #
+plot(p1.cap, display = c("sites", "species"))
+plot(p1.cap, display = c("sp", "wa"))
+plot(p1.cap, display = "species", type = "text")
+p1.cap$inertia
 
-# subset data
-ps1 <-subset_samples(ps, Legume == "1")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
 
+species_scores <- as.data.frame(scores(
+  x = p1.cap,
+  display = "species" # or "sp"
+))
+
+species_scores[order(species_scores$CAP1),]
+head(species_scores)
+species_scores$ASV<-row.names(species_scores)
+
+species_scores %>% filter(CAP1< -0.2) %>%
+ggplot( mapping = aes(CAP1, CAP2))+
+  geom_point()+
+  geom_label(aes(label=ASV))
+
+plot(species_scores$CAP1, species_scores$CAP2)
+
+species_scores %>% filter(CAP1< -0.4)
+
+
+
+
+
+
+###### pairwise adonsis ##########
+
+# A. Install the necessary package (if you haven't already)
+# install.packages("devtools") # If you don't have devtools
+#devtools::install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+
+
+# B. Load the package and run the pairwise test
+library(pairwiseAdonis)
+
+# Assuming:
+# - 'comm_data' is your community matrix (samples as rows, species as columns)
+# - 'env_data' is your environmental/metadata data frame
+# - 'Treatment' is the column with your 7 group levels in 'env_data'
+
+  
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & Legume == "1" )
-#set factors 
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "LB", "LG", "LGB"))
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil")
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
-#cap
-p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
-anova.cca(p1.cap, by="terms")
-
-p2<-plot_ordination(ps1,  p1.cap, color="Treatment", )+
-  theme_bw()+
-  geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=1)+
-  
-  #stat_ellipse(    geom = "polygon",aes(fill = Treatment),alpha = 0.25,level = 0.95 )+  
-  theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-        legend.position="none")+
-  scale_color_manual(values =  mycols4, name="Treatment")+
-  scale_fill_manual(values =  mycols4, name="Treatment")+
-    
-  scale_shape_discrete(name= "Nitrogen")+
-  
-  ggtitle("C Legume")
-p2
-
-
-
-
-
-# Grass# #####
-# subset  data
-ps1 <-subset_samples(ps, Grass=="1")
+# Calculate the Bray-Curtis distance matrix
+# Perform vegdist analysis of BC distances #
+ps1 <-subset_samples(ps, Treatment !="Soil" )
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & Grass=="1"  )
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "G", "GB",  "LG", "LGB"))
+bray_dist <- vegdist(otu_table(ps1), method = "bray")
+# Run the pairwise PERMANOVA
+pairwise_results <- pairwise.adonis2(bray_dist ~ Treatment, # Use the distance matrix directly
+  data = metadat2,
+  permutations = 999,
+  method = "bray",
+  p.adjust.m = "bonferroni")
 
-#cap
-p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
-anova.cca(p1.cap, by="terms")
-
-
-mycols4<- c( "#443983", "#21918c", "#90d743",  "#f7b307")
-
-p3<-plot_ordination(ps1,  p1.cap, color="Treatment", )+
-  theme_bw()+
-  geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=1)+
-  
-  #stat_ellipse(    geom = "polygon",aes(fill = Treatment),alpha = 0.25,level = 0.95 )+  
-  theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-        legend.position="none")+
-  scale_color_manual(values =  mycols4, name="Treatment")+
-  scale_fill_manual(values =  mycols4, name="Treatment")+
-  
-  scale_shape_discrete(name= "Nitrogen") +
-  ggtitle("C Grass")
-p3
+pairwise_results
+pairwise_results$LG_vs_LB
 
 
-# Brass ###########
+######## 4. PCOA -composition * N - ##################
 
-# subset data
-ps1 <-subset_samples(ps, Brassicae=="1")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-metadat2<-filter(metadat, Fraction=="Total" & Brassicae=="1" )
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "B", "GB", "LB",  "LGB"))
-
-# cap
-p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
-anova.cca(p1.cap, by="terms")
-
-#Brass colors
-
-mycols4<- c( "#31688e", "#21918c", "#35b779",  "#f7b307")
-
-
-p4<-plot_ordination(ps1,  p1.cap, color="Treatment", )+
-  theme_bw()+
-  geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=1)+
-  
-  #stat_ellipse(    geom = "polygon",aes(fill = Treatment),alpha = 0.25,level = 0.95 )+  
-  theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-        legend.position="none")+
-  scale_color_manual(values =  mycols4, name="Treatment")+
-  scale_fill_manual(values =  mycols4, name="Treatment")+
-  
-  scale_shape_discrete(name= "Nitrogen")  +
-  ggtitle("D Brassicae")
-p4
-
-
-
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig4_CAP")
-svg(file="CAP.total.svg",width = 6, height=2.5)
-require(gridExtra)
-#windows(10,10)
-grid.arrange( p2, p3, p4, ncol=3)
-dev.off()
-
-
-
-
-
-
-
-######## 5. PCOA ##################
-
-#set shapes and cols
-  myshapes <- c(1, 12,15 ,21, 22, 23 , 24)
-  myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
-  
-  
-######PCOA between fractions##
-  # remove control
-  ps2<-subset_samples(ps, Fraction !="CTL" )
-  ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-  ps2
-  
+#PCOA 
+  # Perform vegdist analysis of BC distances #
+  ps1 <-subset_samples(ps, Treatment !="Soil" )
+  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  ps1
+  # subset metadata
+  metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil")
+  #set factors 
+  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
   # Calculate Bray-Curtis distance between samples
-  otus.bray<-vegdist(otu_table(ps2), method = "bray")
+  otus.bray<-vegdist(otu_table(ps1), method = "bray")
   # Perform PCoA analysis of BC distances #
   otus.pcoa <- cmdscale(otus.bray, k=(44-1), eig=TRUE)
-  
   # Store coordinates for first two axes in new variable #
   otus.p <- otus.pcoa$points[,1:2]
-  
   # Calculate % variance explained by each axis #
   otus.eig<-otus.pcoa$eig
   perc.exp<-otus.eig/(sum(otus.eig))*100
-  pe1<-perc.exp[1]
-  pe2<-perc.exp[2]
+  variance_explained1<-perc.exp[1]
+  variance_explained2<-perc.exp[2]
   
-    
-  # subset metadata
-  metadat2<-filter(metadat, Fraction!="CTL")
-  
-  #factor
-  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-  mycols3<- c(  "#f4f1bb", "#ed6a5a","#9bc1bc")
-  mycols3.1<- c(  "#f4d35e", "#e94f37","#006d77")
-  metadat2$Fraction   <- factor(metadat2$Fraction)
-  
-  #plot
-  #windows(6,6)
-  #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-  
-  svg("pcoa.allfractions.svg",  width = 5, height = 5 )
-  ordiplot(otus.pcoa,choices=c(1,2), type="none", main="all fractions ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
+#plot
+  ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
            ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
   points(otus.p, 
-         col= mycols3.1[metadat2$Fraction],
-         pch= myshapes[metadat2$Rep],
+         col= mycols[metadat2$Treatment],
+         pch= c(22,24)[as.factor(metadat2$N)],
          lwd=1,cex=1.5,
-         bg=mycols3.1[metadat2$Fraction])
-  
-  ordiellipse(otus.pcoa, metadat2$Fraction,  
+         bg=mycols[metadat2$Treatment])
+  ordiellipse(otus.pcoa, metadat2$Treatment,  
               kind = "ehull", conf=0.95, label=T, 
               draw = "polygon",
               border = 0,
-              #lwd=.1,
-              col= mycols3,
+              col= mycols7,
               alpha = 30)
   dev.off()
   
-  
-  
+
+# plot with ggplot
+otus.p <-  as.data.frame(otus.p)
+colnames(otus.p)<- c("PCoA1", "PCoA2")
+df<-cbind(otus.p, metadat2)
+
+# plot
+pcoa_plot <- ggplot(df, aes(x = PCoA1, y = PCoA2, color = Treatment)) +
+  geom_point(aes(shape = as.factor(N) ), size=3)+
+   labs(title = "PCoA of Bray-Curtis Dissimilarities :
+    total composition*N",
+     x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
+    y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
+  theme_minimal() +
+  coord_fixed(ratio=1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
+  scale_color_manual(values =  mycols, name="composition")+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  theme(text=element_text(size=12), strip.text.x=element_text(size=12),
+        legend.position="left")
+
+# Display the plot
+print(pcoa_plot) 
    
   
-######PCOA of total ###
-
-# Calculate Bray-Curtis distance between samples
-# Perform PCoA analysis of BC distances #
-total <-subset_samples(total, Treatment !="Soil" )
-otus.bray<-vegdist(otu_table(total), method = "bray")
-otus.pcoa <- cmdscale(otus.bray, k=(44-1), eig=TRUE)
-# Store coordinates for first two axes in new variable #
-otus.p <- otus.pcoa$points[,1:2]
-colnames(otus.p) <- c("PC1", "PC2")
-df.pcoa <- cbind(sample_data(total), otus.p)
-# Calculate % variance explained by each axis #
-otus.eig<-otus.pcoa$eig
-perc.exp<-otus.eig/(sum(otus.eig))*100
-pe1<-perc.exp[1]
-pe2<-perc.exp[2]
-
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil")
-
-#set factors 
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+######PCOA nitrogen + no nitrogen########
 
 
-svg("pcoa.total.svg", height = 5, width =5)
-windows(6,6)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Total DNA",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
-         ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
+# plot with ggplot
+ggplot(df, aes(x = PCoA1, y = PCoA2, color = as.factor(N))) +
+  geom_point(aes(shape = as.factor(N) ), size=3)+
+  labs(title = "PCoA of Bray-Curtis Dissimilarities :
+    total composition*N",
+       x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
+       y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
+  theme_minimal() +
+  coord_fixed(ratio=1)+  # Ensure the axes are scaled equally (important for ordination plots)
+  scale_color_manual(values =  mycols, name="composition")+
+  stat_ellipse(aes(group=as.factor(N)), linetype=1)+
+  theme(text=element_text(size=12), strip.text.x=element_text(size=12),
+        legend.position="left")
+
+
+# plot
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA ",xlab=paste("PCoA1 (",round(variance_explained1,2),"% variance explained)"),
+         ylab=paste("PCoA2 (",round(variance_explained2,2),"% variance explained)"))
 points(otus.p, 
-       col= mycols7[metadat2$Treatment],
-       pch= myshapes[as.factor(metadat2$Rep)],
-       lwd=2,cex=2,
-       bg=mycols7[metadat2$Treatment])
-
-legend("topleft", legend=c( "L", "G", "B", "GB", "LB", "LG", "LGB") ,
-       fill= mycols7,
-       cex=1,
-       title = "Treatment",
-       bty = "n")
-
-ordiellipse(otus.pcoa, metadat2$Treatment,  
+       col= mycols[as.factor(metadat2$N)],
+       pch= c(22,24)[as.factor(metadat2$N)],
+       lwd=1,cex=1.5,
+       bg=mycols[as.factor(metadat2$N)],)
+ordiellipse(otus.pcoa, as.factor(metadat2$N),  
             kind = "ehull", conf=0.95, label=T, 
             draw = "polygon",
             border = 0,
-            lwd=.1,
             col= mycols7,
-            alpha = 40)
-dev.off()
+            alpha = 30)
 
 
-######PCOA nitrogen + no nitrogen###
+# Display the plot
+print(pcoa_plot) 
 
-# Calculate Bray-Curtis distance between samples
-# Perform PCoA analysis of BC distances #
 
-total <-subset_samples(total, Treatment !="Soil" )
-otus.bray<-vegdist(otu_table(total), method = "bray")
-otus.pcoa <- cmdscale(otus.bray, k=(44-1), eig=TRUE)
-otus.p <- otus.pcoa$points[,1:2]
-colnames(otus.p) <- c("PC1", "PC2")
-
-df.pcoa <- cbind(sample_data(total), otus.p)
-# Calculate % variance explained by each axis #
-otus.eig<-otus.pcoa$eig
-perc.exp<-otus.eig/(sum(otus.eig))*100
-pe1<-perc.exp[1]
-pe2<-perc.exp[2]
-
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil")
-
-#set factors 
-#metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-df.pcoa$Treatment   <- factor(df.pcoa$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-factor(metadat2$Fraction)
-df.pcoa$Rep <- factor(df.pcoa$Rep)
-metadat2$N <- factor(metadat2$N)
-myshapes2 <- c(21 , 12 )
-
-# scree plot
-otus.pcoa$eig
-plot(perc.exp[1:8],
-     ylab = "percent varience explained",
-     xlab = "PC")
-
-# Visualize ordination
-
-ggplot(df.pcoa, aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  # Replace 'Group' with the metadata column you want to use for coloring
-  geom_point(size = 3, alpha=.7) +
+####### PCOA PLOTS just legumes #####
+df %>%
+ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
+  geom_point(aes(shape = as.factor(N) ), size=3)+
+  labs(title = "PCoA of Bray-Curtis Dissimilarities :
+    total composition*N",
+       x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
+       y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
   theme_minimal() +
-  scale_color_manual(values=mycols7, name= "Treatment") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"), title = "Bray-Curtis PCoA Total DNA") +
-  facet_wrap(~N, ncol=2)
-  
-dev.off()
-
-### not with facet wrap
-p1<-df.pcoa %>% filter(N=="0") %>%
-ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal() +
-  scale_color_manual(values=mycols7, name= "Treatment") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Bray-Curtis PCoA  Total DNA ",
-       subtitle = "A  -Nitrogen")+
-  stat_ellipse(aes(group=Treatment), linetype=2)
-
-p2<-df.pcoa %>% filter(N=="1") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal() +
-  scale_color_manual(values=mycols7, name= "Treatment") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Bray-Curtis PCoA  Total DNA ",
-       subtitle = "B  +Nitrogen")+
-  stat_ellipse(aes(group=Treatment), linetype=2)
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg(file="pcoa.total.Nitrogen.svg",width = 8, height=4)
-
-require(gridExtra)
-#windows(8,4)
-grid.arrange(p1, p2, ncol=2)
-dev.off()
+  coord_fixed(ratio=1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
+  scale_color_manual(values =  mycols, name="composition")+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  theme(text=element_text(size=12), strip.text.x=element_text(size=12),
+        legend.position="left")+
+  facet_wrap(~Legume, ncol=2)
 
 
-### color by Nitrogen
-svg("total.pcoa.Nonly.svg", height = 4, width =4)
-df.pcoa %>% #filter(N=="0") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(N))) +  
-  geom_point(size = 3, alpha=.9) +
-  theme_minimal() +
-  scale_color_manual(values=mycols8, name= "Nitrogen") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Bray-Curtis PCoA  Total DNA ",
-       subtitle = "")+
-  stat_ellipse(aes(group=N), linetype=2)
-dev.off()
-
-#both treatments
-svg("total.pcoa.full.svg", height = 4, width =4)
-df.pcoa %>% 
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.9) +
-  theme_minimal() +
-  scale_color_manual(values=mycols7, name= "Treatment") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Bray-Curtis PCoA  Total DNA ",
-       subtitle = "")+
-  stat_ellipse(aes(group=Treatment), linetype=2)
-
-dev.off()
-
-# base R below just colors by N and no N
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-metadat2$N   <- factor(metadat2$N)
-
-svg("total.pcoa.Nonly.svg", height = 5, width =5)
-
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="Total DNA",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
-         ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
-points(otus.p, 
-         col= mycols8[metadat2$N],
-         pch= myshapes[as.factor(metadat2$Rep)],
-         lwd=1,cex=1.5,
-         bg=mycols8[metadat2$N])
-  
-  legend("topleft", legend=c( 0, 1) ,
-         fill= mycols8,
-         cex=1,
-         title = "Nitrogen",
-         bty = "n")
-  
-  ordiellipse(otus.pcoa, metadat2$N,  
-              kind = "ehull", conf=0.95, label=T, 
-              draw = "polygon",
-              border = 0,
-              lwd=.1,
-              col= mycols8,
-              alpha = 60)
-dev.off()
-
-
-
-######PCOA PLOTS  facet by number of species##
-
-p1<-df.pcoa %>% filter(N=="0") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal(base_size = 14) +
-  scale_color_manual(values=mycols7, guide= "none") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% var. explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "PCoA  Total DNA ",
-       subtitle = "A -Nitrogen")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=1)
-  
-  
-
-
-p2<-df.pcoa %>% filter(N=="1") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal( base_size = 14) +
-  scale_color_manual(values=mycols7, guide = "none") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% var. explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "PCoA  Total DNA ",
-       subtitle = "B  +Nitrogen")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=1)
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg(file="pcoa.total.nspecies.svg",width = 8, height=6)
-
-require(gridExtra)
-windows(9,7)
-grid.arrange(p1, p2, ncol=2)
-dev.off()
 
 
 ######PCOA PLOTS by group#
@@ -932,18 +718,15 @@ plot(dispersion, hull=FALSE, ellipse=TRUE)
 
 ######PERMANOVA ######
 
-asvs.clean<-otu_table(total)
-metadat2<-as.data.frame(as.matrix(sample_data(total)))
+asvs.clean<-otu_table(ps1)
+metadat2<-as.data.frame(as.matrix(sample_data(ps1)))
 head(metadat2)
 # Calculate Bray-Curtis distance between samples
 asvs.bray<-vegdist(asvs.clean, method = "bray")
 head(asvs.bray)
-asvs.perm<- adonis2(asvs.clean ~ N, data = metadat2, permutations = 999, method="bray")
+asvs.perm<- adonis2(asvs.clean ~ (N+Treatment)^2, data = metadat2, permutations = 999, method="bray", by="terms")
 asvs.perm
-
-asvs.perm<- adonis2(asvs.clean ~ (Grass + Brassicae + Legume + N)^2, data = metadat2, permutations = 999, method="bray")
-asvs.perm
-adonis2(formula = asvs.clean ~ (Grass + Brassicae + Legume)^3, data = metadat2, permutations = 999, method = "bray")
+summary(asvs.perm)
 
 #Df SumOfSqs      R2      F Pr(>F)    
 #Grass             1   0.6725 0.02898 2.5422  0.001 ***
