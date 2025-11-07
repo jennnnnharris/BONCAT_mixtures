@@ -155,9 +155,10 @@ p1<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   geom_jitter(size=1.5)+
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("Active Shannon Diversity")+
-  xlab("")
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  labs(title = "C",
+                  x="",
+                  y= "Active Shannon Diversity")
  #scale_shape_discrete() 
 p1
 
@@ -170,9 +171,10 @@ p2<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   geom_jitter(size=1.5)+
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("Active Number ASVS")+
-  xlab("")
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  labs(title = "D",
+       x="",
+       y= "Active ASV richness")
   #scale_shape_discrete() 
 p2
 

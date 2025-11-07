@@ -142,12 +142,29 @@ rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB"
 ##plots##
 
 # nitrogen effect
-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=as.factor(N), y=Shannon))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   geom_jitter(size=1.5)+
-  theme_classic(base_size = 16)
-  
+  theme_classic(base_size = 16)+
+  labs(title = "E",
+       x="Nitrogen",
+       y= "Total DNA Shannon diversity")+
+  annotate("text", x=1.5, y=8, label="*")
+
+p2<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+  ggplot(aes(x=as.factor(N), y=Observed))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  geom_jitter(size=1.5)+
+  theme_classic(base_size = 16)+
+  labs(title = "F",
+       x="Nitrogen",
+       y= "Total DNA ASV richness")+
+  annotate("text", x=1.5, y=5500, label="*")
+
+require(gridExtra)
+grid.arrange(p1, p2, ncol=2)
+
 
 # Treatment effect?
 # shannon diversity letters
@@ -166,7 +183,6 @@ lab <- gsub("X", "AB", lab)
 lab
 
 p1<-rich%>%  
-#filter(N=="0") %>%
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols) +
@@ -175,10 +191,11 @@ p1<-rich%>%
   geom_jitter(size=1.5, width=.1)+
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("Total DNA Shannon Diversity")+
- geom_text(y=7.9, label = lab, size=5)+
-  xlab("")
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  geom_text(y=7.9, label = lab, size=5)+
+  labs(title = "A",
+       x="",
+       y= "Total DNA Shannon Diversity")
   #scale_shape_discrete() 
 p1
 
@@ -206,10 +223,11 @@ p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   geom_jitter(width = .1,size=1.5)+
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("Total DNA Number of Asvs")+
-  xlab("")+
-  geom_text(y= 5100, label = lab, size=5)
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  geom_text(y= 5300, label = lab, size=5)+
+  labs(title = "B",
+       x="",
+       y= "Total DNA ASV richness")
   
 #scale_shape_discrete() 
 p2
