@@ -37,7 +37,7 @@ mycols <- c(
   "#FFB000", # golden yellow
   "#865338" # medium mocha brown
 )
-mycols <- c( #IBM colors
+IBM <- c( #IBM colors
   "navy", # dark royal blue
   "#648FFF", # french blue
   "#785EF0", # light purple
@@ -49,7 +49,7 @@ mycols <- c( #IBM colors
 
 mycols2 <- c( #IBM colors
   "grey", # grey
-  "#32a6a8" # teal
+  "black" # teal
 )
 
 # set shapes
@@ -75,6 +75,8 @@ asvs<-t(asvs)
 metadat<-as.data.frame(metadat[order(metadat$SampleID),])
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 row.names(metadat) <- metadat$SampleID
+metadat$N   <- factor(metadat$N)
+metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
 
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
@@ -89,7 +91,6 @@ min.s<-min(rowSums(asvs))
 ### Rarefy to obtain even numbers of reads by sample ###
 set.seed(336)
 asvs<-rrarefy(asvs, min.s)
-
 
 # make composition var
 metadat$composition <- metadat$Treatment
@@ -342,10 +343,10 @@ ps
 #ps <-ps_prune(ps, min.samples = 3) # no features to group!
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
-#1696 asvs
-rich<-0
+#1778 asvs
+
 ## plot
-#plot(sort(taxa_sums(total), TRUE), type="h", ylim=c(0, 8000))
+plot(sort(taxa_sums(ps), TRUE), type="h", ylim=c(0, 8000))
 
 
 ######## 4. CAP -L G B - ##################
@@ -365,18 +366,7 @@ metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB"
 #p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Grass*Legume*Brassicae)
 p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~N*Treatment)
 anova.cca(p1.cap, by="terms")
-
 p1.cap
-
-#col
-# colors
-#mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
-#mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "#365C83FF", "#bd0262","#e8bad2" ,  "white")
-#mycols7<-c( "#715b8a", "#63a4b8", "#b1de64", "#183e80", "#bd0262", "#e8bad7",  "#384351FF")
-#mycols <- c("#882255", "#AA4499", "#CC6677","#DDCC77", "#88CCEE", "#44AA99", "#29224C" )
-
-#mycols7<-c( "#715b8a", "#4D8F8BFF", "#a5c76f", "white", "white", "white",  "#384351FF")
-#mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
 
 # cap plot total
@@ -384,24 +374,24 @@ p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
   theme_bw()+
   geom_point(aes(shape = as.factor(N) ), size=2.5)+
   stat_ellipse(aes(group=Treatment), linetype=1)+
-  theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
+  theme(text=element_text(size=15),
         legend.position="left")+
-  scale_color_manual(values =  mycols, name="composition")+
+  scale_color_manual(values =  IBM, name="composition")+
   scale_shape_discrete(name= "Nitrogen")+
+  coord_fixed(1/2)+
 ggtitle("model: composition * N")
 p1
 
-pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig4_CAPtotal"
-svg("cap.total.treatment3.svg", width = 8 , height = 4)
-p1
-dev.off()
+#pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig4_CAPtotal"
+#svg("cap.total.treatment3.svg", width = 8 , height = 4)
+#p1
+#dev.off()
 
 #species scores #
 plot(p1.cap, display = c("sites", "species"))
 plot(p1.cap, display = c("sp", "wa"))
 plot(p1.cap, display = "species", type = "text")
 p1.cap$inertia
-
 
 species_scores <- as.data.frame(scores(
   x = p1.cap,
@@ -421,10 +411,46 @@ plot(species_scores$CAP1, species_scores$CAP2)
 
 species_scores %>% filter(CAP1< -0.4)
 
+#### nitrogen ##
+p1 <-plot_ordination(ps1,  p1.cap, color= "N")+
+  theme_bw()+
+  geom_point(aes(shape = as.factor(N) ), size=2.5)+
+  stat_ellipse(aes(group=N), linetype=1)+
+  theme(text=element_text(size=15),
+        legend.position="left")+
+  scale_color_manual(values =  mycols2, name="Nitrogen")+
+  scale_shape_discrete(name= "Nitrogen")+
+  coord_fixed(1)+
+  ggtitle("model: composition * N")
+p1
 
+# cap plot total factor
+p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
+  theme_bw()+
+  geom_point(aes(shape = as.factor(N) ), size=2.5)+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  theme(text=element_text(size=15),
+        legend.position="none")+
+  scale_color_manual(values =  IBM, name="composition")+
+  scale_shape_discrete(name= "Nitrogen")+
+  coord_fixed(1/2)+
+  ggtitle("model: composition * N")+
+  facet_grid(~mixture)
+p1
 
-
-
+# cap plot total factor
+p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
+  theme_bw()+
+  geom_point(aes(shape = as.factor(N) ), size=2.5)+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  theme(text=element_text(size=15),
+        legend.position="none")+
+  scale_color_manual(values =  IBM, name="composition")+
+  scale_shape_discrete(name= "Nitrogen")+
+  coord_fixed(1/2)+
+  ggtitle("model: composition * N")+
+  facet_grid(~Legume_label)
+p1
 
 ###### pairwise adonsis ##########
 
