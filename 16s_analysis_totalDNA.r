@@ -37,6 +37,20 @@ mycols <- c(
   "#FFB000", # golden yellow
   "#865338" # medium mocha brown
 )
+mycols <- c( #IBM colors
+  "navy", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000", # golden yellow
+  "#865338" # medium mocha brown
+)
+
+mycols2 <- c( #IBM colors
+  "grey", # grey
+  "#32a6a8" # teal
+)
 
 # set shapes
 myshapes <- c(1, 12,15 ,21, 22, 23 , 24)
