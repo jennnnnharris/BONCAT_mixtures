@@ -37,7 +37,7 @@ mycols <- c( #IBM colors
   "#FFB000", # golden yellow
   "#865338" # medium mocha brown
 )
-mycols <- c( #IBM colors
+IBM <- c( #IBM colors
   "navy", # dark royal blue
   "#648FFF", # french blue
   "#785EF0", # light purple
@@ -49,7 +49,7 @@ mycols <- c( #IBM colors
 
 mycols2 <- c( #IBM colors
   "grey", # grey
-  "#32a6a8" # teal
+  "black" # black
 )
 # set shapes
 myshapes <- c(1, 12,15 ,21, 22, 23 , 24)
@@ -78,6 +78,7 @@ dim(asvs)
 metadat<-metadat[which(metadat$Fraction!="Total"),]
 dim(metadat)
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
 
 
 
@@ -355,19 +356,16 @@ df.pcoa %>%
   
     
   # plot between fractions
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
-           ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))
-  points(otus.p, 
-         col= mycols2[as.factor(metadat2$Fraction)],
-         pch= c(22,24)[as.factor(metadat2$Fraction)],
-         lwd=1,cex=1.5,
-         bg=mycols2[as.factor(metadat2$Fraction)],)
-  ordiellipse(otus.pcoa, as.factor(metadat2$Fraction),  
-              kind = "ehull", conf=0.95, label=T, 
-              draw = "polygon",
-              border = 0,
-              col= mycols2,
-              alpha = 30)
+  df.pcoa %>% 
+    ggplot( aes(x = PC1, y = PC2, color= as.factor(Fraction))) +  
+    geom_point(size = 3, alpha=.7) +
+    theme_minimal(base_size = 14) +
+    scale_color_manual(values=mycols, name="treatment") +
+    labs(x = paste("PCoA3 (",round(pe3,2),"% var. explained)"), y = paste("PCoA4 (",round(pe4,2),"% variance explained)"),
+         title = "PCoA sorted ",
+         subtitle = "A")+
+    coord_fixed()+
+    stat_ellipse(aes(group=Fraction), linetype=2)
 
  
 #######PCOA plot active#########
@@ -444,7 +442,7 @@ df.pcoa %>%
   facet_wrap(~Legume, ncol=3)
 
 
-##CAP ###  
+############CAP ############  
 # Constrained ordination
   ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
@@ -461,7 +459,19 @@ df.pcoa %>%
   p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
   anova.cca(p1.cap, by="terms")
     p1.cap
-  
+# cap plot total
+    p1 <-plot_ordination(ps1,  p1.cap, color="Treatment")+
+      theme_bw()+
+      geom_point( size=2.5)+
+      stat_ellipse(aes(group=Treatment), linetype=1)+
+      theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
+            legend.position="left")+
+      coord_fixed(3/4)+
+      scale_color_manual(values =  IBM, name="composition")+
+      ggtitle("model: composition * N")
+      
+    p1
+    
   # cap plot total
   p1 <-plot_ordination(ps1,  p1.cap, color="Treatment")+
     theme_bw()+
@@ -482,7 +492,7 @@ df.pcoa %>%
           legend.position="left")+
     scale_color_manual(values =  mycols, name="composition")+
     ggtitle("model: composition * N")+
-    facet_grid(~Legume)
+    facet_grid(~Legume_label)
   
 p1
 
