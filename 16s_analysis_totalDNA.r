@@ -514,8 +514,8 @@ pairwise_results$LG_vs_LB
   
 #plot
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-svg("baseRplot.svg", width=10, height = 6)
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+#svg("baseRplot.svg", width=10, height = 6)
 #windows(8,4)
 par(mfrow=c(1,2))
   ordiplot(otus.pcoa,choices=c(1,2), type="none",xlab=paste("PCoA1 (",round(variance_explained1,2),"% variance explained)"),
@@ -569,7 +569,7 @@ ordiellipse(otus.pcoa, as.factor(metadat2$N),
          title = "",     bty = "n")
   
   
-#  dev.off()
+  dev.off()
   
   
   
@@ -584,20 +584,26 @@ colnames(otus.p)<- c("PCoA1", "PCoA2")
 df<-cbind(otus.p, metadat2)
 
 # plot
-ggplot(df, aes(x = PCoA1, y = PCoA2, color = Treatment)) +
+p1<-ggplot(df, aes(x = PCoA1, y = PCoA2, color = Treatment)) +
   geom_point(aes(shape = as.factor(N) ), size=3)+
    labs(title = "A",
      x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
     y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
   theme_bw() +
-  coord_fixed(1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
+  #coord_fixed(1)+  # Ensure the axes are scaled equally (important for ordination plots)
   scale_color_manual(values =  mycols, name="composition")+
   stat_ellipse(aes(group=Treatment), linetype=1)+
   theme(text=element_text(size=12), strip.text.x=element_text(size=12),
-        legend.position="left")
+        legend.position="none")
+
 
 # Display the plot
 print(p1) 
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+svg("pcoa.svg", width=4, height = 4)
+p1
+dev.off()
+
    
   
 ######PCOA nitrogen + no nitrogen##
@@ -614,25 +620,23 @@ p2<-ggplot(df, aes(x = PCoA1, y = PCoA2, color = as.factor(N))) +
        y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
   theme_bw() +
   
-  #coord_fixed()+  # Ensure the axes are scaled equally (important for ordination plots)
   scale_color_manual(values =  mycols2, name="Nitrogen")+
   stat_ellipse(aes(group=as.factor(N)), linetype=1)+
   theme(text=element_text(size=12), strip.text.x=element_text(size=12),
         legend.position="none")
 
 p2
-
-
-# put plots together
-require(gridExtra)
-grid.arrange(p1, p2, ncol=2)
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+svg("Npcoa.svg", width=4, height = 4)
+p2
+dev.off()
 
 
 ####### PCOA PLOTS facet wrap#####
 p3<- df %>%
 ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
   geom_point(aes(shape = as.factor(N) ), size=3)+
-  labs(title = "C",
+  labs(title = "D",
        x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
        y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
   theme_bw() +
@@ -647,7 +651,7 @@ p3
 p4<- df %>%
   ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
   geom_point(aes(shape = as.factor(N) ), size=3)+
-  labs(title = "D",
+  labs(title = "C",
        x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
        y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
   theme_bw() +
@@ -660,7 +664,11 @@ p4<- df %>%
 p4
 
 require(gridExtra)
-grid.arrange(p3, p4, ncol=1)
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+svg("facetplot.svg", width=7, height = 7)
+grid.arrange(p4, p3, ncol=1)
+dev.off()
+
 
 ######PCOA STATS: BETA DISPERSION#
 #full dna  between trts

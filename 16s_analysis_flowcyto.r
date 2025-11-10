@@ -311,50 +311,7 @@ summary(m1)
        ylab = "percent varience explained",
        xlab = "PC")
 
-####faceted plot##
 
-#windows(4,8)
-df.pcoa %>% 
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal(base_size = 14) +
-  scale_color_manual(values=mycols, name="treatment") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% var. explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "PCoA Active ",
-       subtitle = "A")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~mixture, ncol=3)
-
-
-
-#windows(4,8)
-df.pcoa %>% 
-  ggplot( aes(x = PC3, y = PC4, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal(base_size = 14) +
-  scale_color_manual(values=mycols, name="treatment") +
-  labs(x = paste("PCoA3 (",round(pe3,2),"% var. explained)"), y = paste("PCoA4 (",round(pe4,2),"% variance explained)"),
-       title = "PCoA Active ",
-       subtitle = "A")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=3)
-
-
-
-  #windows(4,8)
-  df.pcoa %>% 
-    ggplot( aes(x = PC3, y = PC4, color= as.factor(Treatment))) +  
-    geom_point(size = 3, alpha=.7) +
-    theme_minimal(base_size = 14) +
-    scale_color_manual(values=mycols, name="treatment") +
-    labs(x = paste("PCoA3 (",round(pe3,2),"% var. explained)"), y = paste("PCoA4 (",round(pe4,2),"% variance explained)"),
-         title = "PCoA sorted ",
-         subtitle = "A")+
-    stat_ellipse(aes(group=Treatment), linetype=2)+
-    facet_wrap(~n_species, ncol=3)
-  
-  
-    
   # plot between fractions
   df.pcoa %>% 
     ggplot( aes(x = PC1, y = PC2, color= as.factor(Fraction))) +  
@@ -423,7 +380,7 @@ df.pcoa %>%
        title = "PCoA Active ",
        subtitle = "A")+
   coord_fixed()+
-  stat_ellipse(aes(group=Treatment), linetype=2)
+  stat_ellipse(aes(group=Treatment), linetype=2)+
   facet_wrap(~Legume, ncol=3)
 
 
@@ -495,82 +452,6 @@ df.pcoa %>%
     facet_grid(~Legume_label)
   
 p1
-
-####PCOA inactive######
-ps1 <-subset_samples(ps, Fraction=="Inactive" & Treatment!="Soil" )
-ps1 <-subset_samples(ps, Treatment!="Soil" )
-
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# 1845 taxa
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Inactive" & Treatment!="Soil")
-
-#factor
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-metadat2$Fraction   <- factor(metadat2$Fraction)
-
-
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(15-1), eig=TRUE)
-# Store coordinates for first two axes in new variable #
-otus.p <- otus.pcoa$points[,1:2]
-otus.p3 <- otus.pcoa$points[,3:4]
-colnames(otus.p) <- c("PC1", "PC2")
-colnames(otus.p3) <- c("PC3", "PC4")
-
-df.pcoa <- cbind(sample_data(ps1), otus.p)
-df.pcoa<-cbind(df.pcoa, otus.p3)
-df.pcoa$Treatment   <- factor(df.pcoa$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-df.pcoa
-# Calculate % variance explained by each axis #
-otus.eig<-otus.pcoa$eig
-perc.exp<-otus.eig/(sum(otus.eig))*100
-pe1<-perc.exp[1]
-pe2<-perc.exp[2]
-pe3<-perc.exp[3]
-pe4<-perc.exp[4]
-
-#calculate total variance explained by each principal component
-perc.exp<-otus.eig/(sum(otus.eig))*100
-#scree plot 
-otus.pcoa$eig
-plot(perc.exp[1:8],
-     ylab = "percent varience explained",
-     xlab = "PC")
-
-#windows(4,8)
-df.pcoa %>% 
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal(base_size = 14) +
-  scale_color_manual(values=mycols, name="treatment") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% var. explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "PCoA INActive ",
-       subtitle = "A")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~mixture, ncol=3)
-
-
-
-#windows(4,8)
-df.pcoa %>% 
-  ggplot( aes(x = PC3, y = PC4, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal(base_size = 14) +
-  scale_color_manual(values=mycols, name="treatment") +
-  labs(x = paste("PCoA3 (",round(pe3,2),"% var. explained)"), y = paste("PCoA4 (",round(pe4,2),"% variance explained)"),
-       title = "PCoA INActive ",
-       subtitle = "A")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~Legume, ncol=3)
-
-dev.off()
-
-
 
 ###PCOA STATS: BETA DISPERSION#####
 #full dna  between trts
@@ -649,13 +530,21 @@ plot(dispersion, hull=FALSE, ellipse=TRUE)
 ########PERMANOVA##############
 ########PERMANOVA active ########### 
 #between trts
-ps2<-subset_samples(ps, Fraction =="Active"& Treatment!="Soil" & Treatment!="CTL")
-ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
-ps2
+# Constrained ordination
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# 1845 taxa
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+
+#factor
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2$Fraction   <- factor(metadat2$Fraction)
+
 
 #get asvs table
-asvs.clean<-otu_table(ps2)
-metadat2<-filter(metadat, Fraction =="Active"& Treatment!="Soil" & Treatment!="CTL")
+asvs.clean<-otu_table(ps1)
 
 # Calculate Bray-Curtis distance between samples
 asvs.bray<-vegdist(asvs.clean, method = "bray")
@@ -670,7 +559,7 @@ adonis2(formula = asvs.clean ~ (Grass + Brassicae + Legume)^3, data = metadat2, 
 #### pairwise adonis
 library(pairwiseAdonis)
 
-bray_dist <- vegdist(otu_table(ps2), method = "bray")
+bray_dist <- vegdist(otu_table(ps1), method = "bray")
 # Run the pairwise PERMANOVA
 pairwise_results <- pairwise.adonis2(bray_dist ~ Treatment, # Use the distance matrix directly
                                      data = metadat2,
@@ -1003,6 +892,79 @@ df1%>%
 
 dev.off()
 
+
+ps1 <-subset_samples(ps, Fraction=="Inactive" & Treatment!="Soil" )
+ps1 <-subset_samples(ps, Treatment!="Soil" )
+
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# 1845 taxa
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Inactive" & Treatment!="Soil")
+
+#factor
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2$Fraction   <- factor(metadat2$Fraction)
+
+
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(15-1), eig=TRUE)
+# Store coordinates for first two axes in new variable #
+otus.p <- otus.pcoa$points[,1:2]
+otus.p3 <- otus.pcoa$points[,3:4]
+colnames(otus.p) <- c("PC1", "PC2")
+colnames(otus.p3) <- c("PC3", "PC4")
+
+df.pcoa <- cbind(sample_data(ps1), otus.p)
+df.pcoa<-cbind(df.pcoa, otus.p3)
+df.pcoa$Treatment   <- factor(df.pcoa$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+df.pcoa
+# Calculate % variance explained by each axis #
+otus.eig<-otus.pcoa$eig
+perc.exp<-otus.eig/(sum(otus.eig))*100
+pe1<-perc.exp[1]
+pe2<-perc.exp[2]
+pe3<-perc.exp[3]
+pe4<-perc.exp[4]
+
+#calculate total variance explained by each principal component
+perc.exp<-otus.eig/(sum(otus.eig))*100
+#scree plot 
+otus.pcoa$eig
+plot(perc.exp[1:8],
+     ylab = "percent varience explained",
+     xlab = "PC")
+
+#windows(4,8)
+df.pcoa %>% 
+  ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
+  geom_point(size = 3, alpha=.7) +
+  theme_minimal(base_size = 14) +
+  scale_color_manual(values=mycols, name="treatment") +
+  labs(x = paste("PCoA1 (",round(pe1,2),"% var. explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
+       title = "PCoA INActive ",
+       subtitle = "A")+
+  stat_ellipse(aes(group=Treatment), linetype=2)+
+  facet_wrap(~mixture, ncol=3)
+
+
+
+#windows(4,8)
+df.pcoa %>% 
+  ggplot( aes(x = PC3, y = PC4, color= as.factor(Treatment))) +  
+  geom_point(size = 3, alpha=.7) +
+  theme_minimal(base_size = 14) +
+  scale_color_manual(values=mycols, name="treatment") +
+  labs(x = paste("PCoA3 (",round(pe3,2),"% var. explained)"), y = paste("PCoA4 (",round(pe4,2),"% variance explained)"),
+       title = "PCoA INActive ",
+       subtitle = "A")+
+  stat_ellipse(aes(group=Treatment), linetype=2)+
+  facet_wrap(~Legume, ncol=3)
+
+dev.off()
 
 
 
