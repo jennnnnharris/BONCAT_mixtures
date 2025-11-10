@@ -76,7 +76,7 @@ metadat<-as.data.frame(metadat[order(metadat$SampleID),])
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 row.names(metadat) <- metadat$SampleID
 metadat$N   <- factor(metadat$N)
-metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
+metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes absent", "Legumes present"))
 
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
@@ -379,7 +379,7 @@ p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
   scale_color_manual(values =  IBM, name="composition")+
   scale_shape_discrete(name= "Nitrogen")+
   coord_fixed(1/2)+
-ggtitle("model: composition * N")
+  labs( title= " CAP of bray curtis")
 p1
 
 #pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig4_CAPtotal"
@@ -489,7 +489,7 @@ pairwise_results
 pairwise_results$LG_vs_LB
 
 
-######## 4. PCOA -composition * N - ##################
+######## 4. PCOA ##################
 
 #PCOA 
   # Perform vegdist analysis of BC distances #
@@ -513,8 +513,16 @@ pairwise_results$LG_vs_LB
   variance_explained2<-perc.exp[2]
   
 #plot
-  ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA ",xlab=paste("PCoA1 (",round(variance_explained1,2),"% variance explained)"),
-           ylab=paste("PCoA2 (",round(variance_explained2,2),"% variance explained)"))
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+svg("baseRplot.svg", width=10, height = 6)
+#windows(8,4)
+par(mfrow=c(1,2))
+  ordiplot(otus.pcoa,choices=c(1,2), type="none",xlab=paste("PCoA1 (",round(variance_explained1,2),"% variance explained)"),
+           ylab=paste("PCoA2 (",round(variance_explained2,2),"% variance explained)"))+
+  par(adj = 0)
+  title(main= "A")
+  par(adj=.5)
   points(otus.p, 
          col= mycols[metadat2$Treatment],
          pch= c(22,24)[as.factor(metadat2$N)],
@@ -524,200 +532,135 @@ pairwise_results$LG_vs_LB
               kind = "ehull", conf=0.95, label=T, 
               draw = "polygon",
               border = 0,
-              col= mycols7,
+              col= IBM,
               alpha = 30)
-  dev.off()
+  
+  legend("topleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+         fill= IBM,
+         cex=1,
+         title = "Composition",
+         bty = "n")
+  #legend("bottomleft", legend=c("Nitrogen -", "Nitrogen +"  ),
+  #       pch=c(22,24 ),
+  ##       cex=1,
+  #       title = "",     bty = "n")
   
 
+# plot
+ordiplot(otus.pcoa,choices=c(1,2), type="none",xlab=paste("PCoA1 (",round(variance_explained1,2),"% variance explained)"),
+           ylab=paste("PCoA2 (",round(variance_explained2,2),"% variance explained)"))+
+    par(adj = 0)
+  title(main= "B")
+  par(adj=.5)
+points(otus.p, 
+       col= mycols2[as.factor(metadat2$N)],
+       pch= c(22,24)[as.factor(metadat2$N)],
+       lwd=1,cex=1.5,
+       bg=mycols2[as.factor(metadat2$N)],)
+ordiellipse(otus.pcoa, as.factor(metadat2$N),  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            col= mycols2,
+            alpha = 30)  +
+  legend("topleft", legend=c("Nitrogen -", "Nitrogen +"  ),
+         pch=c(22,24 ),
+         cex=1,
+         title = "",     bty = "n")
+  
+  
+#  dev.off()
+  
+  
+  
+  
+  
+  
+  
+  
 # plot with ggplot
 otus.p <-  as.data.frame(otus.p)
 colnames(otus.p)<- c("PCoA1", "PCoA2")
 df<-cbind(otus.p, metadat2)
 
 # plot
-pcoa_plot <- ggplot(df, aes(x = PCoA1, y = PCoA2, color = Treatment)) +
+ggplot(df, aes(x = PCoA1, y = PCoA2, color = Treatment)) +
   geom_point(aes(shape = as.factor(N) ), size=3)+
-   labs(title = "PCoA of Bray-Curtis Dissimilarities :
-    total composition*N",
+   labs(title = "A",
      x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
     y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
-  theme_minimal() +
-  coord_fixed(ratio=1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
+  theme_bw() +
+  coord_fixed(1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
   scale_color_manual(values =  mycols, name="composition")+
   stat_ellipse(aes(group=Treatment), linetype=1)+
   theme(text=element_text(size=12), strip.text.x=element_text(size=12),
         legend.position="left")
 
 # Display the plot
-print(pcoa_plot) 
+print(p1) 
    
   
-######PCOA nitrogen + no nitrogen########
+######PCOA nitrogen + no nitrogen##
 
 mycols2 <- c(
   "grey",   # grey
-  "#096077" # teal
+  "black" # teal
 )
 # plot with ggplot
-ggplot(df, aes(x = PCoA1, y = PCoA2, color = as.factor(N))) +
+p2<-ggplot(df, aes(x = PCoA1, y = PCoA2, color = as.factor(N))) +
   geom_point(aes(shape = as.factor(N) ), size=3)+
-  labs(title = "PCoA of Bray-Curtis Dissimilarities :
-    total composition*N",
+  labs(title = "B",
        x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
        y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
-  theme_minimal() +
-  coord_fixed(ratio=1)+  # Ensure the axes are scaled equally (important for ordination plots)
+  theme_bw() +
+  
+  #coord_fixed()+  # Ensure the axes are scaled equally (important for ordination plots)
   scale_color_manual(values =  mycols2, name="Nitrogen")+
   stat_ellipse(aes(group=as.factor(N)), linetype=1)+
   theme(text=element_text(size=12), strip.text.x=element_text(size=12),
-        legend.position="left")
+        legend.position="none")
+
+p2
 
 
-# plot
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA ",xlab=paste("PCoA1 (",round(variance_explained1,2),"% variance explained)"),
-         ylab=paste("PCoA2 (",round(variance_explained2,2),"% variance explained)"))
-points(otus.p, 
-       col= mycols[as.factor(metadat2$N)],
-       pch= c(22,24)[as.factor(metadat2$N)],
-       lwd=1,cex=1.5,
-       bg=mycols[as.factor(metadat2$N)],)
-ordiellipse(otus.pcoa, as.factor(metadat2$N),  
-            kind = "ehull", conf=0.95, label=T, 
-            draw = "polygon",
-            border = 0,
-            col= mycols7,
-            alpha = 30)
+# put plots together
+require(gridExtra)
+grid.arrange(p1, p2, ncol=2)
 
-####### PCOA PLOTS jsut monocultures #####
-df %>% filter( n_species==1) %>%
-  ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
-  geom_point(aes(shape = as.factor(N) ), size=3)+
-  labs(title = "PCoA of Bray-Curtis Dissimilarities :
-    total composition*N",
-       x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
-       y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
-  theme_minimal() +
-  coord_fixed(ratio=1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
-  scale_color_manual(values =  mycols, name="composition")+
-  stat_ellipse(aes(group=Treatment), linetype=1)+
-  theme(text=element_text(size=12), strip.text.x=element_text(size=12),
-        legend.position="left")
 
 ####### PCOA PLOTS facet wrap#####
-df %>%
+p3<- df %>%
 ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
   geom_point(aes(shape = as.factor(N) ), size=3)+
-  labs(title = "PCoA of Bray-Curtis Dissimilarities :
-    total composition*N",
+  labs(title = "C",
        x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
        y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
-  theme_minimal() +
-  coord_fixed(ratio=1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
+  theme_bw() +
+ # coord_fixed(ratio=1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
   scale_color_manual(values =  mycols, name="composition")+
   stat_ellipse(aes(group=Treatment), linetype=1)+
   theme(text=element_text(size=12), strip.text.x=element_text(size=12),
-        legend.position="left")+
-  facet_wrap(~Legume, ncol=2)
-ev.off()
+        legend.position="none")+
+  facet_wrap(~Legume_label, ncol=2)
+p3
 
+p4<- df %>%
+  ggplot( aes(x = PCoA1, y = PCoA2, color = Treatment)) +
+  geom_point(aes(shape = as.factor(N) ), size=3)+
+  labs(title = "D",
+       x = paste0("PCoA 1 (", round(variance_explained1,2), "%)"),
+       y = paste0("PCoA 2 (", round(variance_explained2,2), "%)")) +
+  theme_bw() +
+  # coord_fixed(ratio=1/2)+  # Ensure the axes are scaled equally (important for ordination plots)
+  scale_color_manual(values =  mycols, name="composition")+
+  stat_ellipse(aes(group=Treatment), linetype=1)+
+  theme(text=element_text(size=12), strip.text.x=element_text(size=12),
+        legend.position="none")+
+  facet_wrap(~mixture, ncol=2)
+p4
 
-
-######PCOA PLOTS by group#
-
-mycols3<- c(  "#f4d35e", "#e94f37","#006d77")
-
-
-p1<-df.pcoa %>% filter(N=="0") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Legume))) +  
-  geom_point(size = 3, alpha=.9) +
-  theme_minimal() +
-  scale_color_manual(values=c("grey",  "#006d77"), name= "Legume") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Total DNA -N",
-       subtitle = "Legume")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=1)
-
-
-p2<-df.pcoa %>% filter(N=="0") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Grass))) +  
-  geom_point(size = 3, alpha=.9) +
-  theme_minimal() +
-  scale_color_manual(values=c("#5e615f",  "#e6b802"), name= "Grass") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Total DNA -N ",
-       subtitle = "Grass")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=1)
-
-
-p3<-df.pcoa %>% filter(N=="0") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Brassicae))) +  
-  geom_point(size = 3, alpha=.9) +
-  theme_minimal() +
-  scale_color_manual(values=c("grey",  "#e94f37"), name= "Brassica") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Total DNA -N  ",
-       subtitle = "Brassica")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=1)
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg(file="pcoa.total.functionalgroup.svg",width = 10, height=6)
-
-#require(gridExtra)
-#windows(12,8)
-grid.arrange(p1, p2, p3, ncol=3)
-dev.off()
-
-#### with nitrogen
-
-
-
-p1<-df.pcoa %>% filter(N=="1") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Legume))) +  
-  geom_point(size = 3, alpha=.9) +
-  theme_minimal() +
-  scale_color_manual(values=c("grey",  "#006d77"), name= "Legume") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Total DNA +N",
-       subtitle = "Legume")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=1)
-
-
-p2<-df.pcoa %>% filter(N=="1") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Grass))) +  
-  geom_point(size = 3, alpha=.9) +
-  theme_minimal() +
-  scale_color_manual(values=c("#5e615f",  "#e6b802"), name= "Grass") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Total DNA +N ",
-       subtitle = "Grass")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=1)
-
-
-p3<-df.pcoa %>% filter(N=="1") %>%
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Brassicae))) +  
-  geom_point(size = 3, alpha=.9) +
-  theme_minimal() +
-  scale_color_manual(values=c("grey",  "#e94f37"), name= "Brassica") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% variance explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "Total DNA +N  ",
-       subtitle = "Brassica")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~n_species, ncol=1)
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg(file="pcoa.total.functionalgroupN.svg",width = 10, height=6)
-
-#require(gridExtra)
-#windows(12,8)
-grid.arrange(p1, p2, p3, ncol=3)
-dev.off()
-
-
+require(gridExtra)
+grid.arrange(p3, p4, ncol=1)
 
 ######PCOA STATS: BETA DISPERSION#
 #full dna  between trts
