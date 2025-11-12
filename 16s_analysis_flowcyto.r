@@ -544,8 +544,79 @@ df.pcoa %>%
   
   dev.off()
   
+# split legume present and absence in base r
   
+  # legume present 
+legume_cols<- c( #IBM colors
+    "navy", # dark royal blue L
+    "white", # french blue G
+    "white", # light purple  B 
+    "white", # magenta pink GB
+    "#FE6100", # bright orange LB
+    "#FFB000", # golden yellow LG 
+    "#865338" # medium mocha brown LGB
+  )
+  par(cex.lab = 1.1) # make all fonts in graphs little bigger
+  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+           main="Legumes present ", cex = 1.2,
+           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+  par(adj = 0)
+  title(main= "C")
+  par(adj=.5)
+  points(sc_si, 
+         col= legume_cols[metadat2$Treatment],
+         pch= 22,
+         lwd=1,cex=1,
+         bg=legume_cols[metadat2$Treatment])
+  ordiellipse(sc_si, metadat2$Treatment,  
+              kind = "ehull", conf=0.95, label=F, 
+              draw = "polygon",
+              border = 0,
+              col= legume_cols,
+              alpha = 40,
+              cex=1)
+  legend("topleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+         fill= IBM,
+         cex=1,
+         title = "",
+         bty = "n")
+  
+  # legume absent
+no_legumes <- c( #IBM colors
+    "white", # dark royal blue L 
+    "#648FFF", # french blue G
+    "#785EF0", # light purple B
+    "#DC267F", # magenta pink  GB
+    "white", # bright orange LB
+    "white", # golden yellow LG
+    "white" # medium mocha brown LGB
+  )
+  par(cex.lab = 1.1) # make all fonts in graphs little bigger
+  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+           main="Legumes absent ", cex = 1.2,
+           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+  par(adj = 0)
+  title(main= "D")
+  par(adj=.5)
+  points(sc_si, 
+         col= no_legumes[metadat2$Treatment],
+         pch= 22,
+         lwd=1,cex=1,
+         bg=no_legumes[metadat2$Treatment])
+  ordiellipse(sc_si, metadat2$Treatment,  
+              kind = "ehull", conf=0.95, label=F, 
+              draw = "polygon",
+              border = 0,
+              col= no_legumes,
+              alpha = 40,
+              cex=1)
 
+  
+  
+  
+  
 # factor GGplot  
   p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)      
   # cap plot total
