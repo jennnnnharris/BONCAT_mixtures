@@ -413,7 +413,8 @@ df.pcoa %>%
   metadat2$Fraction   <- factor(metadat2$Fraction)
   
   #p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Grass*Legume*Brassicae)
-  p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
+  p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Grass*Legume*Brassicae)
+  #p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
   anova.cca(p1.cap, by="terms")
     p1.cap
 # cap plot total
@@ -527,8 +528,7 @@ dispersion <- betadisper(otus.bray, group=metadat2$Fraction)
 permutest(dispersion)
 plot(dispersion, hull=FALSE, ellipse=TRUE)
 
-########PERMANOVA##############
-########PERMANOVA active ########### 
+#########PERMANOVA active ########### 
 #between trts
 # Constrained ordination
 ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
