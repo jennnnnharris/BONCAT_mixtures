@@ -412,7 +412,6 @@ df.pcoa %>%
   metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
   metadat2$Fraction   <- factor(metadat2$Fraction)
   
-  #p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Grass*Legume*Brassicae)
   p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Grass*Legume*Brassicae)
   #p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
   anova.cca(p1.cap, by="terms")
