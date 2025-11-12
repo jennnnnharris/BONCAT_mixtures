@@ -47,7 +47,7 @@ IBM <- c( #IBM colors
   "#865338" # medium mocha brown
 )
 
-mycols2 <- c( #IBM colors
+bw <- c( #IBM colors
   "grey", # grey
   "black" # black
 )
@@ -103,7 +103,6 @@ ps
 # 110K taxa when rarefied 
 
 
-####Data cleaning and filtering ####
 ###remove plant contamination  ##
 # Select unassigned Asvs that the only in the the roots and nodules
 ps<-subset_taxa(ps, Class!="c__Chloroplast" )
@@ -269,15 +268,13 @@ summary(m1)
   #1902 asvs
   
     
-#####PCOA   ########  
+#####PCOA   ########
+  
+# subset data  
   ps1 <-subset_samples(ps, Treatment !="Soil" & Treatment!="CTL" )
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
   ps1
-  # 1907 taxa
-  # subset metadata
-  metadat2<-filter(metadat, Treatment!="Soil" & Treatment!="CTL")
-  
-  #factor
+   metadat2<-filter(metadat, Treatment!="Soil" & Treatment!="CTL")
   metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
   metadat2$Fraction   <- factor(metadat2$Fraction)
   
@@ -312,18 +309,26 @@ summary(m1)
        xlab = "PC")
 
 
-  # plot between fractions
-  df.pcoa %>% 
-    ggplot( aes(x = PC1, y = PC2, color= as.factor(Fraction))) +  
-    geom_point(size = 3, alpha=.7) +
-    theme_minimal(base_size = 14) +
-    scale_color_manual(values=mycols, name="treatment") +
-    labs(x = paste("PCoA3 (",round(pe3,2),"% var. explained)"), y = paste("PCoA4 (",round(pe4,2),"% variance explained)"),
-         title = "PCoA sorted ",
-         subtitle = "A")+
-    coord_fixed()+
-    stat_ellipse(aes(group=Fraction), linetype=2)
-
+  ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA ",xlab=paste("PCoA1 (",round(pe1,2),"% variance explained)"),
+           ylab=paste("PCoA2 (",round(pe2,2),"% variance explained)"))+
+  par(adj = 0)
+  title(main= "B")
+  par(adj=.5)
+  points(otus.p, 
+         col= bw[as.factor(metadat2$Fraction)],
+         pch= c(22,24)[as.factor(metadat2$Fraction)],
+         lwd=1,cex=1.5,
+         bg=bw[as.factor(metadat2$Fraction)],)
+  ordiellipse(otus.pcoa, as.factor(metadat2$Fraction),  
+              kind = "ehull", conf=0.95, label=T, 
+              draw = "polygon",
+              border = 0,
+              col= bw,
+              alpha = 30,
+              cex=1.5)
+  # base r plot
+  
+  
  
 #######PCOA plot active#########
   ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" )
@@ -400,58 +405,178 @@ df.pcoa %>%
 
 
 ############CAP ############  
-# Constrained ordination
+# inactive verse active 
+  # subset data  
+  ps1 <-subset_samples(ps, Treatment !="Soil" & Treatment!="CTL" )
+  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  ps1
+  metadat2<-filter(metadat, Treatment!="Soil" & Treatment!="CTL")
+  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+  metadat2$Fraction   <- factor(metadat2$Fraction)
+  
+  
+  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
+  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+  
+  # 2. Run the CAP (db-RDA) analysis
+  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+  cap_result <- capscale(dist_matrix ~ Fraction,
+                         data = metadat2,
+                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+  
+  anova.cca(cap_result, by="terms")
+  
+  ### 3. grab info for the plot
+  smry <- summary(cap_result)
+  smry
+  sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+  sc_si
+  
+  # Extract the model's adjusted R2
+  RsquareAdj(cap_result)$adj.r.squared
+  
+  # percent varience of total varience on RDA 1 and RDA 2
+  perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+  perc
+  
+  ### 4. plot 
+  
+  setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
+  svg("cap.fraction.svg", width = 6 , height = 6)
+ # windows(4,4)
+  par(cex.lab = 1.1) # make all fonts in graphs little bigger
+  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+           main="CAP ", cex = 1.2,
+           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+  par(adj = 0)
+  title(main= "A")
+  par(adj=.5)
+  points(sc_si, 
+         col= "black",
+         pch= c(22,24)[as.factor(metadat2$Fraction)],
+         lwd=1,cex=1,
+         bg=bw[metadat2$Fraction])
+  ordiellipse(sc_si, metadat2$Fraction,  
+              kind = "ehull", conf=0.95, label=T, 
+              draw = "polygon",
+              border = 0,
+              col= bw,
+              alpha = 30,
+              cex=1.2)
+  
+  legend("topleft", legend=c("Active", "Inactive"  ),
+         pch=c(22,24 ),
+         cex=1,
+         title = "",     bty = "n")
+  
+  dev.off()
+  
+  
+  
+##### CAP active ##################
+#  Constrained ordination
   ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
   ps1
   # 1845 taxa
   # subset metadata
   metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
-  
   #factor
   metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
   metadat2$Fraction   <- factor(metadat2$Fraction)
   
-  p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Grass*Legume*Brassicae)
-  #p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)
-  anova.cca(p1.cap, by="terms")
-    p1.cap
-# cap plot total
-    p1 <-plot_ordination(ps1,  p1.cap, color="Treatment")+
-      theme_bw()+
-      geom_point( size=2.5)+
-      stat_ellipse(aes(group=Treatment), linetype=1)+
-      theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-            legend.position="left")+
-      coord_fixed(3/4)+
-      scale_color_manual(values =  IBM, name="composition")+
-      ggtitle("model: composition * N")
-      
-    p1
-    
+  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
+  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+  
+  # 2. Run the CAP (db-RDA) analysis
+  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+  cap_result <- capscale(dist_matrix ~ Treatment,
+                         data = metadat2,
+                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+  
+  anova.cca(cap_result, by="terms")
+  
+  ### 3. grab info for the plot
+  smry <- summary(cap_result)
+  smry
+  sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+  sc_si
+  
+  # Extract the model's adjusted R2
+  RsquareAdj(cap_result)$adj.r.squared
+  
+  # percent varience of total varience on RDA 1 and RDA 2
+  perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+  perc
+  
+  ### 4. plot 
+  
+  #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
+  #svg("cap.active.svg", width = 6 , height = 6)
+  #windows(6,6)
+  par(cex.lab = 1.1) # make all fonts in graphs little bigger
+  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+           main="CAP ", cex = 1.2,
+           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+  par(adj = 0)
+  title(main= "B")
+  par(adj=.5)
+  points(sc_si, 
+         col= IBM[metadat2$Treatment],
+         pch= 22,
+         lwd=1,cex=1,
+         bg=IBM[metadat2$Treatment])
+  ordiellipse(sc_si, metadat2$Treatment,  
+              kind = "ehull", conf=0.95, label=T, 
+              draw = "polygon",
+              border = 0,
+              col= IBM,
+              alpha = 40,
+              cex=1)
+  legend("topleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+         fill= IBM,
+         cex=1,
+         title = "",
+         bty = "n")
+  
+  
+  dev.off()
+  
+  
+
+# factor GGplot  
+  p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)      
   # cap plot total
   p1 <-plot_ordination(ps1,  p1.cap, color="Treatment")+
     theme_bw()+
     geom_point( size=2.5)+
-    stat_ellipse(aes(group=Treatment), linetype=1)+
+    #stat_ellipse(aes(group=Treatment), linetype=1)+
     theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
           legend.position="left")+
     scale_color_manual(values =  mycols, name="composition")+
     ggtitle("model: composition * N")+
     facet_grid(~mixture)
   p1
-  
-  p1 <-plot_ordination(ps1,  p1.cap, color="Treatment")+
+
+    
+p2<-  plot_ordination(ps1,  p1.cap, color="Treatment")+
     theme_bw()+
     geom_point( size=2.5)+
-    stat_ellipse(aes(group=Treatment), linetype=1)+
+    #stat_ellipse(aes(group=Treatment), linetype=1)+
     theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-          legend.position="left")+
+          legend.position="none")+
     scale_color_manual(values =  mycols, name="composition")+
-    ggtitle("model: composition * N")+
+    ggtitle("C")+
     facet_grid(~Legume_label)
   
-p1
+
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
+#svg("cap.active.svg", width = 6 , height = 6)
+windows(6,4)
+p2
+dev.off()
 
 ###PCOA STATS: BETA DISPERSION#####
 #full dna  between trts
