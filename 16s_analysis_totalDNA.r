@@ -47,7 +47,7 @@ IBM <- c( #IBM colors
   "#865338" # medium mocha brown
 )
 
-mycols2 <- c( #IBM colors
+bw <- c( #IBM colors
   "grey", # grey
   "black" # teal
 )
@@ -337,7 +337,7 @@ mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
 keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
 ps<-prune_taxa(keep, ps)
 ps
-#1696 asvs
+
 
 # remove asvs that are in less than 5 samples
 #ps <-ps_prune(ps, min.samples = 3) # no features to group!
@@ -349,55 +349,130 @@ ps
 plot(sort(taxa_sums(ps), TRUE), type="h", ylim=c(0, 8000))
 
 
-######## 4. CAP -L G B - ##################
-
+######## 4. CAP -Treatment- ##################
 # Constrained ordination
 # Perform vegdist analysis of BC distances #
+
+# subset data
 ps1 <-subset_samples(ps, Treatment !="Soil" )
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
 # subset metadata
 metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil")
-#set factors 
 metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
-#overall L+B+G
-#p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Grass*Legume*Brassicae)
-p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~N*Treatment)
-anova.cca(p1.cap, by="terms")
-p1.cap
+# 1. Calculate the distance matrix (e.g., Bray-Curtis)
+dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+
+# 2. Run the CAP (db-RDA) analysis
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ Treatment*N*Block,
+                       data = metadat2,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+#anova.cca(cap_result, by="terms")
+
+# other cap model
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ L*G*B,
+                       data = metadat2,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+#anova.cca(cap_result, by="terms")
+
+### 3. grab info for the plot
+smry <- summary(cap_result)
+smry
+sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+sc_si
+
+# Extract the model's adjusted R2
+RsquareAdj(cap_result)$adj.r.squared
+
+# percent varience of total varience on RDA 1 and RDA 2
+perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+perc
 
 
-# cap plot total
-p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
-  theme_bw()+
-  geom_point(aes(shape = as.factor(N) ), size=2.5)+
-  stat_ellipse(aes(group=Treatment), linetype=1)+
-  theme(text=element_text(size=15),
-        legend.position="left")+
-  scale_color_manual(values =  IBM, name="composition")+
-  scale_shape_discrete(name= "Nitrogen")+
-  coord_fixed(1/2)+
-  labs( title= " CAP of bray curtis")
-p1
+### 4. plot 
 
-#pathfig4 <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig4_CAPtotal"
-#svg("cap.total.treatment3.svg", width = 8 , height = 4)
-#p1
-#dev.off()
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+svg("cap.total.svg", width = 6 , height = 6)
+#windows(6,6)
+par(cex.lab = 1.2) # make all fonts in graphs little bigger
+ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+         main="CAP Total", cex = 1.2,
+         xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+         ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+  par(adj = 0)
+title(main= "A")
+par(adj=.5)
+points(sc_si, 
+       col= mycols[metadat2$Treatment],
+       pch= c(22,24)[as.factor(metadat2$N)],
+       lwd=1,cex=1,
+       bg=mycols[metadat2$Treatment])
+ordiellipse(sc_si, metadat2$Treatment,  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            col= IBM,
+            alpha = 30,
+            cex=1.2)
 
-#species scores #
+legend("bottomleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+       fill= IBM,
+       cex=1,
+       title = "",
+       bty = "n")
+legend("bottom", legend=c("Nitrogen -", "Nitrogen +"  ),
+      pch=c(22,24 ),
+       cex=1,
+       title = "",     bty = "n")
+
+dev.off()
+
+###### CAP nitrogen +  - 
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+svg("cap.nitrogen.svg", width = 6 , height = 6)
+#windows(6,6)
+par(cex.lab = 1.2) # make all fonts in graphs little bigger
+ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+         main="CAP Total", cex = 1.2,
+         xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+         ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+par(adj = 0)
+title(main= "B")
+par(adj=.5)
+points(sc_si, 
+       col= "black",
+       pch= c(22,24)[as.factor(metadat2$N)],
+       lwd=1,cex=1,
+       bg=bw[metadat2$N])
+ordiellipse(sc_si, metadat2$Nitrogen_label,  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            col= bw,
+            alpha = 30,
+            cex=1.2)
+legend("bottomleft", legend=c("Nitrogen -", "Nitrogen +"  ),
+       pch=c(22,24 ),
+       cex=1,
+       title = "",     bty = "n")
+
+dev.off()
+
+
+#species scores #####
 plot(p1.cap, display = c("sites", "species"))
 plot(p1.cap, display = c("sp", "wa"))
 plot(p1.cap, display = "species", type = "text")
 p1.cap$inertia
-
 species_scores <- as.data.frame(scores(
   x = p1.cap,
   display = "species" # or "sp"
 ))
-
 species_scores[order(species_scores$CAP1),]
 head(species_scores)
 species_scores$ASV<-row.names(species_scores)
@@ -408,7 +483,7 @@ ggplot( mapping = aes(CAP1, CAP2))+
   geom_label(aes(label=ASV))
 
 plot(species_scores$CAP1, species_scores$CAP2)
-
+###
 species_scores %>% filter(CAP1< -0.4)
 
 #### nitrogen ##
