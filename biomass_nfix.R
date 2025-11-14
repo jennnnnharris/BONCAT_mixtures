@@ -16,10 +16,23 @@ library(nlme)
 mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
 
-#current cols"
-#mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-#mycols4<-c("#466F9DFF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
+IBM <- c( #IBM colors
+  "navy", # dark royal blue L
+  "#648FFF", # french blue G
+  "#785EF0", # light purple B
+  "#DC267F", # magenta pink GB
+  "#FE6100", # bright orange LB
+  "#FFB000", # golden yellow LG
+  "#865338" # medium mocha brown LGB
+)
+legume_cols <- c( #IBM colors
+  "navy", # dark royal blue L
+  "#FE6100", # bright orange LB
+  "#FFB000", # golden yellow LG
+  "#865338" # medium mocha brown LGB
+)
+
+
 
 # load paths
 biomasspath <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
@@ -134,13 +147,14 @@ p1<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+  scale_color_manual(values=IBM) +
+  scale_fill_manual(values = IBM)+
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
         plot.title = element_text(hjust = 0, size=14))+
   facet_grid( ~n_species, scales = "free", space = "free")+
-  xlab("composition") 
+  xlab("composition")+
+  ylab("root biomass (g dry weight)")
 p1
 setwd(fig2path)
 svg(file="biomass.root.trt.svg",width = 2.4, height=2.5)
@@ -154,14 +168,15 @@ p2<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+  scale_color_manual(values=IBM) +
+  scale_fill_manual(values = IBM)+
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0, size=14),
         legend.position = "none")+
   facet_grid( ~n_species, scales = "free", space = "free")+
-  xlab("composition")
+  xlab("composition")+
+  ylab("shoot biomass (g dry weight)")
 
 p2
 
@@ -402,7 +417,7 @@ p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
    xlab("Treatment") +
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
-   scale_fill_manual(values = mycols4)+
+   scale_fill_manual(values = legume_cols)+
    facet_grid( ~spp.number, scales = "free", space = "free")+
     xlab("composition")
 p1
@@ -420,8 +435,9 @@ setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burg
    xlab("Treatment") +
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
-   scale_fill_manual(values = mycols4)+
-   facet_grid( ~spp.number, scales = "free", space = "free")
+   scale_fill_manual(values = legume_cols)+
+   facet_grid( ~spp.number, scales = "free", space = "free")+
+   ylab( "N fixed per legume g")
  
  #dev.off() 
  

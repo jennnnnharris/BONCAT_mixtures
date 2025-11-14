@@ -15,6 +15,15 @@ library(lubridate)
 
 # set colors
 mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
+IBM <- c( #IBM colors
+  "navy", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000", # golden yellow
+  "#865338" # medium mocha brown
+)
 #mycols7vivid<-c( "#715b8a", "#4D8F8BFF", "#b1de64", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
 #mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )#
 
@@ -147,7 +156,7 @@ p1<-df1  %>%
   geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+  scale_fill_manual(values = IBM)+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0))+

@@ -16,20 +16,25 @@ library(nlme)
 #install.packages("viridis")
 #library(viridis)
 
-#mycols7<-c( "#4B2D4BFF", "#02666e", , "#365C83FF",  "#8cbd6a","#916691",  "#384351FF")
 mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 mycols7vivid<-c( "#715b8a", "#4D8F8BFF", "#b1de64", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
-
 mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )#
 
-#mycols7<- c("#FBA475FF", "#4C84A3FF", "#F46124FF", "#4DACD9FF", "#C2421CFF", "#761445FF", "#FAD457FF")
-
-
-
-#mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-#mycols4<-c("#466F9DFF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-
-#df$Treatment   <- factor(df$Treatment, levels= c( "L", "LB", "LG", "LGB"))
+IBM <- c( #IBM colors
+  "navy", # dark royal blue L
+  "#648FFF", # french blue G
+  "#785EF0", # light purple B
+  "#DC267F", # magenta pink GB
+  "#FE6100", # bright orange LB
+  "#FFB000", # golden yellow LG
+  "#865338" # medium mocha brown LGB
+)
+legume_cols <- c( #IBM colors
+  "navy", # dark royal blue L
+  "#FE6100", # bright orange LB
+  "#FFB000", # golden yellow LG
+  "#865338" # medium mocha brown LGB
+)
 
 # load paths
 biomasspath <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
@@ -203,7 +208,16 @@ as.factor(dfb1$Treatment)
 mycols<-c("#365C83FF","grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
 # new
 #mycols<-c("#FEB5A2FF","grey" , "#9D7660FF", "grey", "#D7B5A6FF", "grey", "#3896C4FF" , "grey")
-
+mycols <- c( #IBM colors
+  "#DC267F", # magenta pink GB
+  "grey",
+  "#FE6100", # bright orange LB
+  "grey",
+  "#FFB000", # golden yellow LG
+  "grey",
+  "#865338", # medium mocha brown LGB
+  "grey"
+)
 
 #setwd(fig3path)
 #svg(file="biomass.root.predict.svg",width = 2.8, height=3)
@@ -310,15 +324,24 @@ df1<-full_join(df1, predict)
 df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "half_G", "LG.predict", "LG"))
 as.factor(df1$Treatment)
 
-
+#####go here#######
 mycols7<-c( "#715b8a", "#4D8F8BFF", "grey", "grey", "grey", "#AD5A6BFF") 
+
+mycols <- c( #IBM colors
+  "navy", # dark royal blue L
+  "#648FFF", # french blue G
+  "grey", # light purple B
+  "grey", # magenta pink GB
+  "grey", # bright orange LB
+  "#FFB000" # golden yellow LG
+)
 
 p1<-df1  %>% 
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
   geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
         plot.title = element_text(hjust = 0, size=14))+

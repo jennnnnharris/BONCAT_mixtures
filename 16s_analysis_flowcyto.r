@@ -441,8 +441,15 @@ df.pcoa %>%
   
   ### 4. plot 
   
-  setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
-  svg("cap.fraction.svg", width = 6 , height = 6)
+  #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
+  #svg("cap.fraction.svg", width = 6 , height = 6)
+# split legume present and absence in base r
+  
+  #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
+  #svg("cap.total.fraction.svg", width = 8 , height = 4.5)
+  windows(9,4.5)  
+  
+  par(mfrow = c(1, 2)) # 1 row, 2 column
  # windows(4,4)
   par(cex.lab = 1.1) # make all fonts in graphs little bigger
   ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
@@ -465,12 +472,12 @@ df.pcoa %>%
               alpha = 30,
               cex=1.2)
   
-  legend("topleft", legend=c("Active", "Inactive"  ),
+  legend("bottomleft", legend=c("Active", "Inactive"  ),
          pch=c(22,24 ),
          cex=1,
          title = "",     bty = "n")
   
-  dev.off()
+  #dev.off()
   
   
   
@@ -535,17 +542,20 @@ df.pcoa %>%
               col= IBM,
               alpha = 40,
               cex=1)
-  legend("topleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+  legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
          fill= IBM,
          cex=1,
-         title = "",
          bty = "n")
   
   
-  dev.off()
+  #dev.off()
   
 # split legume present and absence in base r
-  
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
+svg("cap.facet.svg", width = 8 , height = 4.5)
+#windows(8,4.5)  
+
+    par(mfrow = c(1, 2)) # 1 row, 2 columns  
   # legume present 
 legume_cols<- c( #IBM colors
     "navy", # dark royal blue L
@@ -576,11 +586,11 @@ legume_cols<- c( #IBM colors
               col= legume_cols,
               alpha = 40,
               cex=1)
-  legend("topleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-         fill= IBM,
-         cex=1,
-         title = "",
-         bty = "n")
+  #legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+  #       fill= IBM,
+  #       cex=1,
+  #       title = "",
+  #       bty = "n")
   
   # legume absent
 no_legumes <- c( #IBM colors
@@ -614,7 +624,7 @@ no_legumes <- c( #IBM colors
               cex=1)
 
   
-  
+dev.off()  
   
   
 # factor GGplot  
