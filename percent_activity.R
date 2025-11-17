@@ -24,11 +24,6 @@ IBM <- c( #IBM colors
   "#FFB000", # golden yellow
   "#865338" # medium mocha brown
 )
-#mycols7vivid<-c( "#715b8a", "#4D8F8BFF", "#b1de64", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
-#mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )#
-
-#mycols7<-c("#466F9DFF", "#91B3D7FF",  "#ED444AFF", "#FEB5A2FF", "#9D7660FF", "#D7B5A6FF", "#3896C4FF" )
-
 
 
 # import data
@@ -53,16 +48,17 @@ head(df)
 df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 df$Date_sorted   <- factor(df$Date_sorted)
 
-# make composition var
-df$composition <- df$Treatment
-df$composition<-gsub("L", "Legume", df$composition)
-df$composition<-gsub("G", "Grass", df$composition)
-df$composition<-gsub("B", "Brassica", df$composition)
-df$composition<-gsub("LegumeBrassica", "Legume_Brassica", df$composition)
-df$composition<-gsub("LegumeGrass", "Legume_Grass", df$composition)
-df$composition<-gsub("GrassBrassica", "Grass_Brassica", df$composition)
-df$composition 
-df$composition<- factor(df$composition, levels = c("Soil", "Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
+# make long name var
+df$long_name <- df$Treatment
+df$long_name<-gsub("L", "Legume", df$long_name)
+df$long_name<-gsub("G", "Grass", df$long_name)
+df$long_name<-gsub("B", "Brassica", df$long_name)
+df$long_name<-gsub("LegumeBrassica", "Legume_Brassica", df$long_name)
+df$long_name<-gsub("LegumeGrass", "Legume_Grass", df$long_name)
+df$long_name<-gsub("GrassBrassica", "Grass_Brassica", df$long_name)
+df$long_name 
+df$long_name<- factor(df$long_name, levels = c("Soil", "Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
+
 
 
 ################we need normalize by the day/rep ###############
@@ -305,6 +301,59 @@ summary(m2)
 #anova(m2, test= "LRT")
 #there are difference among treatments when soil is removed.
 
+###################################number of cells ########################
+
+# import data
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+dfcells<-read_excel("Flow_cyto_master.xlsx", sheet = 1)
+colnames(dfcells)
+head(dfcells)
+
+
+#make dates be dates
+dfcells$Date_Sorted<-ymd(dfcells$Date_Sorted)
+
+# make treatment and day factors
+dfcells$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+dfcells$Date_Sorted   <- factor(dfcells$Date_Sorted)
+
+# make composition var
+dfcells$long_name <- dfcells$Treatment
+dfcells$long_name<-gsub("L", "Legume", dfcells$long_name)
+dfcells$long_name<-gsub("G", "Grass", dfcells$long_name)
+dfcells$long_name<-gsub("B", "Brassica", dfcells$long_name)
+dfcells$long_name<-gsub("LegumeBrassica", "Legume_Brassica", dfcells$long_name)
+dfcells$long_name<-gsub("LegumeGrass", "Legume_Grass", dfcells$long_name)
+dfcells$long_name<-gsub("GrassBrassica", "Grass_Brassica", dfcells$long_name)
+dfcells$long_name 
+dfcells$long_name<- factor(dfcells$long_name, levels = c("Soil", "Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
+
+dfcells<-dfcells %>% filter(Nitrogen=="1")
+head(dfcells)
+
+
+# plots
+
+
+p1<-dfcells  %>%
+  filter(Treatment!="Soil") %>%
+  ggplot(aes(x=Treatment, y=N_sorted_BONCAT_in_k, fill = Treatment)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.7, outlier.shape = NA)+
+  scale_color_manual(values=mycols7) +
+  scale_fill_manual(values = IBM)+
+  theme_classic(base_size = 14)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
+        plot.title = element_text(hjust = 0))+
+  #ylab("percent active")+
+  xlab("")
+  #facet_grid( ~n_species, scales = "free", space = "free")+
+p1
+
+
+
+
+
 
 #########################effect size + predictions ##################
 # grab effect size
@@ -403,9 +452,8 @@ legend(
   cex = .7 # scale the legend to look attractively sized
 )
 
-
-##############################################
-# increasing species line w/o brasssisae 
+ #
+cies line w/o brasssisae 
 df%>% filter(Species1!="Soil") %>%
   ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Brassicae))) +
   geom_jitter(width = .2, size=2 )+
@@ -489,58 +537,4 @@ df%>% filter(Treatment!="ctl") %>%
   xlab("")
 
 
-
-
-#####################colored line plots#########################
-# increasing species line w/o brasssisae 
-df%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Brassicae))) +
-  geom_jitter(width = .2, size=2 )+
-  theme_bw(base_size = 18, )+
-  stat_summary(geom = "line", fun = mean)
-
-# increasing species line w/o grass
-df%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Grass))) +
-  geom_jitter(width = .2, size=2 )+
-  theme_bw(base_size = 18, )+
-  stat_summary(geom = "line", fun = mean)
-
-
-# increasing species line w/o legume
-df%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Legume))) +
-  geom_jitter(width = .2, size=2 )+
-  theme_bw(base_size = 18, )+
-  stat_summary(geom = "line", fun = mean)
-
-# Binvary plots #######################################Binvary plots ###########################################
-# not a clear pattern on any.
-# Brassicae
-df1%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=as.factor(Brassicae), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
-  #scale_y_log10()+
-  #xlab("method")
-
-df1%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=as.factor(Grass), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
-#scale_y_log10()+
-#xlab("method")
- 
-df1%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=as.factor(Legume), y=BONCAT_freq)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))
-#scale_y_log10()+
-#xlab("method")
 
