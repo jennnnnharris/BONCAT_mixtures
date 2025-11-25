@@ -203,7 +203,6 @@ as.factor(dfb1$Treatment)
 
 ######### Fig 3 plot jenny predictions from monocultures for biomass################
 #old
-mycols<-c("#365C83FF","grey" ,"#AD5A6BFF", "grey", "#E3C1CBFF", "grey", "#384351FF", "grey")
 # new
 #mycols<-c("#FEB5A2FF","grey" , "#9D7660FF", "grey", "#D7B5A6FF", "grey", "#3896C4FF" , "grey")
 mycols <- c( #IBM colors
@@ -220,10 +219,13 @@ mycols <- c( #IBM colors
 #setwd(fig3path)
 #svg(file="biomass.root.predict.svg",width = 2.8, height=3)
 label <- dfb1$Treatment
+label <- gsub("LGB.predict", "*" ,label )
+label <- gsub("LB.predict", "*" ,label )
+label <- gsub("LG.predict", "*" ,label )
 label<- gsub("L", "" ,label )
 label<- gsub("G", "" ,label )
 label <- gsub("B", "" ,label )
-label <- gsub(".predict", "*" ,label )
+label <- gsub(".predict", "" ,label )
 label
 
 p2<-dfb1  %>% 
@@ -268,10 +270,8 @@ p3
 
 require(gridExtra)
 grid.arrange(p2, p3, ncol=2)
-dev.off()
 
 
-# Nfix#
 
 ### example calculation  #####
 
@@ -328,7 +328,7 @@ df1<-full_join(df1, predict)
 df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "half_G", "LG.predict", "LG"))
 as.factor(df1$Treatment)
 
-#####go here#######
+#####example plot#######
 mycols7<-c( "#715b8a", "#4D8F8BFF", "grey", "grey", "grey", "#AD5A6BFF") 
 
 mycols <- c( #IBM colors
@@ -401,49 +401,49 @@ dev.off()
 
 
 
-##### fig 3 anova#####
+##### anova#####
 
 
 #GB
 #filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+df2<-dfb1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+df2<-dfb1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+df2<-dfb1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+df2<-dfb1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
 anova(m1)
 
 # shoots
 #GB
 #filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+df2<-dfb1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
 m1<- lm(Shoot.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+df2<-dfb1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
 m1<- lm(Shoot.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+df2<-dfb1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
 m1<- lm(Shoot.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+df2<-dfb1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
 m1<- lm(Shoot.Biomass~ Treatment, data=df2)
 anova(m1)
 

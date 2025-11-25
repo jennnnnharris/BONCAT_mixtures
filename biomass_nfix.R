@@ -13,8 +13,7 @@ library(lme4)
 library(nlme)
 
 #old cols:
-mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )
+
 
 IBM <- c( #IBM colors
   "navy", # dark royal blue L
@@ -64,16 +63,13 @@ head(dfb)
 
 ###biomass figures ##########
 
-
 # n species###
-
-##with colors#######################3
 p1<-df  %>%
   ggplot(aes(x=n_species, y=Shoot.Biomass, colour = Treatment )) +
   geom_jitter(width = .1, size=1 )+
   geom_smooth(method = lm, color= "grey5")+
   theme_classic(base_size = 16)+
-  scale_color_manual(values = mycols7)+
+  scale_color_manual(values = IBM)+
   xlab("Number of Species") 
 p1
 
@@ -82,17 +78,12 @@ p2<-df  %>%
   geom_jitter(width = .1, size=1 )+
   geom_smooth(method = lm, color= "grey5")+
   theme_classic(base_size = 16)+
-  scale_color_manual(values = mycols7)+
+  scale_color_manual(values = IBM)+
   xlab("Number of Species")
 p2
 
 
-setwd(fig2path)
-svg(file="biomass.species.col.svg",width = 10, height=4)
-require(gridExtra)
-#windows(2,6)
-grid.arrange(p1, p2, ncol=2)
-dev.off()
+
 ###bar plot for each treatment##
 
 
@@ -136,44 +127,6 @@ require(gridExtra)
 #windows(2,6)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
-
-
-
-
-
-
-####linear model#####
-
-#number of species
-#lm
-m1<-lm(Shoot.Biomass~n_species*N*Block ,data=df)
-summary(m1)
-plot(m1)
-# number of species
-#Adjusted R-squared:  0.002231 
-#F-statistic: 1.092 on 2 and 80 DF,  p-value: 0.3406
-
-#number of species
-#lm
-m1<-lm(Root.Biomass~n_species ,data=df)
-summary(m1)
-plot(m1)
-# number of species
-#Adjusted R-squared:  0.002231 
-#F-statistic: 1.092 on 2 and 80 DF,  p-value: 0.3406
-
-
-###roots
-
-#n species
-m1<-lm(Shoot.Biomass~n_species*N*Block ,data=df)
-summary(m1)
-
-#Legume
-m1<-lm(Shoot.Biomass~ Legume*Block*N ,data=df)
-summary(m1)
-plot(m1)
-
 
 
 #### import nfix data and process####
@@ -307,54 +260,17 @@ df.leg$treatment <- factor(df.leg$treatment)
  
 
 ############## N fix figures ####################
-  
- #set wd
-p1<- ggplot(df.leg, aes(x=spp.number, y=perc.Ndfa)) + 
-   ylab('Nitrogen from Fixation (%)') +
-   xlab("Number of species") +
-   geom_jitter(width = .2, size=1 )+
-   geom_smooth(method = lm, color= "grey10")+
-   theme_classic(base_size = 12)+
-   annotate("text", x =2.3, y = 65, label = "p<0.001
-            Rsquared=.43 ", color = "black", size = 3.4)
-  
-p1
- #plot nspecies perc
-  setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
- svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
- p1
- dev.off()
- # linear model
- m1<-lm( perc.Ndfa~spp.number , data= df.leg )
- 
- summary(m1)
- #plot(m1)
-   
-  # plot nspecies per legume
-  #setwd(fig2path)
-  #svg(file="nfix.perc.species.svg",width = 2.4, height=2.4)
- # ggplot(df.leg, aes(x=spp.number, y=n_fix_per_legume)) + 
-#    ylab('grams N fixed per legume') +
-#    xlab("Number of species") +
-#    geom_jitter(width = .2, size=1 )+
-#    geom_smooth(method = lm, color= "grey10")+
-#    theme_classic(base_size = 12)
-  #dev.off()
-
- #per legume
-# ggplot(df.leg, aes(x=spp.number, y=n_fix_per_legume, colour = treatment)) + 
-#   ylab('grams N fixed per legume') +
-#   xlab("Number of species") +
-#   geom_jitter(width = .2, size=2 )+
-#   geom_smooth(method = lm, color= "grey10")+
-#   theme_classic(base_size = 12)+
-#   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-#         plot.title = element_text(hjust = 0.5))+
-#   scale_color_manual(values=mycols4)
- 
 
  
- 
+# by treatment 
+  label <- df.leg$treatment
+ label
+  label <- gsub("LGB", "C" ,label )
+  label<- gsub("LG", "B" ,label )
+  label <- gsub("LB", "B" ,label )
+  label<- gsub("L", "A" ,label )
+
+  
 p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
    geom_jitter(size=.5)+
@@ -364,16 +280,25 @@ p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
    facet_grid( ~spp.number, scales = "free", space = "free")+
-    xlab("Treatment")
+    xlab("Treatment")+
+  geom_text(y=90, label = label, size=5)
 p1
+
+
+# Analysis of variance 
+one.way.Nadd <- aov(perc.Ndfa ~ treatment, data = dfNadd.leg)
+summary(one.way.Nadd) # difference between treatments
+tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
+print(tukey.result.Nadd) # All difference except LG-LB
+#plot(one.way.Nadd) #homoscedasticity looks fine
+
 #plot perc by nspecies
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
- svg(file="nfix.percent.treatment.svg",width = 2.3, height=2.3) 
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
+ #svg(file="nfix.percent.treatment.svg",width = 2.3, height=2.3) 
  p1
- dev.off() 
+ #dev.off() 
  
- #svg(file="nfix.perleg.treatment.svg",width = 2.3, height=2.3)
- ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
+p2<- ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
    geom_jitter(size=.5)+
    #ylab('Nitrogen from Fixation (%)') +
@@ -384,8 +309,7 @@ setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burg
    facet_grid( ~spp.number, scales = "free", space = "free")+
    ylab( "N fixed per legume g")
  
- #dev.off() 
- 
+p2
  
  
  # Analysis of variance 
@@ -396,7 +320,7 @@ setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burg
  #plot(one.way.Nadd) #homoscedasticity looks fine
  
  
-
+ # nfixed per mg of soil
  ggplot(df.leg, aes(x=treatment, y=totalN.mg.g.1, fill=treatment)) + 
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(size=.5)+
@@ -407,27 +331,5 @@ setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burg
   scale_fill_manual(values = mycols4)+
   facet_grid( ~spp.number, scales = "free", space = "free")
 
-#### figure N fixed ###
-ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(size=.5)+
-  #ylab('Total Nitrogen Fixed per gram of soil') +
-  xlab("Treatment") +
-  theme_classic(base_size = 12) +
-  theme(legend.position = "none")+
-  scale_fill_manual(values = mycols4)+
-  facet_grid( ~spp.number, scales = "free", space = "free")
-
-
-#####figure percent N ###
-ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(size=.5)+
-  ylab('Nitrogen from Fixation (%)') +
-  xlab("Treatment") +
-  theme_classic(base_size = 12) +
-  theme(legend.position = "none")+
-  scale_fill_manual(values = mycols4)+
-  facet_grid( ~spp.number, scales = "free", space = "free")
 
 
