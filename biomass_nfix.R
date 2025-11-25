@@ -3,7 +3,7 @@
 
 # clear workspace and restart R
 rm(list=ls())
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(readxl)
@@ -34,15 +34,8 @@ legume_cols <- c( #IBM colors
 
 
 
-# load paths
-biomasspath <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
-nfixpath <- "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Analysis/N Fixation from Emma"
-fig2path <-  "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies"
-#fig3path <-  "C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig3_predict"
-
-
 #### import biomass data and process #####
-setwd(biomasspath)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 df <- read.csv("Rice_greenhouse_ccexp_biomass_block.csv") # biomass data
 
 # process to make n species column, summarize at pot level, make treatment a factor.
@@ -73,46 +66,6 @@ head(dfb)
 
 
 # n species###
-
-setwd(fig2path)
-
-#no colors
-p1<-df  %>%
-  ggplot(aes(x=n_species, y=Shoot.Biomass )) +
-  geom_jitter(width = .1, size=1 )+
-  geom_smooth(method = lm, color=  "grey10" )+
-  theme_classic(base_size = 12)+
-  theme(lot.title = element_text(hjust = 0.5))+
-  xlab("Number of Species") +
-  annotate("text", x =2.4, y = 4, label = "p=0.461", color = "black", size = 3.4)
-
-#scale_color_manual(values = mycols7)
-#geom_text(aes(,y=18, label = ifelse(df1$Treatment=="LB", "*", "")), size=10)+
-p1
-
-p2<-df  %>%
-  ggplot(aes(x=n_species, y=Root.Biomass )) +
-  geom_jitter(width = .1, size=1 )+
-  #geom_jitter(size=1)+
-  geom_smooth(method = lm, color=  "grey10")+
-  theme_classic(base_size = 12)+
-  theme(lot.title = element_text(hjust = 0.5))+
-  xlab("Number of Species") +
-  annotate("text", x =2.4, y = 2, label = "p<0.001
-            Rsquared=.14 ", color = "black", size = 3.4)
-
-#scale_color_manual(values = mycols7)
-#geom_text(aes(,y=4, label = ifelse(df$Treatment=="LB", "", "")), size=10)
-p2
-
-
-setwd(fig2path)
-svg(file="biomass.species.svg",width = 5, height=2.5)
-require(gridExtra)
-#windows(2,6)
-grid.arrange(p2, p1, ncol=2)
-dev.off()
-
 
 ##with colors#######################3
 p1<-df  %>%
@@ -156,10 +109,6 @@ p1<-df  %>% filter(n_species!="NA") %>%
   xlab("composition")+
   ylab("root biomass (g dry weight)")
 p1
-setwd(fig2path)
-svg(file="biomass.root.trt.svg",width = 2.4, height=2.5)
-p1
-dev.off()
 
 
 
@@ -180,10 +129,6 @@ p2<-df  %>% filter(n_species!="NA") %>%
 
 p2
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
-svg(file="biomass.shoot.trt.svg",width = 2.5, height=2.5)
-p2
-dev.off()
 
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
 svg(file="biomass.all.trt.svg",width = 5.2, height=2.5)
@@ -232,7 +177,7 @@ plot(m1)
 
 
 #### import nfix data and process####
-setwd(nfixpath)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Analysis/N Fixation from Emma")
 df <- read.csv("merged.plate.ghbiomass.sheet.csv", header=T, stringsAsFactors = F) # fix data
 
 
@@ -419,7 +364,7 @@ p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
    facet_grid( ~spp.number, scales = "free", space = "free")+
-    xlab("composition")
+    xlab("Treatment")
 p1
 #plot perc by nspecies
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")

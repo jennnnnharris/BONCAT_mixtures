@@ -14,6 +14,11 @@
 #rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
 
+# install phyloseq
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#  install.packages("BiocManager")
+#BiocManager::install("phyloseq")
+
 
 # Load required libraries #
 library(tidyverse)
@@ -21,10 +26,8 @@ library(vegan)
 library(readxl)
 library(lubridate)
 library(phyloseq)
-library(MicEco)
 library(multcompView)
-library(paletteer)
-
+library(BiodiversityR)
 
 # colors
 
@@ -61,7 +64,8 @@ myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
   
 #import data#
 # Set the working directory 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
@@ -80,6 +84,11 @@ metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes absent",
 
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
+
+# get avg number of reads in seq run 
+mean(rowSums(asvs))
+
+
 # select only total dna
 asvs <-asvs[which(metadat$Fraction=="Total" ),] 
 metadat <- metadat %>% filter(Fraction=="Total" )
@@ -366,19 +375,11 @@ dist_matrix<-vegdist(otu_table(ps1), method = "bray")
 
 # 2. Run the CAP (db-RDA) analysis
 # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(dist_matrix ~ Treatment*N*Block,
+cap_result <- capscale(dist_matrix ~ Treatment*N,
                        data = metadat2,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
-#anova.cca(cap_result, by="terms")
-
-# other cap model
-# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(dist_matrix ~ L*G*B,
-                       data = metadat2,
-                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
-
-#anova.cca(cap_result, by="terms")
+anova.cca(cap_result, by="terms")
 
 ### 3. grab info for the plot
 smry <- summary(cap_result)
@@ -395,10 +396,11 @@ perc
 
 
 ### 4. plot 
-
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-svg("cap.total.svg", width = 6 , height = 6)
+#
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+#svg("cap.total.svg", width = 6 , height = 6)
 #windows(6,6)
+par(mfrow=c(1,2))
 par(cex.lab = 1.2) # make all fonts in graphs little bigger
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
          main="CAP Total", cex = 1.2,
@@ -430,11 +432,11 @@ legend("bottom", legend=c("Nitrogen -", "Nitrogen +"  ),
        cex=1,
        title = "",     bty = "n")
 
-dev.off()
+#dev.off()
 
-###### CAP nitrogen +  - 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-svg("cap.nitrogen.svg", width = 6 , height = 6)
+###### CAP nitrogen +  -  #####
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+#svg("cap.nitrogen.svg", width = 6 , height = 6)
 #windows(6,6)
 par(cex.lab = 1.2) # make all fonts in graphs little bigger
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
@@ -461,7 +463,224 @@ legend("bottomleft", legend=c("Nitrogen -", "Nitrogen +"  ),
        cex=1,
        title = "",     bty = "n")
 
-dev.off()
+
+
+####### N+ only  #####
+# Constrained ordination
+# Perform vegdist analysis of BC distances #
+
+# subset data
+ps1 <-subset_samples(ps, Treatment !="Soil" & N=="1" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil"  & N=="1")
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+# 1. Calculate the distance matrix (e.g., Bray-Curtis)
+dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+
+# 2. Run the CAP (db-RDA) analysis
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ Treatment*Block,
+                       data = metadat2,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+# 3. Permutation test for significance of constraints
+anova_cap <- anova(cap_result, permutations = 999, by = "term")
+anova_cap
+# 6. Perform all Pairwise Comparisons
+# The function will iterate through all pairs of the 'Habitat' factor
+
+pairwise_results <- multiconstrained(
+  formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+  data = metadat2,
+  constrained = capscale,       # Specify the constrained ordination method
+  permutations = 999            # Number of permutations for the test
+)
+
+# 7. View the raw pairwise results
+print(pairwise_results)
+
+# 8. Extract the raw p-values from the results
+raw_pvalues <- pairwise_results[, "Pr(>F)"]
+
+# 9. Apply the Holm (Holm-Bonferroni) Adjustment
+adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
+adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
+
+#?p.adjust
+# 10. Combine the results for final interpretation
+final_table <- data.frame(
+  Pair = rownames(pairwise_results),
+  Pseudo_F = pairwise_results[, "F"],
+  Raw_P = raw_pvalues,
+  fdr_adj_p = adjusted_pvalues1,
+  bonferroni_Adj_P = adjusted_pvalues
+)
+
+# 11. Print the final results table
+print(final_table)
+
+
+
+### 3. grab info for the plot
+smry <- summary(cap_result)
+smry
+sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+sc_si
+
+# Extract the model's adjusted R2
+RsquareAdj(cap_result)$adj.r.squared
+
+# percent varience of total varience on RDA 1 and RDA 2
+perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+perc
+
+
+### 4. plot 
+#
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+#svg("cap.total.svg", width = 6 , height = 6)
+#windows(6,6)
+par(mfrow=c(1,2))
+par(cex.lab = 1.2) # make all fonts in graphs little bigger
+ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+         main="Nitrogen + ", cex = 1.2,
+         xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+         ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+par(adj = 0)
+title(main= "C")
+par(adj=.5)
+points(sc_si, 
+       col= mycols[metadat2$Treatment],
+       pch= c(22,24)[as.factor(metadat2$N)],
+       lwd=1,cex=1,
+       bg=mycols[metadat2$Treatment])
+ordiellipse(sc_si, metadat2$Treatment,  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            col= IBM,
+            alpha = 40,
+            cex=1.2)
+
+legend("topleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+       fill= IBM,
+       cex=1,
+       title = "",
+       bty = "n")
+
+
+
+
+
+####### N- only  #####
+# Constrained ordination
+# Perform vegdist analysis of BC distances #
+
+# subset data
+ps1 <-subset_samples(ps, Treatment !="Soil" & N=="0" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil"  & N=="0")
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+# 1. Calculate the distance matrix (e.g., Bray-Curtis)
+dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+
+# 2. Run the CAP (db-RDA) analysis
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ Treatment*Block,
+                       data = metadat2,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+# 3. Permutation test for significance of constraints
+anova_cap <- anova(cap_result, permutations = 999, by = "term")
+anova_cap
+# 6. Perform all Pairwise Comparisons
+# The function will iterate through all pairs of the 'Habitat' factor
+
+pairwise_results <- multiconstrained(
+  formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+  data = metadat2,
+  constrained = capscale,       # Specify the constrained ordination method
+  permutations = 999            # Number of permutations for the test
+)
+
+# 7. View the raw pairwise results
+print(pairwise_results)
+
+# 8. Extract the raw p-values from the results
+raw_pvalues <- pairwise_results[, "Pr(>F)"]
+
+# 9. Apply the Holm (Holm-Bonferroni) Adjustment
+adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
+adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
+
+?p.adjust
+# 10. Combine the results for final interpretation
+final_table <- data.frame(
+  Pair = rownames(pairwise_results),
+  Pseudo_F = pairwise_results[, "F"],
+  Raw_P = raw_pvalues,
+  fdr_adj_p = adjusted_pvalues1,
+  bonferroni_Adj_P = adjusted_pvalues
+)
+
+# 11. Print the final results table
+print(final_table)
+
+
+
+### 3. grab info for the plot
+smry <- summary(cap_result)
+smry
+sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+sc_si
+
+# Extract the model's adjusted R2
+RsquareAdj(cap_result)$adj.r.squared
+
+# percent varience of total varience on RDA 1 and RDA 2
+perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+perc
+
+
+### 4. plot 
+#
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+#svg("cap.total.svg", width = 6 , height = 6)
+#windows(6,6)
+par(cex.lab = 1.2) # make all fonts in graphs little bigger
+ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+         main="Nitrogen -", cex = 1.2,
+         xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+         ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+par(adj = 0)
+title(main= "D")
+par(adj=.5)
+points(sc_si, 
+       col= mycols[metadat2$Treatment],
+       pch= c(22,24)[as.factor(metadat2$N)],
+       lwd=1,cex=1,
+       bg=mycols[metadat2$Treatment])
+ordiellipse(sc_si, metadat2$Treatment,  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            col= IBM,
+            alpha = 50,
+            cex=1.2)
+
+#legend("topleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+#       fill= IBM,
+#       cex=1,
+#       title = "",
+#       bty = "n")
+
+
 
 
 #species scores #####
@@ -527,6 +746,52 @@ p1 <-plot_ordination(ps1,  p1.cap, color="composition")+
   facet_grid(~Legume_label)
 p1
 
+
+#####################CAP pairwise tests ##########
+
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ Treatment*N*Block,
+                       data = metadat2,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+
+
+
+# 3. Permutation test for significance of constraints
+anova_cap <- anova(cap_result, permutations = 999, by = "term")
+anova_cap
+# 6. Perform all Pairwise Comparisons
+# The function will iterate through all pairs of the 'Habitat' factor
+
+pairwise_results <- multiconstrained(
+  formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+  data = metadat2,
+  constrained = capscale,       # Specify the constrained ordination method
+  permutations = 999            # Number of permutations for the test
+)
+
+# 7. View the raw pairwise results
+print(pairwise_results)
+
+# 8. Extract the raw p-values from the results
+raw_pvalues <- pairwise_results[, "Pr(>F)"]
+
+# 9. Apply the Holm (Holm-Bonferroni) Adjustment
+adjusted_pvalues_holm <- p.adjust(raw_pvalues, method = "bonferroni")
+?p.adjust
+# 10. Combine the results for final interpretation
+final_table <- data.frame(
+  Pair = rownames(pairwise_results),
+  Pseudo_F = pairwise_results[, "F"],
+  Raw_P = raw_pvalues,
+  Holm_Adj_P = adjusted_pvalues_holm
+)
+
+# 11. Print the final results table
+print(final_table)
+
+
+
 ###### pairwise adonsis ##########
 
 # A. Install the necessary package (if you haven't already)
@@ -562,6 +827,9 @@ pairwise_results <- pairwise.adonis2(bray_dist ~ Treatment, # Use the distance m
 
 pairwise_results
 pairwise_results$LG_vs_LB
+
+
+
 
 
 ######## 4. PCOA ##################

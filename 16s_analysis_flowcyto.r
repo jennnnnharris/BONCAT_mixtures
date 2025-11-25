@@ -24,8 +24,9 @@ library(vegan)
 library(readxl)
 library(lubridate)
 library(phyloseq)
-library(MicEco)
 library(multcompView)
+library(BiodiversityR)
+
 
 # set colors
 mycols <- c( #IBM colors
@@ -57,7 +58,10 @@ myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
 
 #####Import data#####
 ## Set the working directory ###
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
+
+
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
 metadat<-read.csv("metadat.csv", header = T)
@@ -131,11 +135,14 @@ rich %>% group_by(n_species) %>% summarise(mean(Observed), sd(Observed))
 rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 rich$Fraction   <- factor(rich$Fraction, levels= c("Active", "Inactive"))
 
+
+
+
 #BCAT_73_S35 is kind of a weird outlier
 #rich<-rich[which(rich$SampleID!="BCAT_73_S35"),]
 
 
-##plots######
+#plots
 # Does diversity increase with number of species?
 
 p1<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
@@ -420,11 +427,14 @@ df.pcoa %>%
   
   # 2. Run the CAP (db-RDA) analysis
   # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~ Fraction,
+  cap_result <- capscale(dist_matrix ~ Treatment*Fraction*Block,
                          data = metadat2,
                          add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
   
-  anova.cca(cap_result, by="terms")
+  # 3. Permutation test for significance of constraints
+  anova_cap <- anova(cap_result, permutations = 999, by = "term")
+  anova_cap
+
   
   ### 3. grab info for the plot
   smry <- summary(cap_result)
@@ -447,8 +457,7 @@ df.pcoa %>%
   
   #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
   #svg("cap.total.fraction.svg", width = 8 , height = 4.5)
-  windows(9,4.5)  
-  
+
   par(mfrow = c(1, 2)) # 1 row, 2 column
  # windows(4,4)
   par(cex.lab = 1.1) # make all fonts in graphs little bigger
@@ -498,11 +507,45 @@ df.pcoa %>%
   
   # 2. Run the CAP (db-RDA) analysis
   # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~ Treatment,
+  cap_result <- capscale(dist_matrix ~ Treatment*Block,
                          data = metadat2,
                          add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
   
   anova.cca(cap_result, by="terms")
+  
+  # 6. Perform all Pairwise Comparisons
+  # The function will iterate through all pairs of the 'Habitat' factor
+  
+  pairwise_results <- multiconstrained(
+    formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+    data = metadat2,
+    constrained = capscale,       # Specify the constrained ordination method
+    permutations = 999            # Number of permutations for the test
+  )
+  
+  # 7. View the raw pairwise results
+  print(pairwise_results)
+  
+  # 8. Extract the raw p-values from the results
+  raw_pvalues <- pairwise_results[, "Pr(>F)"]
+  
+  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
+  adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
+  adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
+  
+  #?p.adjust
+  # 10. Combine the results for final interpretation
+  final_table <- data.frame(
+    Pair = rownames(pairwise_results),
+    Pseudo_F = pairwise_results[, "F"],
+    Raw_P = raw_pvalues,
+    fdr_adj_p = adjusted_pvalues1,
+    bonferroni_Adj_P = adjusted_pvalues
+  )
+  
+  # 11. Print the final results table
+  print(final_table)
+  
   
   ### 3. grab info for the plot
   smry <- summary(cap_result)
@@ -549,6 +592,29 @@ df.pcoa %>%
   
   
   #dev.off()
+  
+ ############ addtional cap model L +b +G ###  ##########
+  
+  ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  ps1
+  # 1845 taxa
+  # subset metadata
+  metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+  #factor
+  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+  metadat2$Fraction   <- factor(metadat2$Fraction)
+  
+  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
+  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+  
+  # 2. Run the CAP (db-RDA) analysis
+  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+  cap_result <- capscale(dist_matrix ~Brassicae*Grass*Legume,
+                         data = metadat2,
+                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+  
+  anova.cca(cap_result, by="terms")
   
 # split legume present and absence in base r
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
