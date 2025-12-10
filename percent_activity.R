@@ -14,7 +14,6 @@ library(lubridate)
 
 
 # set colors
-mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
 IBM <- c( #IBM colors
   "navy", # dark royal blue
   "#648FFF", # french blue
@@ -26,38 +25,56 @@ IBM <- c( #IBM colors
 )
 
 
-# import data
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
 
-df<-read_excel("Flow_cyto_master.xlsx", sheet = 2)
+### clean data  #############
+
+# import data
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+df1<-read_excel("Flow_cyto_master.xlsx", sheet = 2)
+
+# avg the technical reps that are adj for day.
+df1
+df1<-df1%>% group_by( Rep, Group, Treatment,  Pot_ID) %>%
+  summarise(BONCAT_freq = mean(BONCAT_freq_adj), 
+            n_events_cells= round(mean(n_events_cells), digits = 0),
+            n_events_BONCAT= round(mean(success_adj), digits = 0) , 
+            n = n())
+# import data
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+df<-read_excel("Flow_cyto_master.xlsx", sheet = 1)
+colnames(df)
+head(df)
+biggie<-left_join(df1, df)
+write.csv(biggie, "flow_cyto.csv")
+
+############################################
+# import data
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+fc <-read.csv("flow_cyto.csv")
+head(fc)
+
 
 #make dates be dates
-df$Date_sorted<-ymd(df$Date_sorted)
-
-#make n species column
-df$Grass<-as.numeric(df$Grass)
-df$Legume<-as.numeric(df$Legume)
-df$Brassicae<-as.numeric(df$Brassicae)
-df$n_species<-rowSums(df[,5:7])
+fc$Date_Sorted<-ymd(fc$Date_Sorted)
 
 # filter out day were pos ctl didn't work
-df<-filter(df, Date_sorted != "2023-05-25")
-head(df)
+fc<-filter(fc, Date_Sorted != "2023-05-25")
+head(fc)
 
 # make treatment and day factors
-df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-df$Date_sorted   <- factor(df$Date_sorted)
+fc$Treatment   <- factor(fc$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+fc$Date_Sorted   <- factor(fc$Date_Sorted)
 
 # make long name var
-df$long_name <- df$Treatment
-df$long_name<-gsub("L", "Legume", df$long_name)
-df$long_name<-gsub("G", "Grass", df$long_name)
-df$long_name<-gsub("B", "Brassica", df$long_name)
-df$long_name<-gsub("LegumeBrassica", "Legume_Brassica", df$long_name)
-df$long_name<-gsub("LegumeGrass", "Legume_Grass", df$long_name)
-df$long_name<-gsub("GrassBrassica", "Grass_Brassica", df$long_name)
-df$long_name 
-df$long_name<- factor(df$long_name, levels = c("Soil", "Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
+fc$long_name <- fc$Treatment
+fc$long_name<-gsub("L", "Legume", fc$long_name)
+fc$long_name<-gsub("G", "Grass", fc$long_name)
+fc$long_name<-gsub("B", "Brassica", fc$long_name)
+fc$long_name<-gsub("LegumeBrassica", "Legume_Brassica", fc$long_name)
+fc$long_name<-gsub("LegumeGrass", "Legume_Grass", fc$long_name)
+fc$long_name<-gsub("GrassBrassica", "Grass_Brassica", fc$long_name)
+fc$long_name 
+fc$long_name<- factor(fc$long_name, levels = c("Soil", "Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
 
 
 
@@ -87,55 +104,11 @@ df$long_name<- factor(df$long_name, levels = c("Soil", "Legume", "Grass", "Brass
 #  theme_bw(base_size = 18, )+
 #  theme(axis.text.x = element_text(angle=60, hjust=1))
 
-# avg the technical reps that are adj for day.
 
-df1<-df%>% group_by(Species1, Species2, Species3, n_species, Nitrogen, Grass, Legume, Brassicae,   Rep, Block, Treatment, composition, Label_short) %>%
-  summarise(BONCAT_freq = mean(BONCAT_freq_adj), 
-            n_events_cells= round(mean(n_events_cells), digits = 0),
-            n_events_BONCAT= round(mean(success_adj), digits = 0) , 
-            n = n())
+###### plot ###########
 
-df1$n_events_cells
-###### plots ###########
-pathfig3<-"C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Figure3_activitydiversity"
-setwd(pathfig3)
-
-
-svg(file="activity.species.svg",width = 3, height=3)
-#require(gridExtra)
-#windows(8,4)
-df  %>%  filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq )) +
-  geom_jitter(width = .2, size=2 )+
-  geom_smooth(method = lm, color= "grey")+
-  theme_classic(base_size = 14)+
-  theme( legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
-  ylab("percent active")+
-  xlab("# plant species")
-
-dev.off()
-
-
-#with colors
-df$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-svg(file="col.activity.species.svg",width = 3, height=3)
-
-df  %>%  filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq, colour = Treatment )) +
-  geom_jitter(width = .2, size=2 )+
-  geom_smooth(method = lm, color= "grey")+
-  theme_classic(base_size = 14)+
-  theme( legend.position="none",
-         plot.title = element_text(hjust = 0.5))+
-  scale_color_manual(values=mycols7)+ 
-  ylab("percent active")+
-  xlab("# plant species")
-
-dev.off()
-
-df1<-df1  %>%   filter(Treatment!="Soil")
-lab = as.character(df1$Treatment)
+fc<-fc  %>%   filter(Treatment!="Soil")
+lab = as.character(fc$Treatment)
 lab<-gsub("LGB", "A", lab)
 lab<-gsub("GB", "A", lab)
 lab<-gsub("B", "A", lab)
@@ -146,395 +119,189 @@ lab
 lab<-gsub("G", "A", lab)
 lab<-gsub("L", "A", lab)
 
-p1<-df1  %>%
+p1<-fc  %>%
   filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=BONCAT_freq, fill = Treatment)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols7) +
+  geom_jitter(width = .2, size=2 )+
+  geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_fill_manual(values = IBM)+
-  theme_classic(base_size = 14)+
+  theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0))+
   ylab("percent active")+
   xlab("")+
   #facet_grid( ~n_species, scales = "free", space = "free")+
-  geom_text(y=18, label = lab, size=5)
+  geom_text(y=15, label = lab, size=5)
 p1
 
-# plot for each treatment
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_activity")
-svg(file="activity.trt.lil.svg",width = 4, height=3)
-p1  
-dev.off()  
-#
-
-
-
-#note about outliers: the high value outlier in LG treatment is the avg of 2 technical reps. (sample #56)
-# the high outlier in teh LGB treatment (sample # 88) does not have technical reps.
-df1 %>% filter(Treatment=="LG")
-
-## linear model for activity ###########
-# in simple lm LB and LG are higher than soil.
-m1<-lm(BONCAT_freq  ~Treatment + Block + Rep, data=df1)
-summary(m1)
-
-t<-df1%>% filter(Treatment!="Soil")
-m1<-lm(BONCAT_freq  ~Treatment + Block, data=t)
-summary(m1)
-
-m1<-lm(BONCAT_freq  ~Treatment + Block + Rep, data=df1)
-
-m1<-lm(BONCAT_freq  ~ n_species, data=df1)
-summary(m1)
-
-# LG is different than the base line. 
-
-#mixed model
-#library(lme4)
-#lm<-lme4::lmer(data=df, BONCAT_freq~Treatment + (1|Date_sorted))
-#library(lmerTest)
-#lm<-lmer(data=df, BONCAT_freq~Treatment + (1|Date_sorted))
-#s<-summary(lm)
-#anova(lm)
-
-
-
-#---------binomial models ---------
-#binomail model on # failures # successes and proportion of each ##
-
-
-#prop<-df1 %>%
-#    mutate(n_failures =  n_events_cells-n_events_BONCAT)
-#y<-cbind(prop$n_events_BONCAT, prop$n_failures)
+#binomial model with percent data##
 # make vector of successes and failures
-#m1<-glm(data= prop, y~Treatment +Block, family = binomial)
-#m1
-#summary(m1)
-#plot(m1)
-# I need a quasibinomial model because residual deviance is higher than the degrees of freedom = model is over disposed
-
-## quasibinomial glm on success and failures##
-#m1<-glm(data= prop, y~Treatment +Block , family = quasibinomial)
-#m1
-#summary(m1)
-#anova(m1, test= "LRT")  
-#anova(m1, test= "Chisq")
-
-# post hoc tests
-# subset to compare treatments
-#prop$Treatment <- as.character(prop$Treatment)
-
-# no soil
-#prop1<-prop%>% filter(Treatment!="Soil")
-#y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
-#prop1$Treatment
-#m1<-glm(y~prop1$Treatment,  quasibinomial)
-#anova(m2, test= "LRT")
-#summary(m1)
-
-# L verse G
-#prop1<-prop%>% filter(Treatment=="L"|Treatment=="G")
-#y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
-#prop1$Treatment
-#m2<-glm(y~prop1$Treatment,  quasibinomial)
-#anova(m2, test= "LRT")
-
-######binomial model with percent data##############
-# make vector of successes and failures
-prop<-df1 %>%
+prop<-fc %>%
   mutate(BONCAT_freq = round(BONCAT_freq, 0)) %>%
   mutate(n_failures =  100-BONCAT_freq)
 y<-cbind(prop$BONCAT_freq, prop$n_failures)
 y
+
 #model
 m1<-glm(data= prop, y~Treatment +Block, family = binomial)
-m1
 summary(m1)
-#plot(m1)
-#plots look okay
-
-#model
-m1<-glm(data= prop, y~n_species, family = binomial)
-m1
-summary(m1)
-#plot(m1)
-#plots look okay
-
 #block not significant so we can take block out
+
+# model
 m1<-glm(data= prop, y~Treatment, family = binomial)
 m1
 summary(m1)
-# all treatments are different that than the soil
-#plot(m1)
-
-# post hoc tests
-# subset to compare treatments
-#prop$Treatment <- as.character(prop$Treatment)
-
-# no soil
-prop1<-prop%>% filter(Treatment!="Soil")
-prop1$Treatment   <- factor(prop1$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-prop1$Treatment
-y<-cbind(prop1$BONCAT_freq, prop1$n_failures)
-prop1$Treatment
-y
-m1<-glm(data=prop1, y~Treatment,  binomial)
-#anova(m2, test= "LRT")
-summary(m1)
-
-hist(df1$BONCAT_freq, breaks=10)
-plot(df1$BONCAT_freq ~ df1$n_species, las=1)
 
 
-# post hoc tests
-# subset to compare treatments
-prop$Treatment <- as.character(prop$Treatment)
-# no soil
-prop1<-prop%>% filter(Treatment!="Soil")
-y<-cbind(prop1$n_events_BONCAT, prop1$n_failures)
-prop1$Treatment
-m2<-glm(y~prop1$Treatment,  binomial)
-summary(m2)
-#anova(m2, test= "LRT")
-#there are difference among treatments when soil is removed.
 
 ###################################number of cells ########################
 
-# import data
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
-dfcells<-read_excel("Flow_cyto_master.xlsx", sheet = 1)
-colnames(dfcells)
-head(dfcells)
+# remove outlier
+fc <- filter(fc, Trt_ID!="B+N6")
+head(fc)
+
+# plot
 
 
-#make dates be dates
-dfcells$Date_Sorted<-ymd(dfcells$Date_Sorted)
+#G    B   GB   LB   LG  LGB    L 
+#"a" "ab"  "a" "ab" "ab" "ab"  "b
 
-# make treatment and day factors
-dfcells$Treatment   <- factor(df$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-dfcells$Date_Sorted   <- factor(dfcells$Date_Sorted)
+fc<-fc  %>%   filter(Treatment!="Soil")
+lab = as.character(fc$Treatment)
+unique(lab)
+lab<-gsub("LGB", "AX", lab)
+lab<-gsub("GB", "A", lab)
+lab<-gsub("LG", "AX", lab)
+lab<-gsub("LB", "AX", lab)
 
-# make composition var
-dfcells$long_name <- dfcells$Treatment
-dfcells$long_name<-gsub("L", "Legume", dfcells$long_name)
-dfcells$long_name<-gsub("G", "Grass", dfcells$long_name)
-dfcells$long_name<-gsub("B", "Brassica", dfcells$long_name)
-dfcells$long_name<-gsub("LegumeBrassica", "Legume_Brassica", dfcells$long_name)
-dfcells$long_name<-gsub("LegumeGrass", "Legume_Grass", dfcells$long_name)
-dfcells$long_name<-gsub("GrassBrassica", "Grass_Brassica", dfcells$long_name)
-dfcells$long_name 
-dfcells$long_name<- factor(dfcells$long_name, levels = c("Soil", "Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
+unique(lab)
+lab<-gsub("B", "AX", lab)
+lab<-gsub("G", "A", lab)
+lab<-gsub("L", "X", lab)
 
-dfcells<-dfcells %>% filter(Nitrogen=="1")
-head(dfcells)
+lab<-gsub("X", "B", lab)
+unique(lab)
 
 
-# plots
-
-
-p1<-dfcells  %>%
+p2<-fc  %>%
   filter(Treatment!="Soil") %>%
-  ggplot(aes(x=Treatment, y=N_sorted_BONCAT_in_k, fill = Treatment)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols7) +
+  ggplot(aes(x=Treatment, y=active_cel_per_g, fill = Treatment)) +
+  geom_jitter(width = .2, size=2 )+
+  geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_fill_manual(values = IBM)+
-  theme_classic(base_size = 14)+
+  theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0))+
   #ylab("percent active")+
-  xlab("")
-  #facet_grid( ~n_species, scales = "free", space = "free")+
-p1
+  xlab("")+
+  geom_text(y=3000, label = lab, size=5)
+
+#facet_grid( ~n_species, scaactive_cel_per_g#facet_grid( ~n_species, scales = "free", space = "free")+
+p2
+
+
+
+
+#scale_shape_discrete() 
+require(gridExtra)
+grid.arrange(p1, p2, ncol=2)
+
+ 
+# stats
+library(multcompView)
+a1<- aov(active_cel_per_g~ Treatment, data = fc)
+summary(a1)
+
+#tukey test
+tukey_results <- TukeyHSD(a1)
+print(tukey_results)
+p_values <- tukey_results$Treatment[, 4]#Extract the p-values for the factor of interest
+cld <- multcompLetters(p_values)# The 'multcompLetters()' function takes a named vector of p-values
+print(cld)#Print the results
 
 
 
 
 
 
-#########################effect size + predictions ##################
-# grab effect size
-effectsize<-s$coefficients
-effectsize<-data.frame(effectsize)
-colnames(effectsize) <- c("effect.size", "std.error", "df", "tvalue", "pvalue") 
-head(effectsize)
+# corr plot activity with functions ####
+
+# import data
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+fc <-read.csv("flow_cyto.csv")
+head(fc)
+
+#make dates be dates
+fc$Date_Sorted<-ymd(fc$Date_Sorted)
+# filter out day were pos ctl didn't work
+#fc<-filter(fc, Date_Sorted != "2023-05-25") 
+#head(fc)
+# make treatment and day factors
+fc$Treatment   <- factor(fc$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+fc$Date_Sorted   <- factor(fc$Date_Sorted)
 
 
-#make summary table
-avg <-df %>% group_by(Treatment) %>%
-summarise(mean.activity = mean(BONCAT_freq), sd.activity = sd(BONCAT_freq))
-table<-cbind(effectsize, avg)
-head(table)
-
-#expectations
-# G + B
-gb<- table[which(table$Treatment == "Soil"), 1]+ table[which(table$Treatment == "B"), 1] + table[which(table$Treatment == "G"), 1] # mean
-gbe<-sqrt(table[which(table$Treatment == "Soil"), 2]+ table[which(table$Treatment == "B"), 2] + table[which(table$Treatment == "G"), 2])# standard dev 
-# 15.0 + or  - 2.67 
-#actually
-#table[which(table$Treatment == "GB"), 1] 
-# 6.7 + or - 5.3
+###### clean data weed seed
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+weed <- read_csv("GH Mix Germination Data(Sheet1).csv")
+head(weed)
 
 
-# L + B
-lb<- table[which(table$Treatment == "Soil"), 1]+ table[which(table$Treatment == "B"), 1] + table[which(table$Treatment == "L"), 1] #mean
-lbe<-sqrt(table[which(table$Treatment == "Soil"), 2]+table[which(table$Treatment == "B"), 2] + table[which(table$Treatment == "G"), 2]) #stdev
-# expectation:  12.2 +/- # 3.06
-#table[which(table$Treatment == "LB"), 2] #mean
-#table[which(table$Treatment == "LB"), 3]  #stdev
-# actual : 10.5 +/- 7
+f<-weed %>% filter(Species=="foxtail")
+# tidy data  
+
+colnames(f) <- c("Trt_ID" ,
+                 "Treatment",
+                 "Rep",
+                 "Block",
+                 "Species",
+                 "foxtail_num_nongerm",
+                 "foxtail_num_germ",
+                 "foxtail_total_seeds",
+                 "foxtail_prop_nongerm")
+f<-f%>% select(-Species)
+## pigweed
 
 
-# L + G
-lg<-table[which(table$Treatment == "Soil"), 1]+  table[which(table$Treatment == "G"), 1] + table[which(table$Treatment == "L"), 1] #mean
-lge<-sqrt(table[which(table$Treatment == "Soil"), 2]+table[which(table$Treatment == "L"), 2] + table[which(table$Treatment == "G"), 2]) #stdev
-# expectation:  8.6 +/- # 2.5
-#table[which(table$Treatment == "LG"), 2] #mean
-#table[which(table$Treatment == "LG"), 3]  #stdev
-# actual : 12.8 +/- 8.5
+p<-weed %>% filter(Species=="pigweed")
+# tidy data  
 
-# L + G + B
-lgb<- table[which(table$Treatment == "Soil"), 1]+ table[which(table$Treatment == "G"), 1] + table[which(table$Treatment == "L"), 1] + table[which(table$Treatment == "B"), 1] #mean
-lgbe<-sqrt(table[which(table$Treatment == "Soil"), 2]+table[which(table$Treatment == "L"), 2] + table[which(table$Treatment == "G"), 2] +  table[which(table$Treatment == "B"), 2] )#stdev
-# expectation:  16.6 +/- 3.5
-#table[which(table$Treatment == "LGB"), 2] #mean
-#table[which(table$Treatment == "LGB"), 3]  #stdev
-# actual : 7.8 +/- 7.8
-
-
-###predictors verse actual
-head(table)
-prediction<-c(NA,NA, NA,NA, gb, lb, lg, lgb)
-prediction.error <- c(NA, NA, NA,NA, gbe, lbe, lge, lgbe)
-table<-cbind(table, prediction)
-table <- cbind(table, prediction.error)
-head(table)
-table$color <- c(0, 0,0, 0, 1, 1, 1 ,1)
-
-table %>% ggplot(aes(x=Treatment, y=prediction, col="red")) +
-            geom_boxplot()+
-            geom_point(aes(x=Treatment, y=mean.activity, col="black")) 
-
-####plot
-
-  #ggplot(data=df, aes(Treatment, BONCAT_freq)) +
-  #geom_jitter(width = .2, size=1 )+
-  #geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  #theme_bw(base_size = 22, )+
-  #theme(axis.text.x = element_text(angle=60, hjust=1)) +
-  #geom_point(data= table, aes(Treatment, y= prediction, col="black")) +
-  #geom_point(data= table, aes(Treatment, y= mean.activity, col="red")) 
+colnames(p) <- c("Trt_ID" ,
+                 "Treatment",
+                 "Rep",
+                 "Block",
+                 "Species",
+                 "pigweed_num_nongerm",
+                 "pigweed_num_germ",
+                 "pigweed_total_seeds",
+                 "pigweed_prop_nongerm")
+p<-p%>% select(-Species)
+weed<-left_join(p,f)
+write.csv(weed, "weed_seed_decay.csv")
 
 
-mycols <- ("black", "red")
-
-mycols<-c(rep("black",4), rep("red", 4))
-  plot(
-    x = table$Treatment,
-    y = table$mean.activity,
-    xlab = "Treatment",
-    ylab = "Microbial Activity",
-    pch = 20, # solid dots increase the readability of this data plot
-    col = mycols,
-    fill = mycols
-  )
+weed<-read.csv("weed_seed_decay.csv", row.names = 1)
+  head(weed)
   
+  
+df<- left_join(weed, fc)
+head(df)  
 
+##
 
-legend(
-  x ="topleft",
-  legend = paste("Color", levels(diamonds$color)), # for readability of legend
-  col = diamond_color_colors,
-  pch = 19, # same as pch=20, just smaller
-  cex = .7 # scale the legend to look attractively sized
-)
+plot(df$active_cel_per_g, df$foxtail_prop_nongerm)
+plot(df$BONCAT_freq, df$pigweed_prop_nongerm)
 
- #
-cies line w/o brasssisae 
-df%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Brassicae))) +
-  geom_jitter(width = .2, size=2 )+
-  theme_bw(base_size = 18, )+
-  stat_summary(geom = "line", fun = mean)
-
-# increasing species line w/o grass
-df%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Grass))) +
-  geom_jitter(width = .2, size=2 )+
-  theme_bw(base_size = 18, )+
-  stat_summary(geom = "line", fun = mean)
-
-
-# increasing species line w/o legume
-df%>% filter(Species1!="Soil") %>%
-  ggplot(aes(x=n_species, y=BONCAT_freq, col=as.factor(Legume))) +
-  geom_jitter(width = .2, size=2 )+
-  theme_bw(base_size = 18, )+
-  stat_summary(geom = "line", fun = mean)
-
-
-
-
-
-
-df%>% filter(Treatment!="ctl") %>%
-  ggplot(aes(x=n_species, y=Percent_BONCAT)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))+
-  scale_y_log10()+
-  xlab("N_species")
-
-m1<-lm(Percent_BONCAT~n_species, data = df)
+m1<-lm(df$pigweed_prop_nongerm~df$active_cel_per_g)
 summary(m1)
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/")
-svg(file="brassica.svg", width=5, height=5 )
-#windows(6,4)
-df%>% filter(Treatment!="ctl", method=="filter", n_species=="1", Percent_BONCAT>0.1) %>%
-    group_by(Brassica)%>%
-    summarise(mean=mean(Percent_BONCAT), sd=sd(Percent_BONCAT)) %>%
-ggplot(aes(x=Brassica, y=mean, fill=Brassica)) +
-  geom_bar( position = "dodge", stat = "identity", alpha=.7)+
-  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
-                position=position_dodge(.9), col="grey28") +
-
-  scale_fill_manual(values=c("#F4743B", "#70AE6E"))+
-  theme_bw(base_size = 22 )+
-  theme(legend.position="none")+
-  xlab("Brassica")+
-  ylab("% active microbes")
-
-dev.off()
-
-df1<-df%>% filter(Treatment!="ctl", method=="filter", n_species=="1", Percent_BONCAT>0.1)
-m1<-lm(Percent_BONCAT~Brassica, data=df1)
+m1<-lm(pigweed_prop_nongerm~, data=df)
 summary(m1)
 
 
-df%>% filter(Treatment!="ctl") %>%
-  ggplot(aes(x=Grass, y=Percent_BONCAT)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))+
-  scale_y_log10()+
-  xlab("Grass")
+
+### nitrogen fixed with microbial activity
 
 
 
-df%>% filter(Treatment!="ctl") %>%
-  ggplot(aes(x=Legume, y=Percent_BONCAT)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-  theme_bw(base_size = 22, )+
-  theme(axis.text.x = element_text(angle=60, hjust=1))+
-  scale_y_log10()+
-  xlab("")
-
-
-
+# biomass increase verse activity

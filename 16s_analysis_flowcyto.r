@@ -26,7 +26,12 @@ library(lubridate)
 library(phyloseq)
 library(multcompView)
 library(BiodiversityR)
-
+#ANCOM
+#BiocManager::install("ANCOMBC")
+library(ANCOMBC)
+#BiocManager::install("microbiome")
+#install.packages("microbiome")
+library(microbiome)
 
 # set colors
 mycols <- c( #IBM colors
@@ -88,7 +93,7 @@ metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present"
 
 #make taxon matrix row names OTUs
 #taxon[1:5,1:5]
-row.names(taxon) <- taxon$Feature.ID
+row.names(taxon) <- taxon$asv
 
 #get min number of reads in a sample
 min.s<-min(rowSums(asvs))
@@ -272,7 +277,6 @@ summary(m1)
   keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
   ps<-prune_taxa(keep, ps)
   ps
-  #1902 asvs
   
     
 #####PCOA   ########
@@ -1237,6 +1241,122 @@ df.pcoa %>%
 
 dev.off()
 
+
+
+
+##### ANCOM###############
+# ancom is run on rarefied filtered data
+
+ps1<-subset_samples(ps , Treatment!="Soil")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+
+metadat2 <- as.data.frame(sample_data(ps1))
+taxon<-as.data.frame(tax_table(ps1))
+df<-as.data.frame(t(otu_table(ps1)))
+
+### skip to data import if you already ran ancom
+sample_data(ps1)
+
+out1 = ancombc(data = ps1, assay_name = "counts", 
+               tax_level = "asv",  
+               formula = "Fraction", 
+               p_adj_method = "holm", prv_cut = .10, lib_cut = 0, 
+               group = "Fraction", struc_zero = FALSE, neg_lb = FALSE, tol = 1e-5, 
+               max_iter = 100, conserve = TRUE, alpha = 0.001, global = FALSE,
+               n_cl = 1, verbose = TRUE)
+
+res = out1$res
+res_global = out1$res_global
+sample_data(ps1)
+
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+#log fold change
+tab_lfc = res$lfc
+head(tab_lfc)
+dim(tab_lfc)
+col_name = c("asv", "LFC_Intercept", "LFC_FractionViable_Cell")
+colnames(tab_lfc) = col_name
+head(tab_lfc)
+write_delim(as.data.frame(tab_lfc), file = "ancom_Log_fold_change.txt", delim = " ")
+
+# standard error
+tab_se = res$se
+col_name = c("asv", "se_Intercept", "se_viable")
+colnames(tab_se) = col_name
+head(tab_se)
+tab_se<-as.data.frame(tab_se)
+write.table(tab_se, file = "ancom_SE.txt")
+tab_se<-read.table("ancom_SE.txt", header = TRUE)
+head(tab_se)
+
+#test statistcs W maybe it's willcoxin?
+tab_w = res$W
+col_name = c("asv", "W_Intercept", "W_viable")
+colnames(tab_w) = col_name
+head(tab_w)
+write.table(as.data.frame(tab_se), file = "ancom_SE.txt")
+
+# P-values from the Primary Result
+tab_p = res$p_val
+col_name = c("asv", "p_Intercept", "p_viable")
+colnames(tab_p) = col_name
+head(tab_p)
+write.table(as.data.frame(tab_p), file = "ancom_pval.txt")
+
+
+#Adjusted p-values from the Primary Result"
+tab_q = res$q
+head(tab_q)
+col_name = c("asv", "adj_p_Intercept", "adj_p_viable")
+colnames(tab_q) = col_name
+head(tab_q)
+write.table(as.data.frame(tab_se), file = "ancom_adjpval.txt")
+
+# yes or no is a taxa differentially abundant
+tab_diff = res$diff_abn
+col_name = c("asv", "DA_Intercept", "DA_Fraction_Viable_cells_Active")
+colnames(tab_diff) = col_name
+head(tab_diff)
+write_delim(as.data.frame(tab_diff), file = "ancom_DA.txt", delim = " ")
+
+
+# through all togetha nd remove anything with DNA
+tab <-tab_lfc %>%
+  left_join(., tab_se) %>%
+  left_join(., tab_w ) %>%
+  left_join(., tab_p) %>%
+  left_join(., tab_q) %>%
+  left_join(., tab_diff)
+write.table(as.data.frame(tab), file = "ancom_table.txt")
+head(tab)
+######ANCOM import df######
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+
+tab<-read.table("ancom_table.txt", header = TRUE)
+head(tab)
+
+##add add abundance and taxon info
+df<-as.data.frame((otu_table(ps1)))
+df$asv<-row.names(df)
+df<-left_join(df, tab)
+taxon<-as.data.frame(tax_table(ps1))
+df<-left_join(taxon, df)
+df
+
+### summarise the abundance in active and Viable
+df$rhizo.Viable.mean <-   rowMeans(df %>% dplyr::select(contains("R.SYBR"))) %>% glimpse()
+t<-df %>% select(contains("R.SYBR"))
+sd_Viable<- apply(t, 1, sd, na.rm=TRUE)
+sd_Viable
+df$sd_Viable <- sd_Viable
+
+df$rhizo.bcat.mean <-   rowMeans(df %>% dplyr::select(contains("R.POS"))) %>%   glimpse()
+t<-df %>% select(contains("R.POS"))
+sd_active<- apply(t, 1, sd, na.rm=TRUE)
+sd_active
+df$sd_active <- sd_active
+head(df)
 
 
 

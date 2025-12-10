@@ -207,7 +207,7 @@ lab <- gsub("X", "AB", lab)
 lab
 
 p1<-rich%>%  
-  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
+  ggplot(aes(x=composition, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
@@ -216,10 +216,11 @@ p1<-rich%>%
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  geom_text(y=7.9, label = lab, size=5)+
+  geom_text(y=7.85, label = lab, size=5)+
   labs(title = "A",
        x="",
-       y= "Total DNA Shannon Diversity")
+       y= "Total DNA Shannon Diversity")+
+  facet_grid(~n_species, scales = "free", space = "free")
   #scale_shape_discrete() 
 p1
 
@@ -565,12 +566,14 @@ ordiellipse(sc_si, metadat2$Treatment,
             alpha = 40,
             cex=1.2)
 
-legend("topleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+legend("topleft", legend=c("Legume", "Grass", "Brassica", "GRass Brassica", "Legume Brassica",
+                           "Legume Grass", "Legume Grass Brassica"),
        fill= IBM,
        cex=1,
        title = "",
        bty = "n")
 
+metadat2$composition
 
 
 

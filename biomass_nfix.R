@@ -298,6 +298,16 @@ print(tukey.result.Nadd) # All difference except LG-LB
  p1
  #dev.off() 
  
+ 
+ # by treatment 
+ label <- df.leg$treatment
+ label
+ 
+ label <- gsub("LGB", "B" ,label )
+ label<- gsub("LG", "AB" ,label )
+ label <- gsub("LB", "AB" ,label )
+ label<- gsub("L", "A" ,label )
+ 
 p2<- ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
    geom_jitter(size=.5)+
@@ -307,19 +317,25 @@ p2<- ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
    facet_grid( ~spp.number, scales = "free", space = "free")+
-   ylab( "N fixed per legume g")
- 
+   ylab( "N fixed per legume g") +
+ geom_text(y=.07, label = label, size=5)
 p2
  
- 
+
  # Analysis of variance 
- one.way.Nadd <- aov(perc.Ndfa ~ treatment, data = dfNadd.leg)
+ one.way.Nadd <- aov(n_fix_per_legume ~ treatment, data = df.leg)
  summary(one.way.Nadd) # difference between treatments
  tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
  print(tukey.result.Nadd) # All difference except LG-LB
  #plot(one.way.Nadd) #homoscedasticity looks fine
  
  
+ #scale_shape_discrete() 
+ require(gridExtra)
+ grid.arrange(p1, p2, ncol=2)
+ 
+ 
+  
  # nfixed per mg of soil
  ggplot(df.leg, aes(x=treatment, y=totalN.mg.g.1, fill=treatment)) + 
   geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -333,3 +349,180 @@ p2
 
 
 
+######## weed seed decay #######
+ #load libraries
+ library(readxl)
+ library(tidyverse)
+ library(lubridate)
+ library(lme4)
+ library(nlme)
+
+ IBM <- c( #IBM colors
+   "navy", # dark royal blue L
+   "#648FFF", # french blue G
+   "#785EF0", # light purple B
+   "#DC267F", # magenta pink GB
+   "#FE6100", # bright orange LB
+   "#FFB000", # golden yellow LG
+   "#865338" # medium mocha brown LGB
+ )
+ IBM2 <- c( #IBM colors
+   "grey",
+   "navy", # dark royal blue L
+   "#648FFF", # french blue G
+   "#785EF0", # light purple B
+   "#DC267F", # magenta pink GB
+   "#FE6100", # bright orange LB
+   "#FFB000", # golden yellow LG
+   "#865338" # medium mocha brown LGB
+ )
+ 
+ 
+ # load data 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+df <- read_csv("GH Mix Germination Data(Sheet1).csv")
+head(df)
+
+# set factor
+df$treatment   <- factor(df$treatment, levels= c("S", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+unique(df$treatment)
+
+# look at daeta distrubution 
+hist(df$prop_nongerm)
+
+# foxtail
+#L G B LB GB LG LGB
+# a a a ab ab ab b
+df1<-df  %>%   filter(treatment!="S") %>% filter(species=="foxtail")
+lab = as.character(df1$treatment)
+unique(lab)
+lab<-gsub("LGB", "X", lab)
+lab<-gsub("GB", "AX", lab)
+lab<-gsub("LG", "AX", lab)
+lab<-gsub("LB", "AX", lab)
+lab<-gsub("B", "A", lab)
+lab<-gsub("G", "A", lab)
+lab<-gsub("L", "A", lab)
+
+lab<-gsub("X", "B", lab)
+unique(lab)
+length(lab)
+
+
+p1<- df %>% filter(species=="foxtail")%>%  filter(treatment!="S") %>%
+  ggplot(aes(x=treatment, y=prop_nongerm, fill=treatment)) + 
+  geom_boxplot(alpha=.7, outlier.shape = NA)+
+  geom_jitter(size=.5)+
+  theme_classic(base_size = 12) +
+  theme(legend.position = "none")+
+  scale_fill_manual(values = IBM)+
+  ylab("percent non germinating foxtail seeds")+
+  geom_text(y=.21, label = lab, size=5)
+p1
+
+
+
+
+
+# pigweed
+# L   G   B   GB    LB  LG  LGB
+# bc abc  d   ab    a   abc cd
+df1<-df  %>%   filter(treatment!="S") %>% filter(species=="pigweed")
+lab = as.character(df1$treatment)
+unique(lab)
+lab<-gsub("LGB", "CD", lab)
+lab<-gsub("GB", "AX", lab)
+lab<-gsub("LG", "AXC", lab)
+lab<-gsub("LB", "A", lab)
+lab<-gsub("B", "D", lab)
+lab<-gsub("G", "ABC", lab)
+lab<-gsub("L", "XC", lab)
+lab<-gsub("X", "B", lab)
+
+p2<-df %>% filter(species=="pigweed")%>%  filter(treatment!="S") %>%
+  ggplot(aes(x=treatment, y=prop_nongerm, fill=treatment)) + 
+  geom_boxplot(alpha=.7, outlier.shape = NA)+
+  geom_jitter(size=.5)+
+  theme_classic(base_size = 12) +
+  theme(legend.position = "none")+
+  scale_fill_manual(values = IBM)+
+  ylab("percent non germinating pigweed seeds")+
+  geom_text(y=.73, label = lab, size=5)
+p2
+
+
+require(gridExtra)
+grid.arrange(p1, p2, ncol=2)
+
+
+
+
+
+# model - binomial model with percent data##
+# make vector of successes and failures
+y<-cbind(df$num_nongerm, df$num_germ)
+m1<-glm(data= df, y~(treatment+block+species)^2, family = binomial)
+summary(m1)
+# significant effect of block and species
+
+# model without soil
+df <- df %>% filter(treatment!="S")
+y<-cbind(df$num_nongerm, df$num_germ)
+m1<-glm(data= df, y~(treatment+block+species)^2, family = binomial)
+summary(m1)
+# significant effect of block and species and species treatment interaction
+
+
+# model foxtail
+df1 <- df %>% filter(species=="foxtail")
+y<-cbind(df1$num_nongerm, df1$num_germ)
+m1<-glm(data= df1, y~treatment+block, family = binomial)
+summary(m1)
+# significant effect of block and species and species treatment interaction
+# pairwise tests
+library(emmeans)
+# Get the EMMs for your treatment groups
+emm_object <- emmeans(m1, specs = ~ treatment)
+# Perform all pairwise comparisons with Tukey adjustment
+pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+summary(pairwise_comparison)
+# This will perform the pairwise tests on the log-odds scale, 
+# apply the sidek adjustment, and assign letters based on the results.
+library(multcomp)
+cld_result <- cld(emm_object, 
+                  adjust = "tukey", 
+                  alpha = 0.05,
+                  # The Letters argument is optional, but common for CLDs
+                  Letters = letters) 
+
+print(cld_result)
+
+
+
+# model pigweed
+df2 <- df %>% filter(species=="pigweed")
+y<-cbind(df2$num_nongerm, df2$num_germ)
+m1<-glm(data= df2, y~treatment+block, family = binomial)
+summary(m1)
+
+# significant effect of block and species and species treatment interaction
+# pairwise tests
+library(emmeans)
+# Get the EMMs for your treatment groups
+  emm_object <- emmeans(m1, specs = ~ treatment)
+# Perform all pairwise comparisons with Tukey adjustment
+pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+summary(pairwise_comparison)
+# This will perform the pairwise tests on the log-odds scale, 
+# apply the sidek adjustment, and assign letters based on the results.
+library(multcomp)
+cld_result <- cld(emm_object, 
+                  adjust = "tukey", 
+                  alpha = 0.05,
+                  # The Letters argument is optional, but common for CLDs
+                  Letters = letters) 
+
+print(cld_result)
+
+# L   G   B   GB    LB  LG  LGB
+# bc abc  d   ab    a   abc cd

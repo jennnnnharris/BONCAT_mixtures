@@ -16,10 +16,6 @@ library(nlme)
 #install.packages("viridis")
 #library(viridis)
 
-mycols7<-c( "#715b8a", "#4D8F8BFF", "#CDD6ADFF", "#365C83FF", "#AD5A6BFF", "#E3C1CBFF",  "#384351FF")
-mycols7vivid<-c( "#715b8a", "#4D8F8BFF", "#b1de64", "#365C83FF", "#bd0262", "#c77597",  "#384351FF")
-mycols4 <- c("#715b8a",  "#AD5A6BFF", "#E3C1CBFF", "#384351FF" )#
-
 IBM <- c( #IBM colors
   "navy", # dark royal blue L
   "#648FFF", # french blue G
@@ -352,52 +348,6 @@ p1<-df1  %>%
   xlab("") 
 p1
 
-#####figure percent N ###
-#svg(file="nfix.percent.predict.svg",width = 2.5, height=2.5)
-# rename
-df1<-df.leg %>% filter(treatment=="L")
-df1$treatment<-gsub("L", "L.predict", df1$treatment )
-m<-mean(df1$perc.Ndfa)
-
-df2<-df.leg %>% filter(treatment!="L")
-df.leg1<-rbind(df1, df2)
-# set cols
-mycols4 <- c("grey", "#35b779", "#90d743", "#fde725")
-
-lab <- df.leg1$treatment
-lab<- gsub("L.predict", "" , lab )
-lab<- gsub("LGB", "*" , lab  )
-lab <- gsub("LB", "*" , lab )
-lab <- gsub("LG", "*" , lab )
-lab
-
-
-p1<-df.leg1 %>%
-  ggplot( aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(width = .2, size=.8 )+
-  ylab('Nitrogen from Fixation (%)') +
-  xlab("Treatment") +
-  theme_classic(base_size = 12) +
-  theme(legend.position = "none",
-        axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5))+
-  scale_fill_manual(values = mycols4)+
-  geom_hline(yintercept = m, color = "grey", linewidth = 1.5, linetype = "dashed")+
-  annotate("text", x =3.5, y = 70, label = "   prediction from
-           monoculture", color = "black", size = 3.4)+
-  geom_text(y=90, label =lab , nudge_x = .1 , size=7)
-
-
-
-p1
-
-setwd(fig3path)
-svg(file="fig3_predict.svg",width = 10, height=3)
-require(gridExtra)
-#windows(10,3)
-grid.arrange(p1, p2, p3, ncol=3)
-dev.off()
 
 
 
