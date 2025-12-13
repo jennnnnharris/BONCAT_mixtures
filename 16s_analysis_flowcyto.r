@@ -140,11 +140,9 @@ rich %>% group_by(n_species) %>% summarise(mean(Observed), sd(Observed))
 rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 rich$Fraction   <- factor(rich$Fraction, levels= c("Active", "Inactive"))
 
+# caculate pilou's evenness where formula J= H/ln(S), 
+rich$evenness = rich$Shannon/log(rich$Observed)
 
-
-
-#BCAT_73_S35 is kind of a weird outlier
-#rich<-rich[which(rich$SampleID!="BCAT_73_S35"),]
 
 
 #plots
@@ -205,6 +203,21 @@ require(gridExtra)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
 
+
+p3<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
+  ggplot(aes(x=Treatment, y=evenness,  fill=Treatment))+
+  geom_boxplot(alpha=.6, outlier.shape = NA) +
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
+  geom_jitter(size=1.5)+
+  theme_classic(base_size = 16)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5),legend.position="none")+
+  ylab("active Chao1 species richness")+
+  xlab("")
+#scale_shape_discrete() 
+p3
 
 
 ##DIVERSITY STATS######
@@ -511,7 +524,7 @@ df.pcoa %>%
   
   # 2. Run the CAP (db-RDA) analysis
   # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~ Treatment*Block,
+  cap_result <- capscale(dist_matrix ~ Treatment,
                          data = metadat2,
                          add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
   
@@ -1247,15 +1260,53 @@ dev.off()
 ##### ANCOM###############
 # ancom is run on rarefied filtered data
 
-ps1<-subset_samples(ps , Treatment!="Soil")
+ps1<-subset_samples(ps , Treatment=="L")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 
+# taxa must have non zero values in active and inactive fractions
+
+# select for taxa that are in at least 3 active sample or 3 viable samples
+# and have at least 50 reads across all samples
+
+active<-subset_samples(ps.r, BONCAT=="POS")
+active<-ps_prune(active, min.samples = 3, min.reads = 50)
+active<-prune_taxa(taxa_names(active)!="Others", active )
+active<-prune_taxa(taxa_sums(active) > 0, active)
+active
+#317 taxa
+dfa<-as.data.frame(otu_table(active))
+dfa[1:13,1:3]
+
+#viable
+viable<-subset_samples(ps.r, BONCAT=="SYBR")
+viable<-ps_prune(viable, min.samples = 3, min.reads = 50)
+viable<-prune_taxa(taxa_names(viable)!="Others", viable )
+viable<-prune_taxa(taxa_sums(viable) > 0, viable)
+viable
+#541 taxa
+dfv<-as.data.frame(otu_table(viable))
+df<-full_join(dfa, dfv)
+dim(df) # 617 taxa
+# ASV that are have 3 in viable or 3 in active
+asvkp<-unique(colnames(df))
+psfilter.r<-prune_taxa(asvkp, ps.r )
+psfilter.r #617 taxa
+
+
+
+
+
+
+
+
+## remake ps1 
 metadat2 <- as.data.frame(sample_data(ps1))
 taxon<-as.data.frame(tax_table(ps1))
 df<-as.data.frame(t(otu_table(ps1)))
 
 ### skip to data import if you already ran ancom
 sample_data(ps1)
+ps1
 
 out1 = ancombc(data = ps1, assay_name = "counts", 
                tax_level = "asv",  
@@ -1328,16 +1379,16 @@ tab <-tab_lfc %>%
   left_join(., tab_p) %>%
   left_join(., tab_q) %>%
   left_join(., tab_diff)
-write.table(as.data.frame(tab), file = "ancom_table.txt")
+write.table(as.data.frame(tab), file = "Lancom_table.txt")
 head(tab)
 ######ANCOM import df######
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
 
-tab<-read.table("ancom_table.txt", header = TRUE)
+tab<-read.table("Lancom_table.txt", header = TRUE)
 head(tab)
 
 ##add add abundance and taxon info
-df<-as.data.frame((otu_table(ps1)))
+df<-as.data.frame(t(otu_table(ps1)))
 df$asv<-row.names(df)
 df<-left_join(df, tab)
 taxon<-as.data.frame(tax_table(ps1))
@@ -1345,14 +1396,14 @@ df<-left_join(taxon, df)
 df
 
 ### summarise the abundance in active and Viable
-df$rhizo.Viable.mean <-   rowMeans(df %>% dplyr::select(contains("R.SYBR"))) %>% glimpse()
-t<-df %>% select(contains("R.SYBR"))
+df$rhizo.inactive.mean <-   rowMeans(df %>% dplyr::select(contains("i_"))) %>% glimpse()
+t<-df %>% select(contains("i_"))
 sd_Viable<- apply(t, 1, sd, na.rm=TRUE)
 sd_Viable
 df$sd_Viable <- sd_Viable
 
-df$rhizo.bcat.mean <-   rowMeans(df %>% dplyr::select(contains("R.POS"))) %>%   glimpse()
-t<-df %>% select(contains("R.POS"))
+df$rhizo.bcat.mean <-   rowMeans(df %>% dplyr::select(contains("BCAT"))) %>%   glimpse()
+t<-df %>% select(contains("BCAT"))
 sd_active<- apply(t, 1, sd, na.rm=TRUE)
 sd_active
 df$sd_active <- sd_active

@@ -82,6 +82,7 @@ row.names(metadat) <- metadat$SampleID
 metadat$N   <- factor(metadat$N)
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes absent", "Legumes present"))
 
+head(asvs)
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
 
@@ -114,7 +115,7 @@ metadat$composition<- factor(metadat$composition, levels = c("Soil", "Legume", "
 
 
 #make taxon matrix row names OTUs
-row.names(taxon) <- taxon$Feature.ID
+row.names(taxon) <- taxon$asv
 
 # import it phyloseq
 Workshop_OTU <- otu_table(as.matrix(asvs), taxa_are_rows = FALSE)
@@ -147,7 +148,7 @@ ps
 #overall 
 rich<-estimate_richness(ps, measures = c("Observed", "Shannon", "Simpson", "InvSimpson", "Chao1"))
 
-# Data wrangling fo rdiversity of active microbes in each fraction
+# Data wrangling for diversity of active microbes in each fraction
 metadat.t <- sample_data(ps)
 rich<-cbind(rich, sample_data(ps))
 rich<-as.data.frame(rich)
@@ -159,8 +160,10 @@ rich %>% group_by(n_species) %>% summarise(mean(Observed), sd(Observed))
 #
 rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
-#BCAT_73_S35 is kind of a weird outlier
-#rich<-rich[which(rich$SampleID!="BCAT_73_S35"),]
+
+# caculate pilou's evenness where formula J= H/ln(S), 
+rich$evenness = rich$Shannon/log(rich$Observed)
+
 
 
 ##plots##
@@ -171,7 +174,7 @@ p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   geom_jitter(size=1.5)+
   theme_classic(base_size = 16)+
-  labs(title = "E",
+  labs(
        x="Nitrogen",
        y= "Total DNA Shannon diversity")+
   annotate("text", x=1.5, y=8, label="*")
@@ -181,7 +184,7 @@ p2<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   geom_jitter(size=1.5)+
   theme_classic(base_size = 16)+
-  labs(title = "F",
+  labs(
        x="Nitrogen",
        y= "Total DNA ASV richness")+
   annotate("text", x=1.5, y=5500, label="*")
@@ -256,6 +259,20 @@ p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   
 #scale_shape_discrete() 
 p2
+
+p3<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+  ggplot(aes(x=Treatment, y=evenness,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_fill_manual(values = mycols)+
+  #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
+  geom_jitter(width = .1,size=1.5)+
+  theme_classic(base_size = 16)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  geom_text(y= 5300, label = lab, size=5)
+
+p3
+
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_diversity")
 svg(file="diversity.total.svg",width = 10, height=6)
 require(gridExtra)
@@ -263,11 +280,7 @@ require(gridExtra)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
 
-
-
 #STATS#
-
-
 # remove soil
 rich <- rich %>% filter(Fraction=="Total") %>% filter(Treatment!="Soil")
 rich$Treatment   <- factor(rich$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
@@ -275,9 +288,7 @@ rich$N <- factor(rich$N, levels= c("0", "1"))
 
 
 # Shannon
-rich1<-rich%>%  
-  filter(N=="1")
-m1<-lm(Shannon ~ N,  data = rich1)
+m1<-lm(Shannon ~ N,  data = rich)
 summary(m1)
 
 m1<-lm(Shannon ~ Treatment*N,  data = rich)
@@ -285,13 +296,21 @@ summary(m1)
 # no interaction with nitrogen, so I'm just gonna bin +N =N together
 
 # Analysis of variance 
+# block droped because not sig
 anova1<- aov(Shannon ~ Treatment, data = rich)
 summary(anova1)
 library(multcompView)
 tukey.a1 <- TukeyHSD(anova1)
+print(tukey.a1) 
+#plot(anova1) #homoscedasticity looks fine
+#Extract the p-values for the factor of interest
+p_values <- tukey.a1$Treatment[, 4]
+# Generate the grouping letters using multcompLetters()
+cld <- multcompLetters(p_values)
+print(cld)
 
-print(tukey.a1) # all difference except LG-LB and LGB-LG
-plot(anova1) #homoscedasticity looks fine
+
+
 
 ##observed ANOVA
 
@@ -319,21 +338,26 @@ print(cld)
 ##chao1 Analysis of variance 
 anova1<- aov(Chao1 ~ Treatment, data = rich)
 summary(anova1)
-# 3. Run the Tukey HSD test on the ANOVA model
+# Run the Tukey HSD test on the ANOVA model
 tukey_output <- TukeyHSD(anova1)
 
 # The 'tukey_output' shows the pairwise comparisons and p-values
 print(tukey_output)
 
-# 4. Extract the p-values for the factor of interest
+# Extract the p-values for the factor of interest
 p_values <- tukey_output$Treatment[, 4]
 
-# 5. Generate the grouping letters using multcompLetters()
 # The 'multcompLetters()' function takes a named vector of p-values
 cld <- multcompLetters(p_values)
 
-# 6. Print the results
+# Print the results
 print(cld)
+
+
+# Evenness
+anova1<- aov(Chao1 ~ evenness, data = rich)
+summary(anova1)
+
 
 ######## 3. Filtering rare taxa ##################
 

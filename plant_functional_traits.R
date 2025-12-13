@@ -35,27 +35,26 @@ legume_cols <- c( #IBM colors
 
 #### import biomass data and process #####
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df <- read.csv("Rice_greenhouse_ccexp_biomass_block.csv") # biomass data
+df <- read.csv("biomass_potlevel.csv") # biomass data
 
 # process to make n species column, summarize at pot level, make treatment a factor.
 df$Grass<-as.numeric(df$Grass)
 df$Legume<-as.numeric(df$Legume)
 df$Brassicae<-as.numeric(df$Brassicae)
-df$n_species<-rowSums(select(df, Brassicae, Legume, Grass))
-df<-df %>% group_by(Pot.Number, Treatment, Rep, Brassicae, N, Legume, Grass, n_species, Block ) %>% summarise(Root.Biomass = sum(Total.Root.g), Shoot.Biomass = sum(Stem.Biomass.g), )
-df$Root.to.Shoot <- df$Root.Biomass / df$Shoot.Biomass
+df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
+df<-df %>% group_by(Trt_ID, Treatment, Rep, Brassicae, Legume, Grass, N, n_species ) %>% summarise(Root.Biomass = sum(Total.Root.g), Shoot.Biomass = sum(Stem.Biomass.g), )
 df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 # give long composition name
-# make composition var
-df$composition <- df$Treatment
-df$composition<-gsub("L", "Legume", df$composition)
-df$composition<-gsub("G", "Grass", df$composition)
-df$composition<-gsub("B", "Brassica", df$composition)
-df$composition<-gsub("LegumeBrassica", "Legume_Brassica", df$composition)
-df$composition<-gsub("LegumeGrass", "Legume_Grass", df$composition)
-df$composition<-gsub("GrassBrassica", "Grass_Brassica", df$composition)
-df$composition 
-df$composition<- factor(df$composition, levels = c("Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
+# make long_name var
+df$long_name <- df$Treatment
+df$long_name<-gsub("L", "Legume", df$long_name)
+df$long_name<-gsub("G", "Grass", df$long_name)
+df$long_name<-gsub("B", "Brassica", df$long_name)
+df$long_name<-gsub("LegumeBrassica", "Legume_Brassica", df$long_name)
+df$long_name<-gsub("LegumeGrass", "Legume_Grass", df$long_name)
+df$long_name<-gsub("GrassBrassica", "Grass_Brassica", df$long_name)
+df$long_name 
+df$long_name<- factor(df$long_name, levels = c("Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
 
 # rename
 dfb <- df
@@ -63,41 +62,16 @@ head(dfb)
 
 ###biomass figures ##########
 
-# n species###
-p1<-df  %>%
-  ggplot(aes(x=n_species, y=Shoot.Biomass, colour = Treatment )) +
-  geom_jitter(width = .1, size=1 )+
-  geom_smooth(method = lm, color= "grey5")+
-  theme_classic(base_size = 16)+
-  scale_color_manual(values = IBM)+
-  xlab("Number of Species") 
-p1
-
-p2<-df  %>%
-  ggplot(aes(x=n_species, y=Root.Biomass, colour = Treatment )) +
-  geom_jitter(width = .1, size=1 )+
-  geom_smooth(method = lm, color= "grey5")+
-  theme_classic(base_size = 16)+
-  scale_color_manual(values = IBM)+
-  xlab("Number of Species")
-p2
-
-
-
-###bar plot for each treatment##
-
 
 p1<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=.5 )+
+  geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=IBM) +
   scale_fill_manual(values = IBM)+
-  theme_classic(base_size = 12)+
+  theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
         plot.title = element_text(hjust = 0, size=14))+
-  facet_grid( ~n_species, scales = "free", space = "free")+
-  xlab("composition")+
   ylab("root biomass (g dry weight)")
 p1
 
@@ -106,27 +80,22 @@ p1
 
 p2<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=.5 )+
+  geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=IBM) +
   scale_fill_manual(values = IBM)+
-  theme_classic(base_size = 12)+
+  theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0, size=14),
         legend.position = "none")+
-  facet_grid( ~n_species, scales = "free", space = "free")+
-  xlab("composition")+
   ylab("shoot biomass (g dry weight)")
 
 p2
 
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig2_nspecies")
-svg(file="biomass.all.trt.svg",width = 5.2, height=2.5)
-require(gridExtra)
-#windows(2,6)
+
 grid.arrange(p1, p2, ncol=2)
-dev.off()
+
 
 
 #### import nfix data and process####
@@ -244,20 +213,7 @@ df.leg$treatment <- factor(df.leg$treatment)
                                   "3" =2)) %>%
    mutate(n_fix_per_legume = totalN.g.pot.1/n_legume)
 
- # make composition var
- df.leg$composition <- df.leg$treatment
- df.leg$composition<-gsub("L", "Legume", df.leg$composition)
- df.leg$composition<-gsub("G", "Grass", df.leg$composition)
- df.leg$composition<-gsub("B", "Brassica", df.leg$composition)
- df.leg$composition<-gsub("LegumeBrassica", "Legume_Brassica", df.leg$composition)
- df.leg$composition<-gsub("LegumeGrass", "Legume_Grass", df.leg$composition)
- df.leg$composition<-gsub("GrassBrassica", "Grass_Brassica", df.leg$composition)
- df.leg$composition 
- df.leg$composition<- factor(df.leg$composition, levels = c( "Legume", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
- 
- 
- 
- 
+
 
 ############## N fix figures ####################
 
@@ -283,7 +239,8 @@ p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
     xlab("Treatment")+
   geom_text(y=90, label = label, size=5)
 p1
-
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+#write.csv(df.leg, "Nfix.csv")
 
 # Analysis of variance 
 one.way.Nadd <- aov(perc.Ndfa ~ treatment, data = dfNadd.leg)
