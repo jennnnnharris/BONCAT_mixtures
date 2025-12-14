@@ -703,35 +703,35 @@ summary(m1)
 # predicted vs measured for activity ######
 
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto")
-df<-read.csv("weed_seed_decay.csv", row.names = 1)
+df<-read.csv("processed_flow_cyto.csv")
 head(df)
 df<-df %>% filter(Treatment!="S")
 # group by
 df<- df %>% group_by(Rep, Nitrogen)
 df
 
-# pigdf
-LG<-get.predict(df, "L", "G", "pigweed_prop_nongerm")
-LB<-get.predict(df, "L", "B", "pigweed_prop_nongerm")
-GB<-get.predict(df, "G", "B", "pigweed_prop_nongerm")
-LGB<-get.predict(df, "L", "G", "pigweed_prop_nongerm", "B")
+# boncat freq
+LG<-get.predict(df, "L", "G", "boncat_freq")
+LB<-get.predict(df, "L", "B", "boncat_freq")
+GB<-get.predict(df, "G", "B", "boncat_freq")
+LGB<-get.predict(df, "L", "G", "boncat_freq", "B")
 LG
 
 predict<-rbind(GB, LB, LG, LGB)
-predict$pigweed_prop_nongerm<-round(as.numeric(predict$pigweed_prop_nongerm), 3)
+predict$boncat_freq<-round(as.numeric(predict$boncat_freq), 3)
 predict$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
 predict
 
 
-# foxtail
-LG<-get.predict(df, "L", "G", "foxtail_prop_nongerm")
-LB<-get.predict(df, "L", "B", "foxtail_prop_nongerm")
-GB<-get.predict(df, "G", "B", "foxtail_prop_nongerm")
-LGB<-get.predict(df, "L", "G", "foxtail_prop_nongerm", "B")
+# active cells
+LG<-get.predict(df, "L", "G", "active_cel_per_g")
+LB<-get.predict(df, "L", "B", "active_cel_per_g")
+GB<-get.predict(df, "G", "B", "active_cel_per_g")
+LGB<-get.predict(df, "L", "G", "active_cel_per_g", "B")
 LG
 
 predict1<-rbind(GB, LB, LG, LGB)
-predict1$foxtail_prop_nongerm<-round(as.numeric(predict1$foxtail_prop_nongerm), 3)
+predict1$active_cel_per_g<-round(as.numeric(predict1$active_cel_per_g), 3)
 predict1$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
 predict1
 predict<-full_join(predict, predict1)
@@ -742,24 +742,6 @@ df1<-df %>% filter(n_species!="1")
 df1<-full_join(df1, predict) 
 df1<-df1 %>% ungroup()
 as.factor(df1$Treatment)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #### plot
 mycols <- c( #IBM colors
@@ -773,7 +755,7 @@ mycols <- c( #IBM colors
   "grey"
 )
 p2<-df1  %>% 
-  ggplot(aes(x=Treatment, y=foxtail_prop_nongerm, fill = Treatment)) +
+  ggplot(aes(x=Treatment, y=boncat_freq, fill = Treatment)) +
   geom_jitter(width = .2, size=2 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
@@ -783,7 +765,7 @@ p2<-df1  %>%
         plot.title = element_text(hjust = 0.5))
 p2
 p3<-df1  %>% 
-  ggplot(aes(x=Treatment, y=pigweed_prop_nongerm, fill = Treatment)) +
+  ggplot(aes(x=Treatment, y=active_cel_per_g, fill = Treatment)) +
   geom_jitter(width = .2, size=2 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
@@ -798,6 +780,57 @@ p3
 require(gridExtra)
 grid.arrange(p2, p3, ncol=2)
 
+
+# anova number cells plain linear model
+#GB
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+m1<- lm(active_cel_per_g~ Treatment, data=df2)
+anova(m1)
+
+#LB
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+m1<- lm(active_cel_per_g~ Treatment, data=df2)
+anova(m1)
+
+#LG
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+m1<- lm(active_cel_per_g~ Treatment, data=df2)
+anova(m1)
+
+#LGB
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+m1<- lm(active_cel_per_g~ Treatment, data=df2)
+anova(m1)
+
+
+# anova boncat freeq
+
+df1$failures<-round(100 - df1$boncat_freq,0)
+
+
+#GB
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+y<-cbind(df2$boncat_freq, df2$failures)
+m1<-glm(data= df2, y~Treatment, family = binomial)
+summary(m1)
+
+#LB
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+y<-cbind(df2$boncat_freq, df2$failures)
+m1<-glm(data= df2, y~Treatment, family = binomial)
+summary(m1)
+
+#LG
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+y<-cbind(df2$boncat_freq, df2$failures)
+m1<-glm(data= df2, y~Treatment, family = binomial)
+summary(m1)
+
+#LGB
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+y<-cbind(df2$boncat_freq, df2$failures)
+m1<-glm(data= df2, y~Treatment, family = binomial)
+summary(m1)
 
 
 

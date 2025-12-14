@@ -106,16 +106,25 @@ fc$Date_Sorted   <- factor(fc$Date_Sorted)
 
 fc<-fc  %>%   filter(Treatment!="Soil")
 lab = as.character(fc$Treatment)
-lab<-gsub("LGB", "AX", lab)
+lab<-gsub("LGB", "X", lab)
+lab<-gsub("LB", "X", lab)
 lab<-gsub("GB", "A", lab)
-lab<-gsub("LG", "X", lab)
-lab<-gsub("LB", "AX", lab)
+lab<-gsub("LG", "C", lab)
 
-lab<-gsub("G", "AX", lab)
-lab<-gsub("L", "AX", lab)
-lab<-gsub("B", "AX", lab)
+lab<-gsub("G", "A", lab)
+lab<-gsub("L", "A", lab)
+lab<-gsub("B", "X", lab)
+
 lab<-gsub("X", "B", lab)
 
+# Treatment emmean     SE  df asymp.LCL asymp.UCL .group
+# GB         -2.81 0.0148 Inf     -2.85     -2.77  a    
+# G          -2.80 0.0173 Inf     -2.85     -2.76  a    
+# L          -2.77 0.0106 Inf     -2.80     -2.74  a    
+# LB         -2.71 0.0126 Inf     -2.74     -2.67   b   
+# LGB        -2.70 0.0128 Inf     -2.73     -2.66   b   
+# B          -2.69 0.0112 Inf     -2.72     -2.66   b   
+# LG         -2.42 0.0109 Inf     -2.45     -2.39    c 
 
 p1<-fc  %>%
   filter(Treatment!="Soil") %>%
@@ -134,11 +143,14 @@ p1
 
 #binomial model with percent data##
 # make vector of successes and failures
+#prop<-fc %>%
+#  mutate(boncat_freq = round(boncat_freq, 0)) %>%
+#  mutate(n_failures =  100-boncat_freq)
+
 prop<-fc %>%
-  mutate(boncat_freq = round(boncat_freq, 0)) %>%
-  mutate(n_failures =  100-boncat_freq)
-y<-cbind(prop$boncat_freq, prop$n_failures)
-y
+  mutate(success = n_events_BONCAT) %>%
+  mutate(n_failures =  n_events_cells)
+y<-cbind(prop$success, prop$n_failures)
 
 #model
 m1<-glm(data= prop, y~Treatment +Block, family = binomial)
@@ -169,21 +181,21 @@ print(cld_result)
 
 
 
-p1<-fc  %>%
-  filter(Treatment!="Soil") %>%
-  ggplot(aes(x=as.factor(Legume), y=boncat_freq, fill = as.factor(Legume))) +
-  geom_jitter(width = .2, size=2 )+
-  geom_boxplot(alpha=.5, outlier.shape = NA)+
-  scale_fill_manual(values = IBM)+
-  theme_classic(base_size = 16)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0))+
-  ylab("percent active")
-
-p1
-m1<-glm(data= prop, y~Legume, family = binomial)
-m1
-summary(m1)
+# p1<-fc  %>%
+#   filter(Treatment!="Soil") %>%
+#   ggplot(aes(x=as.factor(Legume), y=boncat_freq, fill = as.factor(Legume))) +
+#   geom_jitter(width = .2, size=2 )+
+#   geom_boxplot(alpha=.5, outlier.shape = NA)+
+#   scale_fill_manual(values = IBM)+
+#   theme_classic(base_size = 16)+
+#   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
+#         plot.title = element_text(hjust = 0))+
+#   ylab("percent active")
+# 
+# p1
+# m1<-glm(data= prop, y~Legume, family = binomial)
+# m1
+# summary(m1)
 
 
 ###################################number of cells ########################
