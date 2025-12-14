@@ -65,8 +65,6 @@ myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
 ## Set the working directory ###
 #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
-
-
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
 metadat<-read.csv("metadat.csv", header = T)
@@ -82,14 +80,10 @@ metadat
 
 ####filter for just flow cyto samples #
 asvs<-asvs[which(metadat$Fraction!="Total"),]
-dim(asvs)
-
 metadat<-metadat[which(metadat$Fraction!="Total"),]
 dim(metadat)
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
-
-
 
 #make taxon matrix row names OTUs
 #taxon[1:5,1:5]
@@ -117,7 +111,6 @@ ps
 ps<-subset_taxa(ps, Class!="c__Chloroplast" )
 ps<-subset_taxa(ps, Class!=" c__Chloroplast" )
 ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
-
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
 # 110K taxa 
@@ -261,7 +254,7 @@ anova1<- aov(Chao1 ~ Treatment, data = rich)
 summary(anova1)
 tukey.a1 <- TukeyHSD(anova1)
 print(a1) # all difference except LG-LB and LGB-LG
-plot(anova1) #homoscedasticity looks fine
+#plot(a1) #homoscedasticity looks fine
 
 # n species
 m1<-lm(Shannon ~ rich$n_species,  data = rich)
@@ -292,7 +285,7 @@ summary(m1)
   ps
   
     
-#####PCOA   ########
+##### PCOA   ########
   
 # subset data  
   ps1 <-subset_samples(ps, Treatment !="Soil" & Treatment!="CTL" )
@@ -354,7 +347,7 @@ summary(m1)
   
   
  
-#######PCOA plot active#########
+#######PCOA plot active##
   ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" )
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
   ps1
@@ -428,7 +421,7 @@ df.pcoa %>%
   facet_wrap(~Legume, ncol=3)
 
 
-############CAP ############  
+##### CAP ############  
 # inactive verse active 
   # subset data  
   ps1 <-subset_samples(ps, Treatment !="Soil" & Treatment!="CTL" )
@@ -610,7 +603,7 @@ df.pcoa %>%
   
   #dev.off()
   
- ############ addtional cap model L +b +G ###  ##########
+ ############ addtional cap model L +b +G 
   
   ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
@@ -858,7 +851,7 @@ pairwise_results
 
 
 
-########## PERMANOVA Fraction############
+########## PERMANOVA
 ps2<-subset_samples(ps, Fraction!="CTL")
 ps2<-prune_taxa(taxa_sums(ps2) > 0, ps2)
 #
@@ -1114,22 +1107,22 @@ df1<-aggregate(cbind( BCAT_11_S31 ,BCAT_12_S41 ,  BCAT_13_S51 , BCAT_14_S61 ,  B
                       i_56_S29 ,    i_57_S39  ,    i_58_S49  ,    i_59_S59   ,    i_60_S69 ,    i_68_S79  ,    
                       i_69_S10 ,    i_70_S20  ,    i_71_S30  ,    i_72_S40   ,    i_73_S50 ,    i_8_S16   ,    
                       i_83_S60 ,    i_84_S70  ,    i_86_S80  ,   i_88_S81    ,   i_9_S26   ,   pcr_ctl25_S173 ,
-                      pcr_ctl35_S82,  T_DNA_1_S85,
-                      T_DNA_10_S97  , T_DNA_11_S108 , T_DNA_12_S119 , T_DNA_13_S130 ,
-                      T_DNA_14_S141 , T_DNA_15_S152 , T_DNA_16_S163 , T_DNA_17_S87 ,  T_DNA_18_S98  ,  T_DNA_19_S109 ,
-                      T_DNA_2_S96  ,  T_DNA_20_S120 , T_DNA_21_S131 , T_DNA_22_S142 , T_DNA_24_S164 , T_DNA_25_S88  ,
-                      T_DNA_26_S99  , T_DNA_27_S110  ,T_DNA_28_S121 , T_DNA_29_S132 , T_DNA_3_S107  , T_DNA_31_S154 ,
-                      T_DNA_32_S165 , T_DNA_33_S89  , T_DNA_34_S100 , T_DNA_35_S111 , T_DNA_36_S122 , T_DNA_37_S133 ,
-                      T_DNA_38_S144 , T_DNA_39_S155 , T_DNA_4_S118  , T_DNA_40_S166 , T_DNA_41_S90  , T_DNA_42_S101 ,
-                      T_DNA_43_S112 , T_DNA_44_S123 , T_DNA_45_S134 , T_DNA_46_S145 , T_DNA_47_S156 , T_DNA_48_S167 ,
-                      T_DNA_49_S91  , T_DNA_5_S129  , T_DNA_50_S102 , T_DNA_51_S113 , T_DNA_52_S124 , T_DNA_53_S135 ,
-                      T_DNA_54_S146 , T_DNA_55_S157 , T_DNA_56_S168 , T_DNA_57_S92  , T_DNA_58_S103 , T_DNA_59_S114 ,
-                      T_DNA_6_S140  , T_DNA_60_S125 , T_DNA_61_S136 , T_DNA_62_S147 , T_DNA_63_S158 , T_DNA_64_S169 ,
-                      T_DNA_65_S93  , T_DNA_66_S104 , T_DNA_67_S115 , T_DNA_68_S126 , T_DNA_69_S137 , T_DNA_7_S151  ,
-                      T_DNA_70_S148 , T_DNA_71_S159 , T_DNA_72_S170 , T_DNA_73_S94  , T_DNA_74_S105 , T_DNA_75_S116 ,
-                      T_DNA_76_S127 , T_DNA_77_S138 , T_DNA_78_S149 , T_DNA_79_S160 , T_DNA_8_S162  , T_DNA_80_S171 ,
-                      T_DNA_81_S95  , T_DNA_82_S106 , T_DNA_83_S117 , T_DNA_84_S128 , T_DNA_85_S139 , T_DNA_86_S150 ,
-                      T_DNA_87_S161 , T_DNA_88_S172 , T_DNA_9_S86 
+                      pcr_ctl35_S82 # T_DNA_1_S85,
+                      # T_DNA_10_S97  , T_DNA_11_S108 , T_DNA_12_S119 , T_DNA_13_S130 ,
+                      # T_DNA_14_S141 , T_DNA_15_S152 , T_DNA_16_S163 , T_DNA_17_S87 ,  T_DNA_18_S98  ,  T_DNA_19_S109 ,
+                      # T_DNA_2_S96  ,  T_DNA_20_S120 , T_DNA_21_S131 , T_DNA_22_S142 , T_DNA_24_S164 , T_DNA_25_S88  ,
+                      # T_DNA_26_S99  , T_DNA_27_S110  ,T_DNA_28_S121 , T_DNA_29_S132 , T_DNA_3_S107  , T_DNA_31_S154 ,
+                      # T_DNA_32_S165 , T_DNA_33_S89  , T_DNA_34_S100 , T_DNA_35_S111 , T_DNA_36_S122 , T_DNA_37_S133 ,
+                      # T_DNA_38_S144 , T_DNA_39_S155 , T_DNA_4_S118  , T_DNA_40_S166 , T_DNA_41_S90  , T_DNA_42_S101 ,
+                      # T_DNA_43_S112 , T_DNA_44_S123 , T_DNA_45_S134 , T_DNA_46_S145 , T_DNA_47_S156 , T_DNA_48_S167 ,
+                      # T_DNA_49_S91  , T_DNA_5_S129  , T_DNA_50_S102 , T_DNA_51_S113 , T_DNA_52_S124 , T_DNA_53_S135 ,
+                      # T_DNA_54_S146 , T_DNA_55_S157 , T_DNA_56_S168 , T_DNA_57_S92  , T_DNA_58_S103 , T_DNA_59_S114 ,
+                      # T_DNA_6_S140  , T_DNA_60_S125 , T_DNA_61_S136 , T_DNA_62_S147 , T_DNA_63_S158 , T_DNA_64_S169 ,
+                      # T_DNA_65_S93  , T_DNA_66_S104 , T_DNA_67_S115 , T_DNA_68_S126 , T_DNA_69_S137 , T_DNA_7_S151  ,
+                      # T_DNA_70_S148 , T_DNA_71_S159 , T_DNA_72_S170 , T_DNA_73_S94  , T_DNA_74_S105 , T_DNA_75_S116 ,
+                      # T_DNA_76_S127 , T_DNA_77_S138 , T_DNA_78_S149 , T_DNA_79_S160 , T_DNA_8_S162  , T_DNA_80_S171 ,
+                      # T_DNA_81_S95  , T_DNA_82_S106 , T_DNA_83_S117 , T_DNA_84_S128 , T_DNA_85_S139 , T_DNA_86_S150 ,
+                      # T_DNA_87_S161 , T_DNA_88_S172 , T_DNA_9_S86 
   
                )~ Phyla, data = df.taxa, FUN = sum, na.rm = TRUE)
 
@@ -1166,9 +1159,9 @@ RColorBrewer::brewer.pal(26, "Spectral")
 mycols18<- c( "#1F78B4","#A6CEE3","#E31A1C",  "#FB9A99", "#33A02C","#B2DF8A",  "#FF7F00",  "#FDBF6F", "#6A3D9A" , "#CAB2D6",
                "#B15928", "#FFFF99",  "#eb05db","#edceeb","#1a635a","#9ad6ce" , "#969696", "#232423")
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/")
-svg(file="percent_barplot.svg",width = 12, height=10)
-windows(12,12)
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/")
+#svg(file="percent_barplot.svg",width = 12, height=10)
+#windows(12,12)
 df1%>% 
   ggplot(aes(fill=Phyla, y=value, x=sample)) + 
   geom_bar(position="fill", stat= "identity")+
@@ -1178,136 +1171,93 @@ df1%>%
   theme_bw(base_size = 12)+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
 
-dev.off()
-
-
-ps1 <-subset_samples(ps, Fraction=="Inactive" & Treatment!="Soil" )
-ps1 <-subset_samples(ps, Treatment!="Soil" )
-
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# 1845 taxa
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Inactive" & Treatment!="Soil")
-
-#factor
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-metadat2$Fraction   <- factor(metadat2$Fraction)
-
-
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(15-1), eig=TRUE)
-# Store coordinates for first two axes in new variable #
-otus.p <- otus.pcoa$points[,1:2]
-otus.p3 <- otus.pcoa$points[,3:4]
-colnames(otus.p) <- c("PC1", "PC2")
-colnames(otus.p3) <- c("PC3", "PC4")
-
-df.pcoa <- cbind(sample_data(ps1), otus.p)
-df.pcoa<-cbind(df.pcoa, otus.p3)
-df.pcoa$Treatment   <- factor(df.pcoa$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-df.pcoa
-# Calculate % variance explained by each axis #
-otus.eig<-otus.pcoa$eig
-perc.exp<-otus.eig/(sum(otus.eig))*100
-pe1<-perc.exp[1]
-pe2<-perc.exp[2]
-pe3<-perc.exp[3]
-pe4<-perc.exp[4]
-
-#calculate total variance explained by each principal component
-perc.exp<-otus.eig/(sum(otus.eig))*100
-#scree plot 
-otus.pcoa$eig
-plot(perc.exp[1:8],
-     ylab = "percent varience explained",
-     xlab = "PC")
-
-#windows(4,8)
-df.pcoa %>% 
-  ggplot( aes(x = PC1, y = PC2, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal(base_size = 14) +
-  scale_color_manual(values=mycols, name="treatment") +
-  labs(x = paste("PCoA1 (",round(pe1,2),"% var. explained)"), y = paste("PCoA2 (",round(pe2,2),"% variance explained)"),
-       title = "PCoA INActive ",
-       subtitle = "A")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~mixture, ncol=3)
-
-
-
-#windows(4,8)
-df.pcoa %>% 
-  ggplot( aes(x = PC3, y = PC4, color= as.factor(Treatment))) +  
-  geom_point(size = 3, alpha=.7) +
-  theme_minimal(base_size = 14) +
-  scale_color_manual(values=mycols, name="treatment") +
-  labs(x = paste("PCoA3 (",round(pe3,2),"% var. explained)"), y = paste("PCoA4 (",round(pe4,2),"% variance explained)"),
-       title = "PCoA INActive ",
-       subtitle = "A")+
-  stat_ellipse(aes(group=Treatment), linetype=2)+
-  facet_wrap(~Legume, ncol=3)
-
-dev.off()
-
-
+#dev.off()
 
 
 ##### ANCOM###############
-# ancom is run on rarefied filtered data
 
+
+# remove rare taxa #
+ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+# remove true singletons 
+ps<-prune_taxa(taxa_sums(ps) > 1, ps)
+#remove asvs with a mean of less than 5
+mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
+keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
+ps<-prune_taxa(keep, ps)
+# at least 50 reads in active 
+active<-subset_samples(ps, Fraction=="Active")
+active<-prune_taxa(taxa_sums(active) > 50, active)
+keep<-row.names(t(otu_table(active)))
+ps<-prune_taxa(keep, ps)
+ps 
+
+
+#Legume
 ps1<-subset_samples(ps , Treatment=="L")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1349
+out1 = ancombc(data = ps1, assay_name = "counts", 
+               tax_level = "asv",  
+               formula = "Fraction", 
+               p_adj_method = "holm", prv_cut = .10, lib_cut = 0, 
+               group = "Fraction", struc_zero = FALSE, neg_lb = FALSE, tol = 1e-5, 
+               max_iter = 100, conserve = TRUE, alpha = 0.001, global = FALSE,
+               n_cl = 1, verbose = TRUE)
 
-# taxa must have non zero values in active and inactive fractions
+res = out1$res
+res_global = out1$res_global
+get.table <- function(res, res_global) {
+#log fold change
+tab_lfc = res$lfc
+head(tab_lfc)
+dim(tab_lfc)
+col_name = c("asv", "LFC_Intercept", "LFC_FractionViable_Cell")
+colnames(tab_lfc) = col_name
+# standard error
+tab_se = res$se
+col_name = c("asv", "se_Intercept", "se_viable")
+colnames(tab_se) = col_name
+head(tab_se)
+tab_se<-as.data.frame(tab_se)
+#test statistcs W maybe it's willcoxin?
+tab_w = res$W
+col_name = c("asv", "W_Intercept", "W_viable")
+colnames(tab_w) = col_name
+# P-values from the Primary Result
+tab_p = res$p_val
+col_name = c("asv", "p_Intercept", "p_viable")
+colnames(tab_p) = col_name
+head(tab_p)
+#Adjusted p-values from the Primary Result"
+tab_q = res$q
+head(tab_q)
+col_name = c("asv", "adj_p_Intercept", "adj_p_viable")
+colnames(tab_q) = col_name
+head(tab_q)
 
-# select for taxa that are in at least 3 active sample or 3 viable samples
-# and have at least 50 reads across all samples
+# yes or no is a taxa differentially abundant
+tab_diff = res$diff_abn
+col_name = c("asv", "DA_Intercept", "DA_Fraction_inactive_cells_Active")
+colnames(tab_diff) = col_name
 
-active<-subset_samples(ps.r, BONCAT=="POS")
-active<-ps_prune(active, min.samples = 3, min.reads = 50)
-active<-prune_taxa(taxa_names(active)!="Others", active )
-active<-prune_taxa(taxa_sums(active) > 0, active)
-active
-#317 taxa
-dfa<-as.data.frame(otu_table(active))
-dfa[1:13,1:3]
+# through all togetha nd remove anything with DNA
+tab <-tab_lfc %>%
+  left_join(., tab_se) %>%
+  left_join(., tab_w ) %>%
+  left_join(., tab_p) %>%
+  left_join(., tab_q) %>%
+  left_join(., tab_diff)
+return(tab)
+}
+tab<-get.table(res, res_global)
+L<-tab %>% filter(DA_Fraction_inactive_cells_Active=="TRUE") %>%
+  mutate(Treatment=rep("L", length(DA_Fraction_inactive_cells_Active)))
+head(L)
 
-#viable
-viable<-subset_samples(ps.r, BONCAT=="SYBR")
-viable<-ps_prune(viable, min.samples = 3, min.reads = 50)
-viable<-prune_taxa(taxa_names(viable)!="Others", viable )
-viable<-prune_taxa(taxa_sums(viable) > 0, viable)
-viable
-#541 taxa
-dfv<-as.data.frame(otu_table(viable))
-df<-full_join(dfa, dfv)
-dim(df) # 617 taxa
-# ASV that are have 3 in viable or 3 in active
-asvkp<-unique(colnames(df))
-psfilter.r<-prune_taxa(asvkp, ps.r )
-psfilter.r #617 taxa
-
-
-
-
-
-
-
-
-## remake ps1 
-metadat2 <- as.data.frame(sample_data(ps1))
-taxon<-as.data.frame(tax_table(ps1))
-df<-as.data.frame(t(otu_table(ps1)))
-
-### skip to data import if you already ran ancom
-sample_data(ps1)
-ps1
-
+#brass
+ps1<-subset_samples(ps , Treatment=="B")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 out1 = ancombc(data = ps1, assay_name = "counts", 
                tax_level = "asv",  
                formula = "Fraction", 
@@ -1319,96 +1269,238 @@ out1 = ancombc(data = ps1, assay_name = "counts",
 res = out1$res
 res_global = out1$res_global
 sample_data(ps1)
+tab<-get.table(res, res_global)
+B<-tab %>% filter(DA_Fraction_inactive_cells_Active=="TRUE") %>%
+  mutate(Treatment=rep("B", length(DA_Fraction_inactive_cells_Active)))
+head(B)
+
+#grass
+ps1<-subset_samples(ps , Treatment=="G")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+out1 = ancombc(data = ps1, assay_name = "counts", 
+               tax_level = "asv",  
+               formula = "Fraction", 
+               p_adj_method = "holm", prv_cut = .10, lib_cut = 0, 
+               group = "Fraction", struc_zero = FALSE, neg_lb = FALSE, tol = 1e-5, 
+               max_iter = 100, conserve = TRUE, alpha = 0.001, global = FALSE,
+               n_cl = 1, verbose = TRUE)
+
+res = out1$res
+res_global = out1$res_global
+sample_data(ps1)
+tab<-get.table(res, res_global)
+G<-tab %>% filter(DA_Fraction_inactive_cells_Active=="TRUE") %>%
+  mutate(Treatment=rep("G", length(DA_Fraction_inactive_cells_Active)))
 
 
+# grass brass
+ps1<-subset_samples(ps , Treatment=="GB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+out1 = ancombc(data = ps1, assay_name = "counts", 
+               tax_level = "asv",  
+               formula = "Fraction", 
+               p_adj_method = "holm", prv_cut = .10, lib_cut = 0, 
+               group = "Fraction", struc_zero = FALSE, neg_lb = FALSE, tol = 1e-5, 
+               max_iter = 100, conserve = TRUE, alpha = 0.001, global = FALSE,
+               n_cl = 1, verbose = TRUE)
+
+res = out1$res
+res_global = out1$res_global
+tab<-get.table(res, res_global)
+GB<-tab %>% filter(DA_Fraction_inactive_cells_Active=="TRUE") %>%
+  mutate(Treatment=rep("GB", length(DA_Fraction_inactive_cells_Active)))
+
+
+# legume brass
+ps1<-subset_samples(ps , Treatment=="LB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+out1 = ancombc(data = ps1, assay_name = "counts", 
+               tax_level = "asv",  
+               formula = "Fraction", 
+               p_adj_method = "holm", prv_cut = .10, lib_cut = 0, 
+               group = "Fraction", struc_zero = FALSE, neg_lb = FALSE, tol = 1e-5, 
+               max_iter = 100, conserve = TRUE, alpha = 0.001, global = FALSE,
+               n_cl = 1, verbose = TRUE)
+
+res = out1$res
+res_global = out1$res_global
+tab<-get.table(res, res_global)
+LB<-tab %>% filter(DA_Fraction_inactive_cells_Active=="TRUE") %>%
+  mutate(Treatment=rep("LB", length(DA_Fraction_inactive_cells_Active)))
+
+
+# legume grass
+ps1<-subset_samples(ps , Treatment=="LG")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+out1 = ancombc(data = ps1, assay_name = "counts", 
+               tax_level = "asv",  
+               formula = "Fraction", 
+               p_adj_method = "holm", prv_cut = .10, lib_cut = 0, 
+               group = "Fraction", struc_zero = FALSE, neg_lb = FALSE, tol = 1e-5, 
+               max_iter = 100, conserve = TRUE, alpha = 0.001, global = FALSE,
+               n_cl = 1, verbose = TRUE)
+
+res = out1$res
+res_global = out1$res_global
+tab<-get.table(res, res_global)
+LG<-tab %>% filter(DA_Fraction_inactive_cells_Active=="TRUE") %>%
+  mutate(Treatment=rep("LG", length(DA_Fraction_inactive_cells_Active)))
+
+
+# legume grass brass
+ps1<-subset_samples(ps , Treatment=="LGB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+out1 = ancombc(data = ps1, assay_name = "counts", 
+               tax_level = "asv",  
+               formula = "Fraction", 
+               p_adj_method = "holm", prv_cut = .10, lib_cut = 0, 
+               group = "Fraction", struc_zero = FALSE, neg_lb = FALSE, tol = 1e-5, 
+               max_iter = 100, conserve = TRUE, alpha = 0.001, global = FALSE,
+               n_cl = 1, verbose = TRUE)
+
+res = out1$res
+res_global = out1$res_global
+tab<-get.table(res, res_global)
+LGB<-tab %>% filter(DA_Fraction_inactive_cells_Active=="TRUE") %>%
+  mutate(Treatment=rep("LGB", length(DA_Fraction_inactive_cells_Active)))
+
+#rbind all and save table
+
+
+tab<-rbind(L, G, B, GB, LB, LG, LGB)
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-#log fold change
-tab_lfc = res$lfc
-head(tab_lfc)
-dim(tab_lfc)
-col_name = c("asv", "LFC_Intercept", "LFC_FractionViable_Cell")
-colnames(tab_lfc) = col_name
-head(tab_lfc)
-write_delim(as.data.frame(tab_lfc), file = "ancom_Log_fold_change.txt", delim = " ")
-
-# standard error
-tab_se = res$se
-col_name = c("asv", "se_Intercept", "se_viable")
-colnames(tab_se) = col_name
-head(tab_se)
-tab_se<-as.data.frame(tab_se)
-write.table(tab_se, file = "ancom_SE.txt")
-tab_se<-read.table("ancom_SE.txt", header = TRUE)
-head(tab_se)
-
-#test statistcs W maybe it's willcoxin?
-tab_w = res$W
-col_name = c("asv", "W_Intercept", "W_viable")
-colnames(tab_w) = col_name
-head(tab_w)
-write.table(as.data.frame(tab_se), file = "ancom_SE.txt")
-
-# P-values from the Primary Result
-tab_p = res$p_val
-col_name = c("asv", "p_Intercept", "p_viable")
-colnames(tab_p) = col_name
-head(tab_p)
-write.table(as.data.frame(tab_p), file = "ancom_pval.txt")
+write.table(tab, "ancom_table.txt")
 
 
-#Adjusted p-values from the Primary Result"
-tab_q = res$q
-head(tab_q)
-col_name = c("asv", "adj_p_Intercept", "adj_p_viable")
-colnames(tab_q) = col_name
-head(tab_q)
-write.table(as.data.frame(tab_se), file = "ancom_adjpval.txt")
-
-# yes or no is a taxa differentially abundant
-tab_diff = res$diff_abn
-col_name = c("asv", "DA_Intercept", "DA_Fraction_Viable_cells_Active")
-colnames(tab_diff) = col_name
-head(tab_diff)
-write_delim(as.data.frame(tab_diff), file = "ancom_DA.txt", delim = " ")
-
-
-# through all togetha nd remove anything with DNA
-tab <-tab_lfc %>%
-  left_join(., tab_se) %>%
-  left_join(., tab_w ) %>%
-  left_join(., tab_p) %>%
-  left_join(., tab_q) %>%
-  left_join(., tab_diff)
-write.table(as.data.frame(tab), file = "Lancom_table.txt")
-head(tab)
-######ANCOM import df######
+######ANCOM add abundance info
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-
-tab<-read.table("Lancom_table.txt", header = TRUE)
+tab<-read.table("ancom_table.txt", header = TRUE)
 head(tab)
 
-##add add abundance and taxon info
+
+# filter+  get abudance info
+tab1<- tab%>% filter(Treatment=="G")
+ps1<-subset_samples(ps , Treatment=="G")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+##add add abundance and taxon infoget
+get.taxa<- function(tab1, ps1){
+asvkp<-unique(tab1$asv)
 df<-as.data.frame(t(otu_table(ps1)))
 df$asv<-row.names(df)
-df<-left_join(df, tab)
-taxon<-as.data.frame(tax_table(ps1))
-df<-left_join(taxon, df)
-df
-
-### summarise the abundance in active and Viable
+df <- df[df$asv %in% asvkp, ]
+tax<-as.data.frame((tax_table(ps1)))
+df<-left_join(df, tax)
+df<-left_join(df, tab1)
+return(df)
+}
+df<-get.taxa(tab1,ps1)
+### summarise the abundance in active and inactive
+get.abund<-function(df, trt){
 df$rhizo.inactive.mean <-   rowMeans(df %>% dplyr::select(contains("i_"))) %>% glimpse()
 t<-df %>% select(contains("i_"))
-sd_Viable<- apply(t, 1, sd, na.rm=TRUE)
-sd_Viable
-df$sd_Viable <- sd_Viable
-
-df$rhizo.bcat.mean <-   rowMeans(df %>% dplyr::select(contains("BCAT"))) %>%   glimpse()
+sd_inactive<- apply(t, 1, sd, na.rm=TRUE)
+sd_inactive
+df$sd_inactive <- sd_inactive
+# active
+df$active.mean <-   rowMeans(df %>% dplyr::select(contains("BCAT"))) %>%   glimpse()
 t<-df %>% select(contains("BCAT"))
 sd_active<- apply(t, 1, sd, na.rm=TRUE)
 sd_active
 df$sd_active <- sd_active
-head(df)
+df<-df %>% select(-contains("i_"))%>% select(-contains("BCAT")) %>% select(-contains("ctl")) %>% select(-contains("fc_"))
+df<-df%>%mutate(Treatment=rep(trt, length(asv)))
+return(df)
+}
+G<-get.abund(df, "G")
+G
 
 
+
+# filter+  get abudance info
+tab1<- tab%>% filter(Treatment=="B")
+ps1<-subset_samples(ps , Treatment=="B")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+##add add abundance and taxon
+df<-get.taxa(tab1,ps1)
+### summarise the abundance 
+B<-get.abund(df, "B")
+B
+
+# filter+  get abudance info
+tab1<- tab%>% filter(Treatment=="L")
+ps1<-subset_samples(ps , Treatment=="L")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+##add add abundance and taxon
+df<-get.taxa(tab1,ps1)
+### summarise the abundance 
+L<-get.abund(df, "L")
+L
+
+# filter+  get abudance info
+tab1<- tab%>% filter(Treatment=="LB")
+ps1<-subset_samples(ps , Treatment=="LB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+##add add abundance and taxon
+df<-get.taxa(tab1,ps1)
+### summarise the abundance 
+LB<-get.abund(df, "LB")
+LB
+
+
+# filter+  get abudance info
+tab1<- tab%>% filter(Treatment=="LG")
+ps1<-subset_samples(ps , Treatment=="LG")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+##add add abundance and taxon
+df<-get.taxa(tab1,ps1)
+### summarise the abundance 
+LG<-get.abund(df, "LG")
+LG
+
+# filter+  get abudance info
+tab1<- tab%>% filter(Treatment=="GB")
+ps1<-subset_samples(ps , Treatment=="GB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+##add add abundance and taxon
+df<-get.taxa(tab1,ps1)
+### summarise the abundance 
+GB<-get.abund(df, "GB")
+GB
+
+# filter+  get abudance info
+tab1<- tab%>% filter(Treatment=="LGB")
+ps1<-subset_samples(ps , Treatment=="LGB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+##add add abundance and taxon
+df<-get.taxa(tab1,ps1)
+### summarise the abundance 
+LGB<-get.abund(df, "LGB")
+LGB
+
+
+tab<-rbind(L, G, B, GB, LB, LG, LGB)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+write.table(tab, "ancom_table_abund.txt")
+
+
+
+mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+mycols18<- c( "#1F78B4","#A6CEE3","#E31A1C",  "#FB9A99", "#33A02C","#B2DF8A",  "#FF7F00",  "#FDBF6F", "#6A3D9A" , "#CAB2D6",
+              "#B15928", "#FFFF99",  "#eb05db","#edceeb","#1a635a","#9ad6ce" , "#969696", "#232423")
+
+#plot
+
+ggplot(tab)+
+  geom_bar(aes(x=asv , y=active.mean, fill= Phyla), 
+           stat="identity", position="dodge")+
+  #geom_errorbar(aes(x=label, ymin=-se_viable+LFC_FractionViable_Cell,
+   #                 ymax=LFC_FractionViable_Cell+se_viable))+ 
+  scale_fill_manual(values= mycols18)+
+  theme_minimal(base_size = 14) +
+  facet_grid(~Treatment)
+  #coord_flip()+
+ # ylim(c(-5,3))+
+  #xlab("Differentially Abundant Asvs")+
+  #ylab("Log fold change viable to active")
 
 
