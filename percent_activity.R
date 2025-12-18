@@ -132,13 +132,13 @@ p1<-fc  %>%
   geom_jitter(width = .2, size=2 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_fill_manual(values = IBM)+
-  theme_classic(base_size = 16)+
+  theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0))+
-  ylab("percent active")+
-  xlab("")+
-  #facet_grid( ~n_species, scales = "free", space = "free")+
-  geom_text(y=15, label = lab, size=5)
+  labs(title = "A",
+       x="",
+       y= "percent active cells")+
+  geom_text(y=17.6, label = lab, size=5)
 p1
 
 #binomial model with percent data##
@@ -211,8 +211,6 @@ lab<-gsub("LGB", "AX", lab)
 lab<-gsub("GB", "AX", lab)
 lab<-gsub("LG", "AX", lab)
 lab<-gsub("LB", "AX", lab)
-
-unique(lab)
 lab<-gsub("B", "AX", lab)
 lab<-gsub("G", "A", lab)
 lab<-gsub("L", "X", lab)
@@ -227,23 +225,23 @@ p2<-fc  %>%
   geom_jitter(width = .2, size=2 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_fill_manual(values = IBM)+
-  theme_classic(base_size = 16)+
+  theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
         plot.title = element_text(hjust = 0))+
-  #ylab("percent active")+
-  xlab("")+
-  geom_text(y=3000, label = lab, size=5)
+  labs(title = "B",
+       x="",
+       y= "active cells/g rhizosphere")+
+  geom_text(y=3150, label = lab, size=5)
 
-#facet_grid( ~n_species, scaactive_cel_per_g#facet_grid( ~n_species, scales = "free", space = "free")+
 p2
 
 
 
-
-
-#scale_shape_discrete() 
 require(gridExtra)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
+svg("activity.svg", width=8, height=4)
 grid.arrange(p1, p2, ncol=2)
+dev.off()
 
  
 # stats

@@ -483,3 +483,137 @@ print(cld_result)
 
 # L   G   B   GB    LB  LG  LGB
 # bc abc  d   ab    a   abc cd
+
+
+
+#### percent root biomass of each species ####
+
+# load libraries and cols
+library(readxl)
+library(tidyverse)
+IBM <- c( #IBM colors
+  "navy", # dark royal blue L
+  "#648FFF", # french blue G
+  "#785EF0", # light purple B
+  "#DC267F", # magenta pink GB
+  "#FE6100", # bright orange LB
+  "#FFB000", # golden yellow LG
+  "#865338" # medium mocha brown LGB
+)
+mono_cols <- 
+  c( #IBM colors
+    "navy", # dark royal blue L
+    "#648FFF", # french blue G
+    "#785EF0", # light purple B
+    )
+# import data frame 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+df <- read_excel("biomass_species.xlsx")
+
+# tidy data
+head(df)
+
+# make plot
+ggplot(df, aes(fill=Species, y=Root.Biomass.g, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+# make total.root.species.g column
+total<-df %>% group_by(Trt_ID) %>%
+  summarise(
+  Total.no.bulk = sum(Root.Biomass.g))
+
+# add col to df
+df<-left_join(df, total)
+
+# make percent col
+df<-df%>% mutate(
+  percent= (Root.Biomass.g/Total.no.bulk)*100)
+
+# make plot percent
+ggplot(df, aes(fill=Species, y=percent, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+#add unknown bulk to df
+  
+bulk<-df %>%
+  select(Treatment, N, Rep, Trt_ID,  Bulk.Root.g) %>%
+  group_by(Trt_ID, Treatment, N, Rep) %>%
+  summarise(
+    Root.Biomass.g= sum(Bulk.Root.g)) %>%
+  mutate(
+    Species="bulk",
+    Brassicae= 0,
+    Legume=  0,
+    Grass= 0
+  )
+
+
+df1 <- df %>% select( Treatment, N, Rep, Trt_ID, Species,  Brassicae, Legume, Grass, Root.Biomass.g )
+df1<-full_join(df1,bulk)
+
+#add total+bulk to df 
+
+total<-df %>%
+  select(Trt_ID, Total.Root.g) %>%
+  group_by(Trt_ID) %>%
+  summarise(
+    Total.Root.g= sum(Total.Root.g))
+
+df1<-left_join(df1, total)
+
+# calculate percent
+df1<-df1 %>% mutate(
+  percent = Root.Biomass.g/Total.Root.g
+)
+
+df1$Species<- factor(df1$Species, levels= c("bulk", "legume", "grass", "brassica"))
+# make plot percent
+ggplot(df1, aes(fill=Species, y=percent, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+### block with bulk assigned to crops ####
+
+# import data frame 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+df <- read_excel("biomass_species.xlsx")
+
+# tidy data
+head(df)
+
+# make plot
+ggplot(df, aes(fill=Species, y=Root.Biomass.g, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+# make total.root.species.g column
+total<-df %>% group_by(Trt_ID) %>%
+  summarise(
+    Total.withbulk = sum(Total.Root.g))
+
+# add col to df
+df<-left_join(df, total)
+
+# make percent col
+df<-df%>% mutate(
+  percent= (Total.Root.g/Total.withbulk)*100)
+
+df$Species<- factor(df$Species, levels= c("legume", "grass", "brassica"))
+
+# make plot percent
+mono_cols <- 
+  c( #IBM colors
+    "navy", # dark royal blue L
+    "#98b2fa", # french blue G
+    "#785EF0" # light purple B
+  )
+ggplot(df, aes(fill=Species, y=percent, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+
+  scale_fill_manual(values=mono_cols)
+
+write.csv(df, "percent.biomass.csv")
+
