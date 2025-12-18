@@ -1010,48 +1010,52 @@ ps<-prune_taxa(taxa_sums(ps) > 1, ps)
 mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
 keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
 ps<-prune_taxa(keep, ps)
-active<-subset_samples(ps, Fraction=="Active")
+active<-subset_samples(ps, Fraction=="Active" & Treatment!="Soil")
 active<-prune_taxa(taxa_sums(active) > 50, active)
-
+active
 
 taxon<- as.data.frame(tax_table(active))
 df<-as.data.frame(otu_table(active))
 
-# make it percent
-df<-(df/rowSums(df))*100
-df<-as.data.frame(t(df))
-df.taxa<-cbind(df, taxon)
-
-metadat<-as.data.frame(sample_data(active))
-
-metadat<- metadat %>% select(SampleID, Treatment)
-
+# add metdata
+metadat<-as.data.frame(as.matrix(sample_data(active)))
+metadat
+metadat<- metadat %>% select(SampleID, Trt_ID)
+head(metadat)
+n<-metadat$Trt_ID
+n
 # rename columns if you want, not required. 
 colnames(df)
 length(n)
 length(colnames(df))
+df
 
-#colnames(df)<-n
+# make it percent
+df<-(df/rowSums(df))*100
+df<-as.data.frame(t(df))
+colnames(df)<-n # edit col names
+df.taxa<-cbind(df, taxon)
+
+
+
 #rownames(df)<-NULL
 # make rownames null
 # summarize by phyla
-df1<-aggregate(cbind( BCAT_11_S31 , BCAT_12_S41 ,  BCAT_13_S51 , BCAT_14_S61 ,  BCAT_15_S71 , BCAT_23_S2 , 
-                      BCAT_24_S12 , BCAT_25_S22 ,  BCAT_26_S32 ,  BCAT_28_S52 , BCAT_30_S62 ,  BCAT_38_S72 ,
-                      BCAT_39_S3  , BCAT_40_S13 ,  BCAT_41_S23 ,  BCAT_43_S33 ,  BCAT_44_S43 ,  BCAT_45_S53 , 
-                      BCAT_53_S63 , BCAT_54_S73 ,  BCAT_55_S4  ,  BCAT_56_S14  ,  BCAT_57_S24  ,  BCAT_59_S44 ,  
-                      BCAT_60_S54 , BCAT_68_S64 ,  BCAT_69_S74 ,   BCAT_70_S5   ,   BCAT_71_S15  ,  BCAT_72_S25 ,  
-                      BCAT_73_S35 , BCAT_8_S1   ,  BCAT_83_S45 ,   BCAT_84_S55  ,  BCAT_86_S65  ,  BCAT_87_S75 ,  
-                      BCAT_88_S6  , BCAT_9_S11  
-                      
+df1<-aggregate(cbind( LG_N1,  LB_N1,  GB_N1,  LGB_N1, L_N2,   G_N2, 
+                      B_N2,   LG_N2,  GB_N2,  L_N3  , G_N3,  
+                      B_N3,   LG_N3,  GB_N3 , LGB_N3, L_N4 ,
+                      G_N4 ,  B_N4,   LG_N4,  LB_N4,  GB_N4, 
+                      L_N5,  G_N5,   B_N5,   LG_N5,  LB_N5, 
+                      GB_N5,  L_N1,   G_N6,   B_N6,   LB_N6, 
+                      GB_N6,  LGB_N6, G_N1  
   
-               )~ Phyla, data = df.taxa, FUN = sum, na.rm = TRUE)
+                       
+)~ Phyla, data = df.taxa, FUN = sum, na.rm = TRUE)
 
 head(df1)
 
 # gather by sample
-n<-dim(df1)[2]
-df1
-df1<-  gather(df1, "sampleID", value, starts_with("BCAT") )
+df1<-  gather(df1, "sampleID", value, !starts_with("P") )
 head(df1)
 #remove zeros
 df1<-df1[df1$value!=0,]
@@ -1081,7 +1085,7 @@ mycols18<- c( "#1F78B4","#A6CEE3","#E31A1C",  "#FB9A99", "#33A02C","#B2DF8A",  "
 #svg(file="percent_barplot.svg",width = 12, height=10)
 #windows(12,12)
 df1%>% 
-  ggplot(aes(fill=Phyla, y=value, x=sample)) + 
+  ggplot(aes(fill=Phyla, y=value, x=sampleID)) + 
   geom_bar(position="fill", stat= "identity")+
   scale_fill_manual(values=mycols18) +
   #scale_fill_viridis(discrete = TRUE) +
@@ -1090,6 +1094,9 @@ df1%>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
 
 #dev.off()
+
+###### most abundant asvs by treatment
+
 
 
 ##### ANCOM###############
