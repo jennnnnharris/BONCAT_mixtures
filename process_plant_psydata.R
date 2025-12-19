@@ -1,3 +1,52 @@
+
+
+###### clean data weed seed
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+weed <- read_csv("raw_weed_germination.csv")
+head(weed)
+
+
+f<-weed %>% filter(Species=="foxtail")
+# tidy data  
+
+colnames(f) <- c("Trt_ID" ,
+                 "Treatment",
+                 "Rep",
+                 "Block",
+                 "Species",
+                 "foxtail_num_nongerm",
+                 "foxtail_num_germ",
+                 "foxtail_total_seeds",
+                 "foxtail_prop_nongerm")
+f$Species<-NULL
+f$Block <-NULL
+f$Treatment<-NULL
+f$Rep<-NULL
+head(f)
+## pigweed
+
+
+p<-weed %>% filter(Species=="pigweed")
+# tidy data  
+
+colnames(p) <- c("Trt_ID" ,
+                 "Treatment",
+                 "Rep",
+                 "Block",
+                 "Species",
+                 "pigweed_num_nongerm",
+                 "pigweed_num_germ",
+                 "pigweed_total_seeds",
+                 "pigweed_prop_nongerm")
+
+p$Species<-NULL
+weed<-full_join(p,f)
+head(weed)
+write.csv(weed, "weed_seed_decay.csv")
+weed<-read.csv("weed_seed_decay.csv", row.names = 1)
+head(weed)
+
+
 # process Nfix
 # 10 December 2025
 
@@ -119,3 +168,29 @@ df.leg<-df.leg%>%
 
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 write.csv(df.leg, "Nfix.csv")
+
+
+
+# summarise biomass to pot level
+# Dec 10 2025
+
+#load libraries
+library(readxl)
+library(tidyverse)
+
+#### import biomass data and process #####
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+df <- read_excel("biomass_species.xlsx") # biomass data
+
+df<-df %>% group_by(Trt_ID, Treatment, N, Rep, Brassicae, Legume, Grass ) %>%
+  summarise(
+    Stem.Biomass.g = sum(Stem.Biomass.g),
+    Root.Biomass.g = sum(Root.Biomass.g),
+    Bulk.Root.g = sum(Bulk.Root.g),
+    Total.Root.g = sum(Total.Root.g)
+  )
+
+df  
+
+
+write.csv(df, biomass_potlevel.csv)

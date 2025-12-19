@@ -208,8 +208,7 @@ mycols <- c( #IBM colors
   "grey"
 )
 
-#setwd(fig3path)
-#svg(file="biomass.root.predict.svg",width = 2.8, height=3)
+
 label <- df1$Treatment
 label <- gsub("LGB.predict", "*" ,label )
 label <- gsub("LB.predict", "*" ,label )
@@ -220,49 +219,49 @@ label <- gsub("B", "" ,label )
 label <- gsub(".predict", "" ,label )
 label
 
-p2<-df1  %>% 
+p1<-df1  %>% 
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=1 )+
+  geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 16)+
+  theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))+
+       )+
   
-  geom_text(y=6, label =label , nudge_x = -.8, size=8)
+  geom_text(y=6, label =label , nudge_x = -.8, size=7)+
+  labs(title = "C",
+       x="",
+       y="Root biomass (g)")
 
 
-p2
-
-label <- df1$Treatment
-label<- gsub("L", "" ,label )
-label<- gsub("G", "" ,label )
-label <- gsub("B", "" ,label )
-label <- gsub(".predict", "*" ,label )
+p1
 
 
-#setwd(fig3path)
-#svg(file="biomass.shoot.predict.svg",width = 4, height=3)
-p3<-df1  %>% 
+
+p2<-df1  %>% 
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=1 )+
+  geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 16)+
-  #geom_text(y=8, label =label , nudge_x = -.8, size=7)+
+  theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position="none",
-        plot.title = element_text(hjust = 0.5))
+        )+
+  labs(title = "D",
+       x="",
+       y="shoot biomass (g)")
 
-p3
+p2
 
 # put the tow plots together
 
 require(gridExtra)
-grid.arrange(p2, p3, ncol=2)
-
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
+svg("biomasspredict.svg", height = 2.5, width = 5)
+grid.arrange(p1, p2, ncol=2)
+dev.off()
 
 
 ######### example calculation  #####
@@ -497,7 +496,6 @@ df1<-df1 %>% ungroup()
 as.factor(df1$Treatment)
 
 #### plot predictions from monocultures for biomass
-#mycols<-c("#FEB5A2FF","grey" , "#9D7660FF", "grey", "#D7B5A6FF", "grey", "#3896C4FF" , "grey")
 mycols <- c( #IBM colors
   "#DC267F", # magenta pink GB
   "grey",
@@ -509,77 +507,67 @@ mycols <- c( #IBM colors
   "grey"
 )
 
+# make labels 
+label <- df1$Treatment
+label
+label <- gsub("LGB.predict", "*" ,label )
+label<- gsub("L", "" ,label )
+label<- gsub("G", "" ,label )
+label <- gsub("B", "" ,label )
+label <- gsub(".predict", "" ,label )
+label
 
-p2<-df1  %>% 
+# plot
+p1<-df1  %>% 
   ggplot(aes(x=Treatment, y=foxtail_prop_nongerm, fill = Treatment)) +
-  geom_jitter(width = .2, size=2 )+
+  geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 16)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))
-p2
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
+  labs(title = "C",
+       x="",
+       y="non germinating foxtail (%)")+
+  geom_text(y=.25, label =label , nudge_x = -.8, size=7)
+  
+  
+p1
 
-p3<-df1  %>% 
+# make labels 
+label <- df1$Treatment
+label <- gsub("LB.predict", "*" ,label )
+label <- gsub("GB.predict", "*" ,label )
+label<- gsub("L", "" ,label )
+label<- gsub("G", "" ,label )
+label <- gsub("B", "" ,label )
+label <- gsub(".predict", "" ,label )
+label
+
+
+# plot
+p2<-df1  %>% 
   ggplot(aes(x=Treatment, y=pigweed_prop_nongerm, fill = Treatment)) +
-  geom_jitter(width = .2, size=2 )+
+  geom_jitter(width = .2, size=.5 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 16)+
-  #geom_text(y=8, label =label , nudge_x = -.8, size=7)+
+  theme_classic(base_size = 12)+
+  geom_text(y=.8, label =label , nudge_x = -.8, size=7)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        legend.position="none",
-        plot.title = element_text(hjust = 0.5))
+        legend.position="none",)+
+  labs(title = "D",
+       x="",
+       y="non germinating pigweed (%)")
 
-p3
+p2
 
 # put the two plots together
 require(gridExtra)
-grid.arrange(p2, p3, ncol=2)
-
-#GB
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(foxtail_prop_nongerm~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(foxtail_prop_nongerm~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(foxtail_prop_nongerm~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(foxtail_prop_nongerm~ Treatment, data=df2)
-anova(m1)
-
-# pigweed
-#GB
-#filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(pigweed_prop_nongerm~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(pigweed_prop_nongerm~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(pigweed_prop_nongerm~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(pigweed_prop_nongerm~ Treatment, data=df2)
-anova(m1)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
+svg("weeddecay.predict.svg", width = 5, height = 2.5)
+grid.arrange(p1, p2, ncol=2)
+dev.off()
 
 ##########weed prop non germinated #####
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
