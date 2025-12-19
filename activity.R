@@ -291,12 +291,15 @@ hist(df$active_cel_per_g)
 hist(log(df$active_cel_per_g)+1)
 hist(df$boncat_freq)
 hist(df$pigweed_prop_nongerm)
+hist(df$foxtail_num_nongerm)
 hist(log(df$foxtail_num_germ))
 
 
 # plots
 plot(log10(df$active_cel_per_g+1), log10(df$foxtail_num_nongerm+1))
-plot(df$active_cel_per_g, df$pigweed_prop_nongerm)
+plot(log(df$active_cel_per_g, df$pigweed_prop_nongerm)
+
+
 plot(df$boncat_freq, df$pigweed_prop_nongerm)
 plot(df$boncat_freq, df$foxtail_prop_nongerm)
 
@@ -368,6 +371,7 @@ df<-left_join(biomass, fc)
 
 
 # distributions
+hist(log(df$boncat_freq))
 hist(df$active_cel_per_g)
 hist(df$Total.Root.g)
 hist(df$Stem.Biomass.g)
@@ -379,6 +383,12 @@ plot(df$active_cel_per_g, df$Stem.Biomass.g)
 plot(df$active_cel_per_g, df$Root.Biomass.g)
 plot(df$boncat_freq, df$Total.Root.g)
 plot(df$boncat_freq, df$Stem.Biomass.g)
+plot(df$Total.Root.g~log(df$boncat_freq+1))
+
+
+# sig plots
+plot(df$Stem.Biomass.g~log(df$active_cel_per_g+1))
+plot(df$Total.Root.g~df$boncat_freq, data=df)
 
 
 # frequency boncat
@@ -400,7 +410,8 @@ m1<-lm(df$Stem.Biomass.g~log(df$active_cel_per_g+1))
 summary(m1)  # sig
 m1<-lm(df$Total.Root.g~log(df$active_cel_per_g+1))
 summary(m1)
-
+m1<-lm(df$Total.Root.g~log(df$boncat_freq+1))
+summary(m1)
 
 ##### difference between predicted and not ##
 fc

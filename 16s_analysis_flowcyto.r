@@ -1940,4 +1940,125 @@ ordiellipse(otus.pcoa, as.factor(metadat2$Treatment),
             cex=1.5)
 # base r plot
 
+#### extract PC1 ##########
+
+
+# filter data 
+ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+ps<-prune_taxa(taxa_sums(ps) > 1, ps)
+mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
+keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
+ps<-prune_taxa(keep, ps)
+ps
+# filter for active fraction 
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 #1785 taxa
+# filter metadata
+metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2$Fraction   <- factor(metadat2$Fraction)
+
+# 1. Calculate the distance matrix (e.g., Bray-Curtis)
+dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+
+# 1. Perform PCA
+# scale. = TRUE is critical to ensure all variables are treated equally
+pca_result <- prcomp(dist_matrix, center = TRUE, scale. = TRUE)
+
+# 2. Extract the first principal component (PC1)
+# This is your new one-dimensional variable
+pc1_variable <- pca_result$x[, 1]
+
+# get variables of interest - weed seed decay, biomass, nfix, activity
+# clean up metadat2
+metadat2<-metadat2 %>% select(SampleID, Trt_ID, Pot_ID, Treatment, Rep, Block)
+
+# biomass
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+biomass<-read.csv("biomass_potlevel.csv", row.names = 1)
+biomass<-biomass %>% select(Trt_ID, Total.Root.g, Stem.Biomass.g ) %>%
+  mutate(Root.Biomass=Total.Root.g, Shoot.Biomass= Stem.Biomass.g) %>%
+  select(Trt_ID, Root.Biomass, Shoot.Biomass) 
+df<-left_join(metadat2, biomass)
+
+# fc 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+fc <-read.csv("processed_flow_cyto.csv")
+head(fc)
+fc<-fc %>% select(Trt_ID, boncat_freq, active_cel_per_g )
+df<-left_join(df, fc)
+
+# n fix 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+nfix<-read.csv("Nfix.csv")
+head(nfix)
+nfix<-nfix %>% 
+  filter(duplicate=="N") %>%select(Trt_ID, perc.Ndfa, n_fix_per_legume )
+df<-left_join(df, nfix)
+
+# weeds
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+weed<-read.csv("weed_seed_decay.csv", row.names = 1)
+head(weed)
+weed<-weed %>% select(Trt_ID, foxtail_prop_nongerm, pigweed_prop_nongerm)
+df<-left_join(df, weed)
+
+# z transform
+df$z_Root.Biomass<-as.vector(scale(df$Root.Biomass))
+df$z_Shoot.Biomass<-as.vector(scale(df$Shoot.Biomass))
+df$z_foxtail_prop_nongerm<-as.vector(scale(log(df$foxtail_prop_nongerm+1)))
+df$z_pigweed_prop_nongerm<-as.vector(scale(df$pigweed_prop_nongerm))
+df$z_boncat_freq<-as.vector(scale(df$boncat_freq))
+df$z_active_cel_per_g<-as.vector(scale(log(df$active_cel_per_g+1)))
+
+df$z_perc.Ndfa<-as.vector(scale(df$perc.Ndfa))
+df$z_n_fix_per_legume<-as.vector(scale(df$n_fix_per_legume))
+
+# hist 
+hist(df$z_Root.Biomass) # okay 
+hist(df$z_Shoot.Biomass) # okay 
+hist(df$z_pigweed_prop_nongerm) # okay
+hist(df$z_foxtail_prop_nongerm) # okay after log transform
+hist(df$z_boncat_freq) # okay
+hist(df$z_active_cel_per_g) # okay after log transform
+
+hist(df$z_perc.Ndfa) # kinda skewed 
+hist(df$z_n_fix_per_legume)
+
+
+# 4. Add it to your data frame
+df$PC1 <- pc1_variable
+
+
+# corrplots
+
+plot(df$PC1, df$z_Shoot.Biomass)
+plot(df$PC1, df$z_boncat_freq)
+plot(df$PC1, df$z_foxtail_prop_nongerm)
+plot(df$PC1, df$z_pigweed_prop_nongerm)
+
+# lm 
+plot(df$PC1, df$z_Root.Biomass)
+m1<-lm(df$PC1~df$z_Root.Biomass)
+summary(m1) # trend
+
+m1<-lm(df$PC1~df$z_Shoot.Biomass)
+summary(m1)
+
+m1<-lm(df$PC1~df$z_boncat_freq)
+summary(m1)
+
+plot(df$PC1, df$z_active_cel_per_g)
+m1<-lm(df$PC1~df$z_active_cel_per_g)
+summary(m1) # sig
+
+m1<-lm(df$PC1~df$z_foxtail_prop_nongerm)
+summary(m1)
+
+plot(df$PC1, df$z_pigweed_prop_nongerm)
+m1<-lm(df$PC1~df$z_pigweed_prop_nongerm)
+summary(m1) # trend
+
+
 
