@@ -1626,7 +1626,7 @@ df$z_foxtail_num_germ<-as.vector(scale(log(df$foxtail_num_nongerm+1)))
 df$z_pigweed_prop_nongerm<-as.vector(scale(df$pigweed_prop_nongerm))
 df$z_boncat_freq<-as.vector(scale(df$boncat_freq))
 df$z_active_cel_per_g<-as.vector(scale(log(df$active_cel_per_g+1)))
-df$z_perc.Ndfa<-as.vector(scale(df$perc.Ndfa))
+df$z_perc.Ndfa<-as.vector(scale(log(df$perc.Ndfa+1)))
 df$z_n_fix_per_legume<-as.vector(scale(df$n_fix_per_legume))
 
 #hist
@@ -1637,8 +1637,7 @@ hist(df$z_foxtail_num_germ) # okay
 hist(df$z_foxtail_prop_nongerm) # bad
 hist(df$z_boncat_freq) # okay
 hist(df$z_active_cel_per_g) # okay after log transform
-
-hist(df$z_perc.Ndfa) # kinda skewed 
+hist(df$z_perc.Ndfa) # kinda skewed but better after log transform
 hist(df$z_n_fix_per_legume)
 
 # 4. Add it to your data frame
@@ -1652,10 +1651,12 @@ plot(df$PC1, df$z_Shoot.Biomass)
 
 plot(df$PC1, df$z_boncat_freq)
 plot(df$PC1, df$z_active_cel_per_g)
+
 plot(df$PC1, df$z_foxtail_num_germ)
 plot(df$PC1, df$z_pigweed_prop_nongerm)
 
-
+plot(df$PC1, df$z_perc.Ndfa)
+plot(df$PC1, df$z_n_fix_per_legume)
 
 # lm 
 m1<-lm(df$PC1~df$z_Root.Biomass)
@@ -1674,16 +1675,13 @@ summary(m1) # sig
 m1<-lm(df$PC1~df$z_foxtail_prop_nongerm)
 summary(m1)
 
-plot(df$PC1, df$z_pigweed_prop_nongerm)
 m1<-lm(df$PC1~df$z_pigweed_prop_nongerm)
 summary(m1) 
 
+m1<-lm(df$PC1~df$z_perc.Ndfa)
+summary(m1) 
 
-
-# n fix
-
-
-
-
-
+m1<-lm(df$PC1~df$z_n_fix_per_legume)
+summary(m1) 
+plot(m1)
 
