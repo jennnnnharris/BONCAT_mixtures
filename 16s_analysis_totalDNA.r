@@ -1646,35 +1646,35 @@ df$PC1 <- pc1_variable
 
 # corrplots\
 
-plot(df$PC1, df$z_Root.Biomass)
-plot(df$PC1, df$z_Shoot.Biomass)
+par(mfrow=c(2,2))
+plot(df$PC1, df$z_Root.Biomass, main= "Total, p=.001, Rsq =.18")
+plot(df$PC1, df$z_Shoot.Biomass, main= "Total, p=.001, Rsq =.59")
 
-plot(df$PC1, df$z_boncat_freq)
-plot(df$PC1, df$z_active_cel_per_g)
+#par(mfrow=c(1,2))
+plot(df$PC1, df$z_boncat_freq, main="total, not sig")
+plot(df$PC1, df$z_active_cel_per_g, main= "Total, p=.05, Rsq=.14")
 
 plot(df$PC1, df$z_foxtail_num_germ)
-plot(df$PC1, df$z_pigweed_prop_nongerm)
+plot(df$PC1, df$z_pigweed_prop_nongerm, )
 
 plot(df$PC1, df$z_perc.Ndfa)
 plot(df$PC1, df$z_n_fix_per_legume)
 
 # lm 
 m1<-lm(df$PC1~df$z_Root.Biomass)
-summary(m1) # trend
-
+summary(m1) # sig
 m1<-lm(df$PC1~df$z_Shoot.Biomass)
 summary(m1) # sig
 
+
 m1<-lm(df$PC1~df$z_boncat_freq)
 summary(m1)
-
-plot(df$PC1, df$z_active_cel_per_g)
 m1<-lm(df$PC1~df$z_active_cel_per_g)
 summary(m1) # sig
 
+
 m1<-lm(df$PC1~df$z_foxtail_prop_nongerm)
 summary(m1)
-
 m1<-lm(df$PC1~df$z_pigweed_prop_nongerm)
 summary(m1) 
 
