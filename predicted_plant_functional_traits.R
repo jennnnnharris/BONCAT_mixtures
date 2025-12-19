@@ -12,7 +12,6 @@ library(lubridate)
 library(lme4)
 library(nlme)
 
-
 IBM <- c( #IBM colors
   "navy", # dark royal blue L
   "#648FFF", # french blue G
@@ -28,38 +27,6 @@ legume_cols <- c( #IBM colors
   "#FFB000", # golden yellow LG
   "#865338" # medium mocha brown LGB
 )
-
-# load paths
-biomasspath <- "C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
-
-
-#### import biomass data and process #####
-setwd(biomasspath)
-df <- read.csv("biomass_potlevel.csv") # biomass data
-
-# process to make n species column, summarize at pot level, make treatment a factor.
-df$Grass<-as.numeric(df$Grass)
-df$Legume<-as.numeric(df$Legume)
-df$Brassicae<-as.numeric(df$Brassicae)
-df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
-df<-df %>% group_by(Trt_ID, Treatment, Rep, Brassicae, Legume, Grass, N, n_species ) %>% summarise(Root.Biomass = sum(Total.Root.g), Shoot.Biomass = sum(Stem.Biomass.g), )
-df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-# give long composition name
-# make long_name var
-# df$long_name <- df$Treatment
-# df$long_name<-gsub("L", "Legume", df$long_name)
-# df$long_name<-gsub("G", "Grass", df$long_name)
-# df$long_name<-gsub("B", "Brassica", df$long_name)
-# df$long_name<-gsub("LegumeBrassica", "Legume_Brassica", df$long_name)
-# df$long_name<-gsub("LegumeGrass", "Legume_Grass", df$long_name)
-# df$long_name<-gsub("GrassBrassica", "Grass_Brassica", df$long_name)
-# df$long_name 
-# df$long_name<- factor(df$long_name, levels = c("Legume", "Grass", "Brassica", "Grass_Brassica", "Legume_Brassica", "Legume_Grass", "Legume_Grass_Brassica"))
-
-# rename
-df <- df
-head(df)
-
 
 
 
@@ -151,6 +118,28 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
 
 
 #####predictions from monocultures for biomass #######
+#### import biomass data and process
+biomasspath <- "C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
+setwd(biomasspath)
+df <- read.csv("biomass_potlevel.csv", row.names = 1) # biomass data
+
+# process to make n species column, summarize at pot level, make treatment a factor.
+df$Grass<-as.numeric(df$Grass)
+df$Legume<-as.numeric(df$Legume)
+df$Brassicae<-as.numeric(df$Brassicae)
+df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
+#df<-df %>% group_by(Trt_ID, Treatment, Rep, Brassicae, Legume, Grass, N, n_species ) %>% summarise(Root.Biomass = sum(Total.Root.g), Shoot.Biomass = sum(Stem.Biomass.g), )
+# rename cols
+# rename cols
+df$Shoot.Biomass<-df$Stem.Biomass.g
+df$Stem.Biomass.g=NULL
+df$Root.Biomass = df$Total.Root.g
+df$Root.Biomass.g=NULL
+df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+# rename
+df <- df
+head(df)
+
 ## we expect that a plant makes the same amount of biomass in monoculures vs mixtures
 #example
 #LB biomass = L monoculture/  2 + B monocultre/2 
@@ -183,22 +172,24 @@ predict<- cbind(predict, Root.Biomass)
 predict$Root.Biomass<-as.numeric(predict$Root.Biomass)
 predict
 
+# add N
+dim(predict)
+predict$Nitrogen_label<-rep(rep(c("Nitrogen +", "Nitrogen -"), each=6), 4)
 
 ## add to df
-df1<-df %>% filter(n_species!="1")
-mixtures<-df %>% filter(n_species!="1")
-47*2
 
-df1<-full_join(df1, predict) 
+df1<-full_join(df, predict) 
 df1<-df1 %>% ungroup()
-as.factor(df1$Treatment)
+df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB", "GB.predict", "LB", "LB.predict",  "LG", 
+                                 "LG.predict", "LGB", "LGB.predict" ))
 
 #### plot predictions from monocultures for biomass
-#old
-# new
-#mycols<-c("#FEB5A2FF","grey" , "#9D7660FF", "grey", "#D7B5A6FF", "grey", "#3896C4FF" , "grey")
+
 mycols <- c( #IBM colors
-  "#DC267F", # magenta pink GB
+  "navy", # dark royal blue L
+  "#648FFF", # french blue G
+  "#785EF0", # light purple B
+    "#DC267F", # magenta pink GB
   "grey",
   "#FE6100", # bright orange LB
   "grey",
@@ -221,7 +212,8 @@ label
 
 p1<-df1  %>% 
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=.5 )+
+  geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
+  
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
@@ -229,10 +221,12 @@ p1<-df1  %>%
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
        )+
   
-  geom_text(y=6, label =label , nudge_x = -.8, size=7)+
-  labs(title = "C",
+  geom_text(y=6, label =label , nudge_x = -.8, size=8)+
+  labs(title = "A",
        x="",
-       y="Root biomass (g)")
+       y="Root biomass (g)")+
+  scale_shape_manual(values = c(17, 16)) #
+
 
 
 p1
@@ -241,7 +235,8 @@ p1
 
 p2<-df1  %>% 
   ggplot(aes(x=Treatment, y=Shoot.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=.5 )+
+  geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
+  
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
@@ -249,9 +244,10 @@ p2<-df1  %>%
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position="none",
         )+
-  labs(title = "D",
+  labs(title = "B",
        x="",
-       y="shoot biomass (g)")
+       y="shoot biomass (g)")+
+  scale_shape_manual(values = c(17, 16)) #
 
 p2
 
@@ -259,8 +255,8 @@ p2
 
 require(gridExtra)
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-svg("biomasspredict.svg", height = 2.5, width = 5)
-grid.arrange(p1, p2, ncol=2)
+svg("biomasspredict.svg", height = 6, width = 5)
+grid.arrange(p1, p2, ncol=1)
 dev.off()
 
 
@@ -489,14 +485,19 @@ predict1
 predict<-full_join(predict, predict1)
 
 ## add to df
-df1<-df %>% filter(n_species!="1")
+ #df1<-df %>% filter(n_species!="1")
 
-df1<-full_join(df1, predict) 
+df1<-full_join(df, predict) 
 df1<-df1 %>% ungroup()
-as.factor(df1$Treatment)
+df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB", "GB.predict", "LB", "LB.predict",  "LG", 
+                                                "LG.predict", "LGB", "LGB.predict" ))
 
-#### plot predictions from monocultures for biomass
+#### plot predictions from monocultures for weed seed
+
 mycols <- c( #IBM colors
+  "navy", # dark royal blue L
+  "#648FFF", # french blue G
+  "#785EF0", # light purple B
   "#DC267F", # magenta pink GB
   "grey",
   "#FE6100", # bright orange LB
@@ -506,6 +507,8 @@ mycols <- c( #IBM colors
   "#865338", # medium mocha brown LGB
   "grey"
 )
+
+
 
 # make labels 
 label <- df1$Treatment
@@ -520,7 +523,7 @@ label
 # plot
 p1<-df1  %>% 
   ggplot(aes(x=Treatment, y=foxtail_prop_nongerm, fill = Treatment)) +
-  geom_jitter(width = .2, size=.5 )+
+  geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
@@ -529,7 +532,7 @@ p1<-df1  %>%
   labs(title = "C",
        x="",
        y="non germinating foxtail (%)")+
-  geom_text(y=.25, label =label , nudge_x = -.8, size=7)
+  geom_text(y=.25, label =label , nudge_x = -.8, size=8)
   
   
 p1
@@ -548,12 +551,12 @@ label
 # plot
 p2<-df1  %>% 
   ggplot(aes(x=Treatment, y=pigweed_prop_nongerm, fill = Treatment)) +
-  geom_jitter(width = .2, size=.5 )+
+  geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
   theme_classic(base_size = 12)+
-  geom_text(y=.8, label =label , nudge_x = -.8, size=7)+
+  geom_text(y=.8, label =label , nudge_x = -.8, size=8)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position="none",)+
   labs(title = "D",
@@ -565,8 +568,8 @@ p2
 # put the two plots together
 require(gridExtra)
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-svg("weeddecay.predict.svg", width = 5, height = 2.5)
-grid.arrange(p1, p2, ncol=2)
+svg("weeddecay.predict.svg", width = 5, height = 6)
+grid.arrange(p1, p2, ncol=1)
 dev.off()
 
 ##########weed prop non germinated #####

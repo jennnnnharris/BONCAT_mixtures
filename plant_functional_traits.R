@@ -40,7 +40,6 @@ df$Grass<-as.numeric(df$Grass)
 df$Legume<-as.numeric(df$Legume)
 df$Brassicae<-as.numeric(df$Brassicae)
 df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
-#df<-df %>% group_by(Trt_ID, Treatment, Rep, Brassicae, Legume, Grass, N, n_species ) %>% summarise(Root.Biomass = sum(Total.Root.g), Shoot.Biomass = sum(Stem.Biomass.g), )
 df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 
@@ -110,12 +109,12 @@ head(df.leg)
   
 p1<- ggplot(df.leg, aes(x=Treatment, y=perc.Ndfa, fill=Treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(aes(shape=Nitrogen_label), size=.7, width=.1)+
+  geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
    geom_text(y=92, label = label, size=4)+
-   labs(title = "A",
+   labs(title = "E",
        x="",
        y= "Nitrogen from Fixation (%)") +
   scale_shape_manual(values = c(17, 16)) #
@@ -143,12 +142,12 @@ print(tukey.result.Nadd) # All difference except LG-LB
  
 p2<- ggplot(df.leg, aes(x=Treatment, y=n_fix_per_legume, fill=Treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(aes(shape=Nitrogen_label), size=.7, width=.1)+
+  geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
    geom_text(y=.07, label = label, size=4)+
-   labs(title = "B",
+   labs(title = "F",
        x="",
        y= "N fixed (mg per legume)")  +
   scale_shape_manual(values = c(17, 16)) #

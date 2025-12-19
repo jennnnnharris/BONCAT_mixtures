@@ -278,6 +278,7 @@ summary(m1)
 
 # corr plot activity with functions ####
 # weed seed
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 weed<-read.csv("weed_seed_decay.csv", row.names = 1)
 head(weed)
   
