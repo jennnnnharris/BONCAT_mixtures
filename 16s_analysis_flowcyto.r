@@ -2022,8 +2022,7 @@ hist(df$z_pigweed_prop_nongerm) # okay
 hist(df$z_foxtail_prop_nongerm) # okay after log transform
 hist(df$z_boncat_freq) # okay
 hist(df$z_active_cel_per_g) # okay after log transform
-
-hist(df$z_perc.Ndfa) # kinda skewed 
+hist(df$z_perc.Ndfa) # okay
 hist(df$z_n_fix_per_legume)
 
 
@@ -2033,13 +2032,19 @@ df$PC1 <- pc1_variable
 
 # corrplots
 
-plot(df$PC1, df$z_Shoot.Biomass)
-plot(df$PC1, df$z_boncat_freq)
-plot(df$PC1, df$z_foxtail_prop_nongerm)
-plot(df$PC1, df$z_pigweed_prop_nongerm)
+par(mfrow=c(2,2))
+plot(df$PC1, df$z_Shoot.Biomass, main = "active, not sig")
+plot(df$PC1, df$z_Root.Biomass, main = "acitve, p=.07, rsq =.07")
+plot(df$PC1, df$z_boncat_freq, main = "active, not sig")
+plot(df$PC1, df$z_active_cel_per_g, main = "active, p=.01, rsq=.25")
+
+par(mfrow=c(1,2))
+plot(df$PC1, df$z_foxtail_prop_nongerm, main= "active, not sig")
+plot(df$PC1, df$z_pigweed_prop_nongerm, main= "active p=.06, Rsq=.07")
+plot(df$PC1, df$z_n_fix_per_legume, main= "active, not sig  ")
+plot(df$PC1, df$z_perc.Ndfa, main= "active, not sig")
 
 # lm 
-plot(df$PC1, df$z_Root.Biomass)
 m1<-lm(df$PC1~df$z_Root.Biomass)
 summary(m1) # trend
 
@@ -2049,16 +2054,18 @@ summary(m1)
 m1<-lm(df$PC1~df$z_boncat_freq)
 summary(m1)
 
-plot(df$PC1, df$z_active_cel_per_g)
 m1<-lm(df$PC1~df$z_active_cel_per_g)
 summary(m1) # sig
 
 m1<-lm(df$PC1~df$z_foxtail_prop_nongerm)
 summary(m1)
 
-plot(df$PC1, df$z_pigweed_prop_nongerm)
 m1<-lm(df$PC1~df$z_pigweed_prop_nongerm)
 summary(m1) # trend
 
+m1<-lm(df$PC1~df$z_n_fix_per_legume)
+summary(m1) # trend
 
+m1<-lm(df$PC1~df$z_perc.Ndfa)
+summary(m1) # trend
 
