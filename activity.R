@@ -46,7 +46,8 @@ IBM <- c( #IBM colors
 # write.csv(biggie, "flow_cyto.csv")
 
 ####### import data #####
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto")
 fc <-read.csv("processed_flow_cyto.csv")
 head(fc)
 
@@ -106,25 +107,25 @@ fc$Date_Sorted   <- factor(fc$Date_Sorted)
 
 fc<-fc  %>%   filter(Treatment!="Soil")
 lab = as.character(fc$Treatment)
-lab<-gsub("LGB", "X", lab)
-lab<-gsub("LB", "X", lab)
+lab<-gsub("LGB", "AX", lab)
+lab<-gsub("LB", "AX", lab)
 lab<-gsub("GB", "A", lab)
-lab<-gsub("LG", "C", lab)
+lab<-gsub("LG", "X", lab)
 
-lab<-gsub("G", "A", lab)
-lab<-gsub("L", "A", lab)
-lab<-gsub("B", "X", lab)
+lab<-gsub("G", "AX", lab)
+lab<-gsub("L", "AX", lab)
+lab<-gsub("B", "AX", lab)
 
 lab<-gsub("X", "B", lab)
 
-# Treatment emmean     SE  df asymp.LCL asymp.UCL .group
-# GB         -2.81 0.0148 Inf     -2.85     -2.77  a    
-# G          -2.80 0.0173 Inf     -2.85     -2.76  a    
-# L          -2.77 0.0106 Inf     -2.80     -2.74  a    
-# LB         -2.71 0.0126 Inf     -2.74     -2.67   b   
-# LGB        -2.70 0.0128 Inf     -2.73     -2.66   b   
-# B          -2.69 0.0112 Inf     -2.72     -2.66   b   
-# LG         -2.42 0.0109 Inf     -2.45     -2.39    c 
+# Treatment emmean    SE  df asymp.LCL asymp.UCL .group
+# GB         -2.91 0.184 Inf     -3.40     -2.41  a    
+# L          -2.88 0.182 Inf     -3.37     -2.39  ab   
+# G          -2.69 0.168 Inf     -3.14     -2.24  ab   
+# B          -2.67 0.166 Inf     -3.11     -2.22  ab   
+# LGB        -2.54 0.157 Inf     -2.96     -2.12  ab   
+# LB         -2.49 0.153 Inf     -2.90     -2.08  ab   
+# LG         -2.22 0.137 Inf     -2.58     -1.85   b   
 
 p1<-fc  %>%
   filter(Treatment!="Soil") %>%
@@ -143,13 +144,13 @@ p1
 
 #binomial model with percent data##
 # make vector of successes and failures
-#prop<-fc %>%
-#  mutate(boncat_freq = round(boncat_freq, 0)) %>%
-#  mutate(n_failures =  100-boncat_freq)
-
 prop<-fc %>%
-  mutate(success = n_events_BONCAT) %>%
-  mutate(n_failures =  n_events_cells)
+  mutate(success = round(boncat_freq, 0)) %>%
+  mutate(n_failures =  100-boncat_freq)
+
+#prop<-fc %>%
+#  mutate(success = n_events_BONCAT) %>%
+#  mutate(n_failures =  n_events_cells)
 y<-cbind(prop$success, prop$n_failures)
 
 #model
@@ -276,47 +277,68 @@ summary(m1)
 
 
 
-# corr plot activity with functions ####
+# corr plot activity with weed seed ####
 # weed seed
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 weed<-read.csv("weed_seed_decay.csv", row.names = 1)
-head(weed)
-  
+
   
 df<- left_join(weed, fc)
 head(df)  
 
-## check distribution
-hist(df$active_cel_per_g)
-hist(log(df$active_cel_per_g)+1)
-hist(df$boncat_freq)
-hist(df$pigweed_prop_nongerm)
-hist(df$foxtail_num_nongerm)
-hist(log(df$foxtail_num_germ))
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
+svg("pigweed_active.svg", width=4.5, height=3.5)
+ggplot(df, aes(y=pigweed_num_nongerm, x=active_cel_per_g))+
+  geom_point()+
+  theme_bw(base_size = 12)+
+  labs(y = "non germinating pigweed",
+       x = "Active cells / g rhizosphere")
+dev.off()
 
 
-# plots
-plot(log10(df$active_cel_per_g+1), log10(df$foxtail_num_nongerm+1))
-plot(log(df$active_cel_per_g, df$pigweed_prop_nongerm)
+# pigweed vs boncat freq
+#plot(df$boncat_freq, df$pigweed_prop_nongerm)
+# log tranform
+#plot(df$boncat_freq, log(df$pigweed_prop_nongerm+1))
+m1<-lm(pigweed_prop_nongerm~log(df$boncat_freq+1), data=df)
+summary(m1) # trend
+# number of seeds
+plot(df$boncat_freq, log(df$pigweed_num_nongerm+1))
+m1<-lm(pigweed_prop_nongerm~log(df$boncat_freq+1), data=df)
+summary(m1) # trend .07 # probaly specifc taxa matter
 
 
-plot(df$boncat_freq, df$pigweed_prop_nongerm)
-plot(df$boncat_freq, df$foxtail_prop_nongerm)
+# pigweed vs number of active cells
+plot(df$pigweed_prop_nongerm, df$active_cel_per_g)
+m1<-lm(pigweed_prop_nongerm~df$active_cel_per_g, data=df)
+summary(m1) 
+# log tranform
+plot(log(df$active_cel_per_g+1), log(df$pigweed_prop_nongerm+1))
+m1<-lm(log(pigweed_prop_nongerm+1)~log(df$active_cel_per_g+1), data=df)
+summary(m1) 
+# number of seeds
+plot(log(df$active_cel_per_g+1), log(df$pigweed_num_nongerm+1))
+m1<-lm(log(df$pigweed_num_nongerm+1)~log(df$active_cel_per_g+1), data=df)
+summary(m1) 
+# poisson
+plot(df$active_cel_per_g, df$pigweed_num_nongerm)
+m1<-glm(pigweed_num_nongerm~active_cel_per_g, data=df, family=poisson)
+summary(m1) 
+plot(m1) 
 
-
-# model
-m1<-lm(log(df$active_cel_per_g+1) ~log(df$foxtail_num_nongerm+1))
-summary(m1)
-
-m1<-lm(pigweed_prop_nongerm~df$boncat_freq, data=df)
-summary(m1)
-
+# foxtail 
+hist(df$foxtail_num_germ)
+plot(log(df1$active_cel_per_g), log(df1$foxtail_num_nongerm))
 m1<-lm(df$foxtail_prop_nongerm~df$active_cel_per_g)
 summary(m1)
+
+# foxtail 
+hist(df$boncat_freq)
+plot(df$boncat_freq, log(df$foxtail_num_nongerm))
 m1<-lm(foxtail_prop_nongerm~df$boncat_freq, data=df)
 summary(m1)
+# no pattern
 
-# no clear signals
 
 ### nitrogen fixed with microbial activity
 fc
@@ -325,13 +347,6 @@ nfix<-read.csv("Nfix.csv")
 
 colnames(nfix) 
 df<-left_join(nfix, fc)
-
-# distributions
-hist(df$active_cel_per_g)
-hist(df$perc.Ndfa)
-hist(df$n_fix_per_legume)
-
-
 # plots
 plot(df$active_cel_per_g, df$perc.Ndfa)
 plot(df$boncat_freq, df$perc.Ndfa)
@@ -345,8 +360,6 @@ summary(m1)
 #plot(m1)
 m1<-lm(df$n_fix_per_legume~df$boncat_freq, data=df)
 summary(m1)
-#plot(m1)
-
 # cells boncat
 m1<-lm(df$n_fix_per_legume~df$active_cel_per_g)
 summary(m1)
@@ -359,44 +372,67 @@ summary(m1)
 m1<-lm(df$perc.Ndfa~log(df$active_cel_per_g+1))
 summary(m1)
 
+# no signals 
 
 
-
-# biomass increase verse activity
+# corplot biomass increase verse activity ####
 fc
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 biomass<-read.csv("biomass_potlevel.csv")
 colnames(biomass) 
 df<-left_join(biomass, fc)
 
-
-# distributions
-hist(log(df$boncat_freq))
-hist(df$active_cel_per_g)
+# distributions look okay 
+hist(df$boncat_freq)
+hist(log(df$active_cel_per_g))
 hist(df$Total.Root.g)
 hist(df$Stem.Biomass.g)
 
 
-# plots
+# figure 
+plot(df$active_cel_per_g, df$Stem.Biomass.g, main= "p=0.01")
+plot(df$boncat_freq, df$Stem.Biomass.g, main= "not sig")
+plot(df$Total.Root.g~log(df$active_cel_per_g+1), main="not sig")
+plot(df$Total.Root.g~log(df$boncat_freq+1), data=df, main="p=.09")
 
-plot(df$active_cel_per_g, df$Stem.Biomass.g)
-plot(df$active_cel_per_g, df$Root.Biomass.g)
-plot(df$boncat_freq, df$Total.Root.g)
-plot(df$boncat_freq, df$Stem.Biomass.g)
-plot(df$Total.Root.g~log(df$boncat_freq+1))
+# ggplot
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
+svg("shoot.active.svg", width=4.5, height = 3.5)
+ggplot(df, aes(y=Stem.Biomass.g, x=active_cel_per_g))+
+  geom_point()+
+  geom_smooth(method = lm)+
+  annotate("text", x = 1500, y = 5, label = "p<0.001, Rsq=.38", 
+           color = "black", size = 5, fontface = "bold")+
+  labs(y = "Shoot biomass (g)",
+       x = "Active cells / g rhizosphere")+
+  theme_bw(base_size = 12)
+dev.off()
 
 
-# sig plots
-plot(df$Stem.Biomass.g~log(df$active_cel_per_g+1))
-plot(df$Total.Root.g~df$boncat_freq, data=df)
+ggplot(df, aes(y=Total.Root.g, x=log(df$boncat_freq+1)))+
+  geom_point()+
+  geom_smooth(method = lm)+
+  annotate("text", x = 5, y = 2, label = "p=0.09", 
+           color = "red", size = 5, fontface = "bold")
 
+# shoots X number cells
+m1<-lm(df$Stem.Biomass.g~df$active_cel_per_g, data=df)
+summary(m1)
+# big plants more cells bb
 
-# frequency boncat
+# shoots X frequency boncat
 m1<-lm(df$Stem.Biomass.g~df$boncat_freq, data=df)
 summary(m1)
-#plot(m1)
-m1<-lm(df$Total.Root.g~df$boncat_freq, data=df)
-summary(m1) ### marginal trend
+# no pattern
+
+# roots X number of cells 
+m1<-lm(df$Total.Root.g~log(df$active_cel_per_g+1), data=df)
+summary(m1)
+
+# root X freq
+m1<-lm(df$Total.Root.g~log(df$boncat_freq+1), data=df)
+summary(m1)
+### marginal trend
 #plot(m1)
 
 # cells boncat
@@ -413,9 +449,9 @@ summary(m1)
 m1<-lm(df$Total.Root.g~log(df$boncat_freq+1))
 summary(m1)
 
-##### difference between predicted and not ##
+##### difference between predicted and not ## 
 fc
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 biomass<-read.csv("predicted.biomass.csv")
 colnames(biomass) 
 df<-left_join(biomass, fc)
@@ -457,8 +493,369 @@ summary(m1)  # sig
 m1<-lm(df$root.difference~log(df$active_cel_per_g+1))
 summary(m1)
 
+###################predicting microbial activity with biomass ##############
+
+#load libraries
+
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+biomass<-read.csv("percent.biomass.csv")
+# only n+ 
+biomass<-biomass %>% filter(N==1)
+
+library(dplyr)
 
 
 
 
+# LG
+# filter fc for L treatment
+fc %>% filter(Treatment=="L") 
+fc %>% dplyr::select(boncat_freq)
+df<-fc %>% filter(Treatment=="L") %>% dplyr::select(boncat_freq, active_cel_per_g )
+# get biomass info and multiply by L biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="legume") %>% arrange(Pot_ID)
+sp1
+vector<-sp1$percent/100
+data_frame_multiplied1 <- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+data_frame_multiplied1
+# filter for G treat
+fc %>% filter(Treatment=="G") 
+df<-fc %>% filter(Treatment=="G") %>% dplyr::select(boncat_freq, active_cel_per_g )
+
+
+# get biomass info and multiply by G biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="grass") %>% arrange(Pot_ID)
+sp1
+vector<-sp1$percent/100
+vector
+
+data_frame_multiplied2<- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+
+print(data_frame_multiplied2)
+# add together
+LG<-data_frame_multiplied1 + data_frame_multiplied2
+LG$Trt_ID<-c("predict_LG+N1", "predict_LG+N2", "predict_LG+N3", "predict_LG+N4", "predict_LG+N5", "predict_LG+N6" )
+LG$Treatment<-c("LG.predict", "LG.predict", "LG.predict", "LG.predict", "LG.predict", "LG.predict" )
+LG$Rep <- c(1, 2, 3, 4, 5, 6 )
+LG
+
+
+# LB
+# filter fc for L treatment
+# check
+fc %>% filter(Treatment=="L") 
+df<-fc %>% filter(Treatment=="L")%>% filter(Rep!="5") %>% dplyr::select(boncat_freq, active_cel_per_g ) 
+df
+# get biomass info and multiply by L biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% filter(Rep!="5") 
+sp1
+vector<-sp1$percent/100
+vector
+data_frame_multiplied1 <- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+data_frame_multiplied1
+# filter for B treat
+fc %>% filter(Treatment=="B")
+df<-fc %>% filter(Treatment=="B") %>%filter(Rep!="5") %>%  dplyr::select(boncat_freq, active_cel_per_g )
+df
+# get biomass info and multiply by G biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="brassica") %>% arrange(Pot_ID)
+sp1
+vector<-sp1$percent/100
+vector
+
+data_frame_multiplied2<- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+
+print(data_frame_multiplied2)
+# add together
+LB<-data_frame_multiplied1 + data_frame_multiplied2
+LB$Trt_ID<-c("predict_LB+N1", "predict_LB+N2", "predict_LB+N3", "predict_LB+N4",  "predict_LB+N6" )
+LB$Treatment<-c("LB.predict", "LB.predict", "LB.predict", "LB.predict", "LB.predict" )
+LB$Rep <- c(1, 2, 3, 4, 6 )
+LB
+
+
+
+
+# GB
+# filter fc for G treatment
+fc %>% filter(Treatment=="G") 
+df<-fc %>% filter(Treatment=="G")  %>% 
+  dplyr::select(boncat_freq, active_cel_per_g ) 
+df
+# get biomass info and multiply by L biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="grass") %>% arrange(Pot_ID) #%>% filter(Rep!="5") 
+sp1
+vector<-sp1$percent/100
+vector
+data_frame_multiplied1 <- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+data_frame_multiplied1
+# filter for B treat
+fc %>% filter(Treatment=="B")
+df<-fc %>% filter(Treatment=="B") %>%  dplyr::select(boncat_freq, active_cel_per_g )
+df
+# get biomass info and multiply by G biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="brassica") %>% arrange(Pot_ID)
+sp1
+vector<-sp1$percent/100
+vector
+
+data_frame_multiplied2<- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+
+print(data_frame_multiplied2)
+# add together
+GB<-data_frame_multiplied1 + data_frame_multiplied2
+GB$Trt_ID<-c("predict_GB+N1", "predict_GB+N2", "predict_GB+N3", "predict_GB+N4", "predict_GB+N5",  "predict_GB+N6" )
+GB$Treatment<-c("GB.predict", "GB.predict", "GB.predict", "GB.predict", "GB.predict" , "GB.predict")
+GB$Rep <- c(1, 2, 3, 4,5, 6 )
+GB
+
+
+
+
+
+
+# LGB
+# filter fc for L treatment
+fc %>% filter(Treatment=="L") 
+df<-fc %>% filter(Treatment=="L") %>%  dplyr::select(boncat_freq, active_cel_per_g ) 
+df
+# get biomass info and multiply by L biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="legume") %>% arrange(Pot_ID)# 
+sp1
+
+vector<-sp1$percent/100
+vector
+data_frame_multiplied0 <- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+data_frame_multiplied0
+
+# filter fc for G treatment
+fc %>% filter(Treatment=="G") 
+df<-fc %>% filter(Treatment=="G")  %>%    dplyr::select(boncat_freq, active_cel_per_g ) 
+df
+# get biomass info and multiply by biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="grass") %>% arrange(Pot_ID) #%>% filter(Rep!="5") # has all reps
+sp1
+vector<-sp1$percent/100
+vector
+data_frame_multiplied1 <- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+data_frame_multiplied1
+
+# filter for B treat
+fc %>% filter(Treatment=="B")
+df<-fc %>% filter(Treatment=="B") %>%    dplyr::select(boncat_freq, active_cel_per_g )
+df
+# get biomass info and multiply by G biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) # has all reps 
+sp1
+vector<-sp1$percent/100
+vector
+
+data_frame_multiplied2<- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+
+print(data_frame_multiplied2)
+# add together
+LGB<-data_frame_multiplied0 + data_frame_multiplied1 + data_frame_multiplied2
+LGB$Trt_ID<-c("predict_LGB+N1", "predict_LGB+N2", "predict_LGB+N3", "predict_LGB+N4", "predict_LGB+N5",  "predict_LGB+N6" )
+LGB$Treatment<-c("LGB.predict", "LGB.predict", "LGB.predict", "LGB.predict", "LGB.predict" , "LGB.predict")
+LGB$Rep <- c(1, 2, 3, 4,5, 6 )
+LGB
+
+
+# combine
+predict<-rbind(GB, LG, LB, LGB)
+df<-full_join(fc, predict)
+
+
+
+mycols <- c( #IBM colors
+ # "navy", # dark royal blue L
+#  "#648FFF", # french blue G
+#  "#785EF0", # light purple B
+  "#DC267F", # magenta pink GB
+  "grey",
+  "#FE6100", # bright orange LB
+  "grey",
+  "#FFB000", # golden yellow LG
+  "grey",
+  "#865338", # medium mocha brown LGB
+  "grey"
+)
+
+
+df<-df %>% filter(Treatment!="Soil")
+df<-df %>% filter(Treatment!="G" & Treatment!="B" & Treatment!="L")
+
+unique(df$Treatment)
+
+df$Treatment<-factor(df$Treatment, levels = c( "GB", "GB.predict", "LB", "LB.predict",  "LG", 
+                                                "LG.predict", "LGB", "LGB.predict" ))
+
+
+# plot
+p1<-df  %>% 
+  ggplot(aes(x=Treatment, y=active_cel_per_g, fill = Treatment)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.5, outlier.shape = NA)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
+  labs(title = "A",
+       x="",
+       y="active cells/g rhizosphere")
+  #geom_text(y=.25, label =label , nudge_x = -.8, size=8)
+
+p1
+
+
+p2<-df  %>% 
+  ggplot(aes(x=Treatment, y=boncat_freq, fill = Treatment)) +
+  geom_jitter(width = .2, size=1 )+
+  geom_boxplot(alpha=.5, outlier.shape = NA)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
+labs(title = "B",
+     x="",
+     y=" active cells (%)")
+#geom_text(y=.25, label =label , nudge_x = -.8, size=8)
+
+p2
+require(gridExtra)
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
+svg("activity.predict.svg", width=6, height=3)
+grid.arrange(p1, p2, ncol=2)
+dev.off()
+
+
+# anova active cells
+#GB
+df1<-df%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+m1<-glm(data= df1, active_cel_per_g~Treatment)
+summary(m1)
+
+#LB
+df1<-df%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+m1<-glm(data= df1, active_cel_per_g~Treatment)
+summary(m1)
+
+#LG
+df1<-df%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+m1<-glm(data= df1, active_cel_per_g~Treatment)
+summary(m1)
+
+#LGB
+df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+m1<-glm(data= df1, active_cel_per_g~Treatment)
+summary(m1)
+
+
+
+
+# anova binomial model percent 
+#binomial model with percent data##
+# make vector of successes and failures
+
+
+
+#GB
+df1<-df%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+prop<-df1 %>%
+  mutate(success = round(boncat_freq, 0)) %>%
+  mutate(n_failures =  100-success)
+y<-cbind(prop$success, prop$n_failures)
+m1<-glm(data= df1, y~Treatment, family = binomial)
+summary(m1)
+
+#LB
+df1<-df%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+prop<-df1 %>%
+  mutate(success = round(boncat_freq, 0)) %>%
+  mutate(n_failures =  100-success)
+y<-cbind(prop$success, prop$n_failures)
+m1<-glm(data= df1, y~Treatment, family = binomial)
+summary(m1)
+
+#LG
+df1<-df%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+prop<-df1 %>%
+  mutate(success = round(boncat_freq, 0)) %>%
+  mutate(n_failures =  100-success)
+y<-cbind(prop$success, prop$n_failures)
+m1<-glm(data= df1, y~Treatment, family = binomial)
+summary(m1)
+
+
+#LGB
+df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+prop<-df1 %>%
+  mutate(success = round(boncat_freq, 0)) %>%
+  mutate(n_failures =  100-success)
+y<-cbind(prop$success, prop$n_failures)
+m1<-glm(data= df1, y~Treatment, family = binomial)
+summary(m1)
 

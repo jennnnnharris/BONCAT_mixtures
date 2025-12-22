@@ -25,13 +25,13 @@ library(readxl)
 library(lubridate)
 library(phyloseq)
 library(multcompView)
-library(BiodiversityR)
+#library(BiodiversityR)
 #ANCOM
 #BiocManager::install("ANCOMBC")
-library(ANCOMBC)
+#library(ANCOMBC)
 #BiocManager::install("microbiome")
 #install.packages("microbiome")
-library(microbiome)
+#library(microbiome)
 
 # set colors
 
@@ -56,7 +56,7 @@ myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
 #####Import data#####
 ## Set the working directory ###
 #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
 metadat<-read.csv("metadat.csv", header = T)
@@ -305,8 +305,7 @@ summary(m1)
               col= bw,
               alpha = 30,
               cex=1.5)
-  # base r plot
-  
+
   
  
 #######PCOA plot active##
@@ -1474,7 +1473,7 @@ tax_table<-tax_table(ps)
 #load libraries
 library(readxl)
 library(tidyverse)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 biomass<-read.csv("percent.biomass.csv")
 # only n+ 
 biomass<-biomass %>% filter(N==1)
@@ -1497,7 +1496,7 @@ df$Pot_ID=NULL
 head(biomass)
 sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% 
   filter(Rep!=6)# remove rep 6 
-vector<-sp1$percent
+vector<-sp1$percent/100
 data_frame_multiplied1 <- df %>%
   mutate(
     across(
@@ -1522,7 +1521,7 @@ df$Pot_ID=NULL
 head(biomass)
 sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="grass") %>% arrange(Pot_ID) %>% 
   filter(Rep!=6)# remove rep 6 
-vector<-sp1$percent
+vector<-sp1$percent/100
 sp1
 data_frame_multiplied2<- df %>%
   mutate(
@@ -1561,7 +1560,7 @@ df$Pot_ID=NULL
 head(biomass)
 sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="grass") %>% arrange(Pot_ID) %>% 
   filter(Rep!=1)# remove rep 1
-vector<-sp1$percent
+vector<-sp1$percent/100
 vector
 data_frame_multiplied1 <- df %>%
   mutate(
@@ -1589,7 +1588,7 @@ df$Pot_ID=NULL
 head(biomass)
 sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>% 
   filter(Rep!=1)# remove rep 1
-vector<-sp1$percent
+vector<-sp1$percent/100
 sp1
 vector
 data_frame_multiplied2<- df %>%
@@ -1625,7 +1624,7 @@ head(biomass)
 sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% 
   filter(Rep!=1 )# remove rep 1 a LB doesn't have a rep 5, so use 6 insteasd
 sp1
-vector<-sp1$percent
+vector<-sp1$percent/100
 vector
 data_frame_multiplied1 <- df %>%
   mutate(
@@ -1650,7 +1649,7 @@ df$Pot_ID=NULL
 head(biomass)
 sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>% 
   filter(Rep!=1)# remove rep 1
-vector<-sp1$percent
+vector<-sp1$percent/100
 sp1
 vector
 data_frame_multiplied2<- df %>%
@@ -1668,7 +1667,7 @@ row.names(LB)<-c("predict_LB_N2", "predict_LB_N3", "predict_LB_N4", "predict_LB_
 
 
 
-# LBG ##########
+# LBG 
 # filter for L community
 ps1<-subset_samples(ps , Treatment=="L" & Rep!="1" & Rep!="6") # no rep 1 for brass so skip that one 
 df<-as.data.frame(otu_table(ps1))
@@ -1686,7 +1685,7 @@ head(biomass)
 sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% 
   filter(Rep!=1 & Rep!=6)# remove rep 1  and 6
 sp1
-vector<-sp1$percent
+vector<-sp1$percent/100
 vector
 data_frame_multiplied1 <- df %>%
   mutate(
@@ -1712,7 +1711,7 @@ df$Pot_ID=NULL
 #head(biomass)
 sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>% 
   filter(Rep!=1 & Rep!=6)# remove rep 1 and 6
-vector<-sp1$percent
+vector<-sp1$percent/100
 #sp1
 #vector
 data_frame_multiplied2<- df %>%
@@ -1740,7 +1739,7 @@ df$Pot_ID=NULL
 #head(biomass)
 sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>% 
   filter(Rep!=1 & Rep!=6)# remove rep 1
-vector<-sp1$percent
+vector<-sp1$percent/100
 #sp1
 #vector
 data_frame_multiplied3<- df %>%
@@ -1764,7 +1763,7 @@ row.names(df1)
 df<-as.data.frame(otu_table(ps))
 otus<-rbind(df1, df)
 otus<-t(otus)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
 write.csv(otus, "feature.table.csv")
 
 
@@ -1775,9 +1774,9 @@ write.csv(tax_table, "taxonomy.csv")
 
 ##### import predicted #####
 IBM <- c( #IBM colors
-  "navy", # dark royal blue
-  "#648FFF", # french blue
-  "#785EF0", # light purple
+  #"navy", # dark royal blue
+  #"#648FFF", # french blue
+  #"#785EF0", # light purple
   "#DC267F", # magenta pink 
   "#FE6100", # bright orange
   "#FFB000", # golden yellow
@@ -1785,7 +1784,7 @@ IBM <- c( #IBM colors
 )
 ## Set the working directory ###
 #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
 taxon <- read.csv("taxonomy.csv", row.names = 1)
 asvs <- read.csv("feature.table.csv", row.names = 1)
 metadat<-read.csv("metadata_predicted16S.csv", header = T)
@@ -1820,32 +1819,83 @@ ps
 # 1804 taxa when rarefied 
 
 
-#plot 
-
-
-#  Constrained ordination
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+##### predicted plot #####
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" & n_species!="1")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
-# 1845 taxa
+# 1745 taxa
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" & n_species!="1")
 #factor
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "GB", "LB", "LG", "LGB"))
 metadat2$Fraction   <- factor(metadat2$Fraction)
 
-# 1. Calculate the distance matrix (e.g., Bray-Curtis)
-dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(15-1), eig=TRUE)
+# Store coordinates for first two axes in new variable #
+otus.p <- otus.pcoa$points[,1:2]
+colnames(otus.p) <- c("PC1", "PC2")
+
+# Calculate % variance explained by each axis #
+otus.eig<-otus.pcoa$eig
+perc.exp<-otus.eig/(sum(otus.eig))*100
+pe1<-round(perc.exp[1],2)
+pe2<-round(perc.exp[2],2)
+pe2
+
+#calculate total variance explained by each principal component
+perc.exp<-otus.eig/(sum(otus.eig))*100
+#scree plot 
+plot(otus.pcoa$eig)
+
+par(adj=.5)
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA",
+         xlab=paste("PCoA1 (",pe1,"% variance explained)"),
+         ylab=paste("PCoA2 (",pe2,"% variance explained)"))
+
+  par(adj = 0)
+title(main= "")
+par(adj=.5)
+points(otus.p, 
+       col= IBM[as.factor(metadat2$Treatment)],
+       pch= c(16,18)[as.factor(metadat2$Measurement)],
+       
+       lwd=1,cex=1.5,
+       bg=IBM[as.factor(metadat2$Treatment)],)
+ordiellipse(otus.pcoa, as.factor(metadat2$Measurement),  
+            kind = "ehull", conf=0.95, label=T, 
+            draw = "polygon",
+            border = 0,
+            col= IBM,
+            alpha = 30,
+            cex=1.5)
+legend("topleft", legend=c( "GB", "LB", "LG", "LGB"),
+       fill= IBM,
+       cex=1,
+       bty = "n")
+legend("bottomleft", legend=c("measured", "predicted"  ),
+       pch=c(16,18 ),
+       cex=1,
+       title = "",     bty = "n")
+
+
+# permanova
+adonis2(otus.bray ~ Treatment, data = metadat2)
+adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
+
+
+#### CAP ##### 
 
 # 2. Run the CAP (db-RDA) analysis
 # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(dist_matrix ~ Treatment,
+cap_result <- capscale(otus.bray ~ (Treatment+Measurement)^2,
                        data = metadat2,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
 anova.cca(cap_result, by="terms")
 
-### 3. grab info for the plot
 smry <- summary(cap_result)
 smry
 sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
@@ -1865,16 +1915,16 @@ perc
 #windows(6,6)
 par(cex.lab = 1.1) # make all fonts in graphs little bigger
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-         main="CAP ", cex = 1.2,
+         main="", cex = 1.2,
          xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
          ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
 par(adj = 0)
-title(main= "B")
+title(main= "D")
 par(adj=.5)
 points(sc_si, 
        col= IBM[metadat2$Treatment],
-       pch= 22,
-       lwd=1,cex=1,
+       pch= c(16,18)[as.factor(metadat2$Measurement)],
+       lwd=1,cex=2,
        bg=IBM[metadat2$Treatment])
 ordiellipse(sc_si, metadat2$Treatment,  
             kind = "ehull", conf=0.95, label=T, 
@@ -1888,57 +1938,14 @@ legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
        cex=1,
        bty = "n")
 
-##### pcoa
 
-ps1 <-subset_samples(ps, Treatment !="Soil" & Treatment!="CTL" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-metadat2<-filter(metadat, Treatment!="Soil" & Treatment!="CTL")
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-metadat2$Fraction   <- factor(metadat2$Fraction)
+dev.off()
 
 
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(15-1), eig=TRUE)
-# Store coordinates for first two axes in new variable #
-otus.p <- otus.pcoa$points[,1:2]
-colnames(otus.p) <- c("PC1", "PC2")
-
-# Calculate % variance explained by each axis #
-otus.eig<-otus.pcoa$eig
-perc.exp<-otus.eig/(sum(otus.eig))*100
-pe1<-round(perc.exp[1],2)
-pe2<-perc.exp[2]
 
 
-#calculate total variance explained by each principal component
-perc.exp<-otus.eig/(sum(otus.eig))*100
-#scree plot 
-otus.pcoa$eig
-plot(perc.exp[1:8],
-     ylab = "percent varience explained",
-     xlab = "PC")
 
 
-ordiplot(otus.pcoa, type = "none", main = "PCoA Plot (Bray-Curtis)")
-  par(adj = 0)
-title(main= "B")
-par(adj=.5)
-points(otus.p, 
-       col= IBM[as.factor(metadat2$Treatment)],
-       pch= c(22,24)[as.factor(metadat2$Fraction)],
-       lwd=1,cex=1.5,
-       bg=IBM[as.factor(metadat2$Treatment)],)
-ordiellipse(otus.pcoa, as.factor(metadat2$Treatment),  
-            kind = "ehull", conf=0.95, label=T, 
-            draw = "polygon",
-            border = 0,
-            col= IBM,
-            alpha = 30,
-            cex=1.5)
-# base r plot
 
 #### extract PC1 ##########
 
@@ -1975,7 +1982,7 @@ pc1_variable <- pca_result$x[, 1]
 metadat2<-metadat2 %>% select(SampleID, Trt_ID, Pot_ID, Treatment, Rep, Block)
 
 # biomass
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 biomass<-read.csv("biomass_potlevel.csv", row.names = 1)
 biomass<-biomass %>% select(Trt_ID, Total.Root.g, Stem.Biomass.g ) %>%
   mutate(Root.Biomass=Total.Root.g, Shoot.Biomass= Stem.Biomass.g) %>%
@@ -1983,14 +1990,14 @@ biomass<-biomass %>% select(Trt_ID, Total.Root.g, Stem.Biomass.g ) %>%
 df<-left_join(metadat2, biomass)
 
 # fc 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
 fc <-read.csv("processed_flow_cyto.csv")
 head(fc)
 fc<-fc %>% select(Trt_ID, boncat_freq, active_cel_per_g )
 df<-left_join(df, fc)
 
 # n fix 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 nfix<-read.csv("Nfix.csv")
 head(nfix)
 nfix<-nfix %>% 
@@ -1998,7 +2005,7 @@ nfix<-nfix %>%
 df<-left_join(df, nfix)
 
 # weeds
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 weed<-read.csv("weed_seed_decay.csv", row.names = 1)
 head(weed)
 weed<-weed %>% select(Trt_ID, foxtail_prop_nongerm, pigweed_prop_nongerm)
@@ -2008,7 +2015,7 @@ df<-left_join(df, weed)
 df$z_Root.Biomass<-as.vector(scale(df$Root.Biomass))
 df$z_Shoot.Biomass<-as.vector(scale(df$Shoot.Biomass))
 df$z_foxtail_prop_nongerm<-as.vector(scale(log(df$foxtail_prop_nongerm+1)))
-df$z_pigweed_prop_nongerm<-as.vector(scale(df$pigweed_prop_nongerm))
+df$z_pigweed_prop_nongerm<-as.vector(scale(log(df$pigweed_prop_nongerm+1)))
 df$z_boncat_freq<-as.vector(scale(df$boncat_freq))
 df$z_active_cel_per_g<-as.vector(scale(log(df$active_cel_per_g+1)))
 
@@ -2044,6 +2051,33 @@ plot(df$PC1, df$z_pigweed_prop_nongerm, main= "active p=.06, Rsq=.07")
 plot(df$PC1, df$z_n_fix_per_legume, main= "active, not sig  ")
 plot(df$PC1, df$z_perc.Ndfa, main= "active, not sig")
 
+
+##### ggplot ####
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
+svg("shoot_pc1.svg", width=4.5, height=3.5)
+ggplot(df, aes(y=z_Shoot.Biomass, x=PC1))+
+  geom_point()+
+  theme_bw(base_size = 12)+
+  labs(y = "shoot biomass",
+       x = "PC1 active microbiome")
+dev.off()
+
+svg("weed_pc1.svg", width=4.5, height=3.5)
+ggplot(df, aes(y=z_pigweed_prop_nongerm, x=PC1))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  theme_bw(base_size = 12)+
+  labs(y = "non germinating pigweed",
+       x = "PC1 active microbiome")+
+  annotate("text", x = 1, y = .5, label = "p=0.05, Rsq=.11", 
+           color = "black", size = 5, fontface = "bold")
+  
+dev.off()
+
+m1<-lm(df$z_pigweed_prop_nongerm~df$PC1)
+summary(m1) # trend
+
+
 # lm 
 m1<-lm(df$PC1~df$z_Root.Biomass)
 summary(m1) # trend
@@ -2063,9 +2097,13 @@ summary(m1)
 m1<-lm(df$PC1~df$z_pigweed_prop_nongerm)
 summary(m1) # trend
 
-m1<-lm(df$PC1~df$z_n_fix_per_legume)
+m1<-lm(df$z_pigweed_prop_nongerm~df$PC1)
 summary(m1) # trend
 
-m1<-lm(df$PC1~df$z_perc.Ndfa)
-summary(m1) # trend
+
+m1<-lm(df$PC1~df$z_n_fix_per_legume)
+summary(m1)
+
+m1<-lm(df$z_perc.Ndfa)
+summary(m1) 
 
