@@ -6,7 +6,7 @@
 # Jan 7 2025
 # Last Updated: May 2025
 
-#R version 4.4.1 (2024-06-14 ucrt) -- "Race for Your Life"
+# laptop R version 4.2.3 (2023-03-15 ucrt) -- "Shortstop Beagle"
 
 ### Initial Setup ###
 
@@ -21,17 +21,17 @@ rm(list=ls())
 #basic
 library(tidyverse)
 library(vegan)
-library(readxl)
-library(lubridate)
+#library(readxl)
+#library(lubridate)
 library(phyloseq)
-library(multcompView)
+#library(multcompView)
 #library(BiodiversityR)
 #ANCOM
 #BiocManager::install("ANCOMBC")
-#library(ANCOMBC)
+library(ANCOMBC)
 #BiocManager::install("microbiome")
 #install.packages("microbiome")
-#library(microbiome)
+library(microbiome)
 
 # set colors
 
@@ -1107,7 +1107,7 @@ ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps<-prune_taxa(taxa_sums(ps) > 1, ps)
 #remove asvs with a mean of less than 5
 mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
-keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
+keep<-row.names(t(otu_table(ps))[ mean.reads > 50, ])
 ps<-prune_taxa(keep, ps)
 # at least 50 reads in active 
 active<-subset_samples(ps, Fraction=="Active")
@@ -1115,6 +1115,8 @@ active<-prune_taxa(taxa_sums(active) > 50, active)
 keep<-row.names(t(otu_table(active)))
 ps<-prune_taxa(keep, ps)
 ps 
+
+
 
 
 #Legume
@@ -1297,10 +1299,10 @@ write.table(tab, "ancom_table.txt")
 
 
 ######ANCOM add abundance info ####
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
 tab<-read.table("ancom_table.txt", header = TRUE)
 head(tab)
-
+library(tidyverse)
 
 # filter+  get abudance info
 tab1<- tab%>% filter(Treatment=="G")
@@ -1309,10 +1311,16 @@ ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ##add add abundance and taxon infoget
 get.taxa<- function(tab1, ps1){
 asvkp<-unique(tab1$asv)
-df<-as.data.frame(t(otu_table(ps1)))
+
+# make df relative abundance
+df<-as.data.frame((otu_table(ps1)))
+df<-df/rowSums(df)
+df<- as.data.frame(t(df))
+
 df$asv<-row.names(df)
 df <- df[df$asv %in% asvkp, ]
 tax<-as.data.frame((tax_table(ps1)))
+
 df<-left_join(df, tax)
 df<-left_join(df, tab1)
 return(df)
@@ -1321,6 +1329,14 @@ df<-get.taxa(tab1,ps1)
 df
 ### summarise the abundance in active and inactive
 get.abund<-function(df, trt){
+  
+  
+df$rhizo.inactive.mean <-   rowMeans(df %>% dplyr::select(starts_with("i_"))) %>% glimpse()
+t<-df %>% select(.,starts_with("i_"))
+sd_inactive<- apply(t, 1, sd, na.rm=TRUE)
+sd_inactive
+df$sd_inactive <- sd_inactive
+# active  
 df$rhizo.inactive.mean <-   rowMeans(df %>% dplyr::select(.,starts_with("i_"))) %>% glimpse()
 t<-df %>% select(.,starts_with("i_"))
 sd_inactive<- apply(t, 1, sd, na.rm=TRUE)
@@ -1405,7 +1421,7 @@ LGB
 
 ######ANCOM load data ####
 tab<-rbind(L, G, B, GB, LB, LG, LGB)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
 tab <-  read.csv("ancom_table_abund.csv")
 tab$Treatment<-factor(tab$Treatment, levels=c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
@@ -1424,6 +1440,7 @@ tablong<-tablong %>% group_by(Phyla,Treatment, Species, fraction)%>%
     mean= sum(mean)
   )
 
+tablong$Phyla<-gsub("p__", "", tablong$Phyla)
 
 
 mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
@@ -1431,22 +1448,24 @@ mycols18<- c( "#1F78B4","#A6CEE3","#E31A1C",  "#FB9A99", "#33A02C","#B2DF8A",  "
               "grey", "#FFFF99",  "#eb05db","#edceeb","#1a635a","#9ad6ce" , "#969696", "#232423")
 #plot
 
+
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
+svg("DA.svg", width = 9, height = 6)
 ggplot(tablong)+
   geom_bar(aes(x=Species, y=mean, fill= Phyla), 
            stat="identity", position="dodge")+
   #geom_errorbar(aes(x=label, ymin=-se_viable+LFC_FractionViable_Cell,
    #                 ymax=LFC_FractionViable_Cell+se_viable))+ 
   scale_fill_manual(values= mycols18)+
-  theme_bw(base_size = 14) +
+  theme_bw(base_size = 12) +
   facet_grid(~Treatment, scales="free", space="free")+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0.5))+
   #coord_flip()+
    ylim(c(-500,900)) +
   xlab("Differentially Abundant Asvs")+
-  ylab("abundance")
-
-####abundant asvs ######
+  ylab("number of reads")
+dev.off()
 
 
 
@@ -1850,37 +1869,39 @@ perc.exp<-otus.eig/(sum(otus.eig))*100
 #scree plot 
 plot(otus.pcoa$eig)
 
-par(adj=.5)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="PCOA",
-         xlab=paste("PCoA1 (",pe1,"% variance explained)"),
-         ylab=paste("PCoA2 (",pe2,"% variance explained)"))
 
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
+svg("pcoa.svg", height = 3.7, width = 3.8)
+par(adj=.5)
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="",
+         xlab=paste("PCoA1 (",pe1,"% var. explained)"),
+         ylab=paste("PCoA2 (",pe2,"% var. explained)"))
   par(adj = 0)
-title(main= "")
+title(main= "C")
 par(adj=.5)
 points(otus.p, 
        col= IBM[as.factor(metadat2$Treatment)],
-       pch= c(16,18)[as.factor(metadat2$Measurement)],
+       pch= c(16,8)[as.factor(metadat2$Measurement)],
        
-       lwd=1,cex=1.5,
+       lwd=2,cex=1.2,
        bg=IBM[as.factor(metadat2$Treatment)],)
-ordiellipse(otus.pcoa, as.factor(metadat2$Measurement),  
-            kind = "ehull", conf=0.95, label=T, 
-            draw = "polygon",
-            border = 0,
-            col= IBM,
-            alpha = 30,
-            cex=1.5)
-legend("topleft", legend=c( "GB", "LB", "LG", "LGB"),
+# ordiellipse(otus.pcoa, as.factor(metadat2$Measurement),  
+#             kind = "ehull", conf=0.95, label=T, 
+#             draw = "polygon",
+#             border = 0,
+#             col= IBM,
+#             alpha = 50,
+#             cex=1.5)
+legend("topright", legend=c( "GB", "LB", "LG", "LGB"),
        fill= IBM,
        cex=1,
        bty = "n")
-legend("bottomleft", legend=c("measured", "predicted"  ),
-       pch=c(16,18 ),
+legend("bottomright", legend=c("measured", "predicted"  ),
+       pch=c(16,8 ),
        cex=1,
-       title = "",     bty = "n")
+       title = "",     bty = "o")
 
-
+dev.off()
 # permanova
 adonis2(otus.bray ~ Treatment, data = metadat2)
 adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
