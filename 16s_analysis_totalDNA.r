@@ -169,7 +169,7 @@ rich$evenness = rich$Shannon/log(rich$Observed)
 ##plots##
 
 # nitrogen effect
-p5<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=as.factor(N), y=Shannon))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   geom_jitter(size=1.5)+
@@ -179,7 +179,7 @@ p5<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
        y= "Total DNA Shannon diversity")+
   annotate("text", x=1.5, y=8, label="*")
 
-p5<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+p2<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=as.factor(N), y=Observed))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   geom_jitter(size=1.5)+
@@ -196,22 +196,26 @@ grid.arrange(p1, p2, ncol=2)
 # Treatment effect?
 # shannon diversity letters
 rich<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil")
-  
-lab<-as.character(rich$Treatment)
-lab<- gsub("LGB", "X", lab)
-lab <- gsub("LG", "B", lab)
-lab <- gsub("LB", "B", lab)
-lab <- gsub("GB", "B", lab)
-lab
-lab <- gsub("L", "Y", lab) 
-lab <- gsub("G", "B", lab) 
-lab <- gsub("Y", "A", lab) 
-lab <- gsub("X", "AB", lab) 
+N1<-rich %>% filter(N==1)
+N0 <- rich %>% filter(N==0)
+
+
+# nitrogen +  
+lab<-as.character(N1$Treatment)
+lab<- gsub("LGB", "A", lab)
+lab <- gsub("LG", "A", lab)
+lab <- gsub("LB", "A", lab)
+lab <- gsub("GB", "A", lab)
+lab <- gsub("L", "A", lab) 
+lab <- gsub("G", "A", lab) 
+lab <- gsub("B", "A", lab) 
 lab
 
 
-rich$Nitrogen_label<-as.factor(rich$Nitrogen_label)
-p1<-rich%>%  
+
+
+N1$Nitrogen_label<-as.factor(N1$Nitrogen_label)
+p1<-N1%>%  
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_color_manual(values=mycols) +
@@ -219,14 +223,67 @@ p1<-rich%>%
   geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0),legend.position="none")+
-  geom_text(y=7.9, label = lab, size=5)+
+        plot.title = element_text(hjust = 0),legend.position="none",
+        plot.subtitle = element_text(hjust = 0.5))+
+  geom_text(y=7.89, label = lab, size=5)+
   labs(title = "E",
+       subtitle = "Nitrogen +",
        x="",
        y= "Total DNA Shannon Diversity")+
-  scale_shape_manual(values = c(17, 16)) #
+  scale_shape_manual(values = c(17, 16))+
+  ylim(6.6, 8)
+
 
 p1
+
+# nitrogen minus shannon 
+#  L  G    B   GB   LB   LG  LGB    
+# "c" "ab"  "a" "ab" "ab" "ab" "bc" 
+lab<-as.character(N0$Treatment)
+lab<- gsub("LGB", "XC", lab)
+lab <- gsub("LG", "AX", lab)
+lab <- gsub("LB", "AX", lab)
+lab <- gsub("GB", "AX", lab)
+lab
+lab <- gsub("L", "C", lab) 
+lab <- gsub("G", "AX", lab) 
+lab <- gsub("X", "B", lab) 
+lab
+
+
+N0$Nitrogen_label<-as.factor(N0$Nitrogen_label)
+p2<-N0%>%  
+  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
+  theme_classic(base_size = 16)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none",
+        plot.subtitle = element_text(hjust = 0.5))+
+  geom_text(y=7.89, label = lab, size=5)+
+  labs(title = "F",
+       subtitle = "Nitrogen -",
+       x="",
+       y= "Total DNA Shannon Diversity")+
+  scale_shape_manual(values = c(17, 16))+
+  ylim(6.6, 8)
+
+p2
+grid.arrange(p1, p2, ncol=2)
+
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+svg(file="diversity.svg",width = 8, height=4)
+require(gridExtra)
+#windows(10,4)
+grid.arrange(p1, p2, ncol=2)
+dev.off()
+
+
+
+
 
 #label for observed
 
@@ -257,7 +314,9 @@ p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   labs(title = "F",
        x="",
        y= "Total DNA ASV richness")+
-  scale_shape_manual(values = c(17, 16)) #
+  scale_shape_manual(values = c(17, 16)) +
+  facet_grid(~N)
+
 
 p2
 
@@ -270,7 +329,9 @@ p3<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 16)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  geom_text(y= 5300, label = lab, size=5)
+  #geom_text(y= 5300, label = lab, size=5)+
+  facet_grid(~N)
+
 
 p3
 
@@ -298,7 +359,9 @@ summary(m1)
 
 # Analysis of variance 
 # block droped because not sig
-anova1<- aov(Shannon ~ Treatment, data = rich)
+N1<-rich %>% filter(N==1)
+N0 <- rich %>% filter(N==0)
+anova1<- aov(Shannon ~ Treatment, data = N1)
 summary(anova1)
 library(multcompView)
 tukey.a1 <- TukeyHSD(anova1)
@@ -310,8 +373,18 @@ p_values <- tukey.a1$Treatment[, 4]
 cld <- multcompLetters(p_values)
 print(cld)
 
-
-
+## 
+anova1<- aov(Shannon ~ Treatment, data = N0)
+summary(anova1)
+library(multcompView)
+tukey.a1 <- TukeyHSD(anova1)
+print(tukey.a1) 
+#plot(anova1) #homoscedasticity looks fine
+#Extract the p-values for the factor of interest
+p_values <- tukey.a1$Treatment[, 4]
+# Generate the grouping letters using multcompLetters()
+cld <- multcompLetters(p_values)
+print(cld)
 
 ##observed ANOVA
 
@@ -424,7 +497,7 @@ perc
 ### 4. plot 
 #
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal") 
-svg("cap.total1.svg", width =8 , height = 4)
+#svg("cap.total1.svg", width =8 , height = 4)
 #windows(10,6)
 par(mfrow=c(1,2))
 par(cex.lab = 1.2) # make all fonts in graphs little bigger
@@ -506,7 +579,7 @@ dist_matrix<-vegdist(otu_table(ps1), method = "bray")
 
 # 2. Run the CAP (db-RDA) analysis
 # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(dist_matrix ~ Treatment*Block,
+cap_result <- capscale(dist_matrix ~ Treatment,
                        data = metadat2,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
