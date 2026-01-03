@@ -347,14 +347,14 @@ dev.off()
 rich <- rich %>% filter(Fraction=="Total") %>% filter(Treatment!="Soil")
 rich$Treatment   <- factor(rich$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 rich$N <- factor(rich$N, levels= c("0", "1"))
-
+#rich$Treatment <- as.character(rich$Treatment)
 
 # Shannon
 m1<-lm(Shannon ~ N,  data = rich)
 summary(m1)
 
-m1<-lm(Shannon ~ Treatment*N,  data = rich)
-summary(m1)
+anova1<- aov(Shannon ~ Treatment*N, data = rich)
+summary(anova1)
 # no interaction with nitrogen, so I'm just gonna bin +N =N together
 
 # Analysis of variance 
@@ -386,51 +386,58 @@ p_values <- tukey.a1$Treatment[, 4]
 cld <- multcompLetters(p_values)
 print(cld)
 
-##observed ANOVA
-
-# #chao1 Analysis of variance 
-anova1<- aov(Observed ~ Treatment, data = rich)
+##observed
+#anova
+anova1<- aov(Observed ~ Treatment*N, data = rich)
 summary(anova1)
-# 3. Run the Tukey HSD test on the ANOVA model
-tukey_output <- TukeyHSD(anova1)
 
-# The 'tukey_output' shows the pairwise comparisons and p-values
-print(tukey_output)
-
-# 4. Extract the p-values for the factor of interest
-p_values <- tukey_output$Treatment[, 4]
-
-# 5. Generate the grouping letters using multcompLetters()
-# The 'multcompLetters()' function takes a named vector of p-values
+# break up N+ and N-
+N1<-rich %>% filter(N==1)
+N0 <- rich %>% filter(N==0)
+anova1<- aov(Observed ~ Treatment, data = N1)
+summary(anova1)
+library(multcompView)
+tukey.a1 <- TukeyHSD(anova1)
+print(tukey.a1) 
+#plot(anova1) #homoscedasticity looks fine
+#Extract the p-values for the factor of interest
+p_values <- tukey.a1$Treatment[, 4]
+# Generate the grouping letters using multcompLetters()
 cld <- multcompLetters(p_values)
-
-# 6. Print the results
 print(cld)
 
-
-
-##chao1 Analysis of variance 
-anova1<- aov(Chao1 ~ Treatment, data = rich)
+## 
+anova1<- aov(Observed ~ Treatment, data = N0)
 summary(anova1)
-# Run the Tukey HSD test on the ANOVA model
-tukey_output <- TukeyHSD(anova1)
-
-# The 'tukey_output' shows the pairwise comparisons and p-values
-print(tukey_output)
-
-# Extract the p-values for the factor of interest
-p_values <- tukey_output$Treatment[, 4]
-
-# The 'multcompLetters()' function takes a named vector of p-values
+library(multcompView)
+tukey.a1 <- TukeyHSD(anova1)
+print(tukey.a1) 
+#plot(anova1) #homoscedasticity looks fine
+#Extract the p-values for the factor of interest
+p_values <- tukey.a1$Treatment[, 4]
+# Generate the grouping letters using multcompLetters()
 cld <- multcompLetters(p_values)
-
-# Print the results
 print(cld)
 
 
 # Evenness
-anova1<- aov(Chao1 ~ evenness, data = rich)
+anova1<- aov(evenness ~ Treatment*N, data = rich)
 summary(anova1)
+# no interaction with nitrogen, so I'm just gonna bin +N =N together
+
+#tukey
+anova1<- aov(evenness ~ Treatment, data = rich)
+summary(anova1)
+library(multcompView)
+tukey.a1 <- TukeyHSD(anova1)
+print(tukey.a1) 
+#plot(anova1) #homoscedasticity looks fine
+#Extract the p-values for the factor of interest
+p_values <- tukey.a1$Treatment[, 4]
+# Generate the grouping letters using multcompLetters()
+cld <- multcompLetters(p_values)
+print(cld)
+
 
 
 ######## 3. Filtering rare taxa ##################
@@ -584,34 +591,35 @@ cap_result <- capscale(dist_matrix ~ Treatment,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
 # # 3. Permutation test for significance of constraints
-# anova_cap <- anova(cap_result, permutations = 999, by = "term")
-# anova_cap
+anova_cap <- anova(cap_result, permutations = 999, by = "term")
+anova_cap
+
 #  Perform all Pairwise Comparisons
-# # The function will iterate through all pairs of the 'Habitat' factor
-# pairwise_results <- multiconstrained(
-#   formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
-#   data = metadat2,
-#   constrained = capscale,       # Specify the constrained ordination method
-#   permutations = 999            # Number of permutations for the test
-# )
-# View the raw pairwise results
-# print(pairwise_results)
-# Extract the raw p-values from the results
-# raw_pvalues <- pairwise_results[, "Pr(>F)"]
-# Apply the Holm (Holm-Bonferroni) Adjustment
-# adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
-# adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
-# #?p.adjust
+# The function will iterate through all pairs of the 'Habitat' factor
+pairwise_results <- multiconstrained(
+  formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+  data = metadat2,
+  constrained = capscale,       # Specify the constrained ordination method
+  permutations = 999            # Number of permutations for the test
+)
+## View the raw pairwise results
+print(pairwise_results)
+#Extract the raw p-values from the results
+raw_pvalues <- pairwise_results[, "Pr(>F)"]
+Apply the Holm (Holm-Bonferroni) Adjustment
+adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
+adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
+#p.adjust
 # Combine the results for final interpretation
-# final_table <- data.frame(
-#   Pair = rownames(pairwise_results),
-#   Pseudo_F = pairwise_results[, "F"],
-#   Raw_P = raw_pvalues,
-#   fdr_adj_p = adjusted_pvalues1,
-#   bonferroni_Adj_P = adjusted_pvalues
-# )
-#  Print the final results table
-# #print(final_table)
+final_table <- data.frame(
+  Pair = rownames(pairwise_results),
+  Pseudo_F = pairwise_results[, "F"],
+  Raw_P = raw_pvalues,
+  fdr_adj_p = adjusted_pvalues1,
+  bonferroni_Adj_P = adjusted_pvalues
+)
+ #Print the final results table
+print(final_table)
 
 
 
@@ -673,39 +681,39 @@ dist_matrix<-vegdist(otu_table(ps1), method = "bray")
 
 # 2. Run the CAP (db-RDA) analysis
 # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(dist_matrix ~ Treatment*Block,
+cap_result <- capscale(dist_matrix ~ Treatment,
                        data = metadat2,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
 # 3. Permutation test for significance of constraints
-#anova_cap <- anova(cap_result, permutations = 999, by = "term")
-#anova_cap
+anova_cap <- anova(cap_result, permutations = 999, by = "term")
+anova_cap
 # Perform all Pairwise Comparisons
-# The function will iterate through all pairs of the 'Habitat' factor
-# 
-# pairwise_results <- multiconstrained(
-#   formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
-#   data = metadat2,
-#   constrained = capscale,       # Specify the constrained ordination method
-#   permutations = 999            # Number of permutations for the test
-# )
-# # View the raw pairwise results
-# print(pairwise_results)
-# # Extract the raw p-values from the results
-# raw_pvalues <- pairwise_results[, "Pr(>F)"]
-# # Apply the Holm (Holm-Bonferroni) Adjustment
-# adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
-# adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
-# #Combine the results for final interpretation
-# final_table <- data.frame(
-#   Pair = rownames(pairwise_results),
-#   Pseudo_F = pairwise_results[, "F"],
-#   Raw_P = raw_pvalues,
-#   fdr_adj_p = adjusted_pvalues1,
-#   bonferroni_Adj_P = adjusted_pvalues
-# )
-# Print the final results table
-#print(final_table)
+#The function will iterate through all pairs of the 'Habitat' factor
+
+pairwise_results <- multiconstrained(
+  formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+  data = metadat2,
+  constrained = capscale,       # Specify the constrained ordination method
+  permutations = 999            # Number of permutations for the test
+)
+# View the raw pairwise results
+print(pairwise_results)
+# Extract the raw p-values from the results
+raw_pvalues <- pairwise_results[, "Pr(>F)"]
+# Apply the Holm (Holm-Bonferroni) Adjustment
+adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
+adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
+#Combine the results for final interpretation
+final_table <- data.frame(
+  Pair = rownames(pairwise_results),
+  Pseudo_F = pairwise_results[, "F"],
+  Raw_P = raw_pvalues,
+  fdr_adj_p = adjusted_pvalues1,
+  bonferroni_Adj_P = adjusted_pvalues
+)
+#Print the final results table
+print(final_table)
 
 ### 4. grab info for the plot
 smry <- summary(cap_result)
