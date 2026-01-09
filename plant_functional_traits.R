@@ -31,7 +31,7 @@ legume_cols <- c( #IBM colors
 
 
 
-#### import biomass data and process #####
+#### import biomass data #####
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 df <- read.csv("biomass_potlevel.csv") # biomass data
 
@@ -106,31 +106,32 @@ head(df.leg)
   label <- gsub("LB", "B" ,label )
   label<- gsub("L", "A" ,label )
 
-  
+
 p1<- ggplot(df.leg, aes(x=Treatment, y=perc.Ndfa, fill=Treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
-   geom_text(y=92, label = label, size=4)+
+  # geom_text(y=92, label = label, size=4)+
    labs(title = "E",
        x="",
        y= "Nitrogen from Fixation (%)") +
-  scale_shape_manual(values = c(17, 16)) #
+  scale_shape_manual(values = c(17, 16)) +
+   facet_grid(~Nitrogen_label)#
 
   
 p1
 
 
 # Analysis of variance 
-one.way.Nadd <- aov(perc.Ndfa ~ Treatment, data = df.leg)
+df<-df.leg %>% filter(Nitrogen==0)
+one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
 summary(one.way.Nadd) # difference between treatments
 tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
 print(tukey.result.Nadd) # All difference except LG-LB
 #plot(one.way.Nadd) #homoscedasticity looks fine
- 
- 
+
  # by treatment 
  label <- df.leg$Treatment
  label
@@ -146,26 +147,34 @@ p2<- ggplot(df.leg, aes(x=Treatment, y=n_fix_per_legume, fill=Treatment)) +
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
-   geom_text(y=.07, label = label, size=4)+
+  # geom_text(y=.07, label = label, size=4)+
    labs(title = "F",
        x="",
        y= "N fixed (mg per legume)")  +
-  scale_shape_manual(values = c(17, 16)) #
+  scale_shape_manual(values = c(17, 16)) +
+  facet_grid(~Nitrogen_label)#
 
 p2
  
 
  # Analysis of variance 
- one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df.leg)
+df<-df.leg %>% filter(Nitrogen==1)
+ one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
+ summary(one.way.Nadd) # difference between treatments
+ tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
+ print(tukey.result.Nadd) # All difference except LG-LB
+ #plot(one.way.Nadd) #homoscedasticity looks fine\
+ 
+ df<-df.leg %>% filter(Nitrogen==0)
+ one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
  summary(one.way.Nadd) # difference between treatments
  tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
  print(tukey.result.Nadd) # All difference except LG-LB
  #plot(one.way.Nadd) #homoscedasticity looks fine
  
- 
 
  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
- svg("nfix.svg", height = 2.5, width = 5)
+ svg("nfix.svg", height = 3, width = 8)
   grid.arrange(p1, p2, ncol=2)
  dev.off()
  
@@ -412,7 +421,7 @@ ggplot(df, aes(fill=Species, y=percent, x=Trt_ID)) +
 #add unknown bulk to df
   
 bulk<-df %>%
-  select(Treatment, N, Rep, Trt_ID,  Bulk.Root.g) %>%
+  dplyr::select(Treatment, N, Rep, Trt_ID,  Bulk.Root.g) %>%
   group_by(Trt_ID, Treatment, N, Rep) %>%
   summarise(
     Root.Biomass.g= sum(Bulk.Root.g)) %>%
@@ -424,13 +433,13 @@ bulk<-df %>%
   )
 
 
-df1 <- df %>% select( Treatment, N, Rep, Trt_ID, Species,  Brassicae, Legume, Grass, Root.Biomass.g )
+df1 <- df %>% dplyr:: select( Treatment, N, Rep, Trt_ID, Species,  Brassicae, Legume, Grass, Root.Biomass.g )
 df1<-full_join(df1,bulk)
 
 #add total+bulk to df 
 
 total<-df %>%
-  select(Trt_ID, Total.Root.g) %>%
+  dplyr::select(Trt_ID, Total.Root.g) %>%
   group_by(Trt_ID) %>%
   summarise(
     Total.Root.g= sum(Total.Root.g))
@@ -480,14 +489,18 @@ df$Species<- factor(df$Species, levels= c("legume", "grass", "brassica"))
 # make plot percent
 mono_cols <- 
   c( #IBM colors
-    "navy", # dark royal blue L
-    "#98b2fa", # french blue G
+    "#0a3170", # dark royal blue L
+    "#cdddf7", # french blue G
     "#785EF0" # light purple B
-  )
+  )]
+
+windows(6,4)
 ggplot(df, aes(fill=Species, y=percent, x=Trt_ID)) + 
+  theme_bw(base_size = 12)+
   geom_bar(position="stack", stat="identity")+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+
-  scale_fill_manual(values=mono_cols)
+  scale_fill_manual(values=mono_cols)+
+  labs(x= "Treatment ID")
 
 write.csv(df, "percent.biomass.csv")
 

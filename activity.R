@@ -194,9 +194,9 @@ print(cld_result)
 #   ylab("percent active")
 # 
 # p1
-# m1<-glm(data= prop, y~Legume, family = binomial)
-# m1
-# summary(m1)
+ m1<-glm(data= prop, y~Legume, family = binomial)
+ m1
+ summary(m1)
 
 
 ###################################number of cells ########################
@@ -497,7 +497,7 @@ summary(m1)
 
 #load libraries
 
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 biomass<-read.csv("percent.biomass.csv")
 # only n+ 
 biomass<-biomass %>% filter(N==1)
@@ -786,7 +786,7 @@ labs(title = "B",
 
 p2
 require(gridExtra)
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
 svg("activity.predict.svg", width=6, height=3)
 grid.arrange(p1, p2, ncol=2)
 dev.off()

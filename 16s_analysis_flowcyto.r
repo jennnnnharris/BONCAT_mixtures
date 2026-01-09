@@ -16,16 +16,16 @@
 rm(list=ls())
 
 
+
 ## Load required libraries ##
 
-#basic
 library(tidyverse)
 library(vegan)
 #library(readxl)
 #library(lubridate)
 library(phyloseq)
-#library(multcompView)
-#library(BiodiversityR)
+library(multcompView)
+library(BiodiversityR)
 #ANCOM
 #BiocManager::install("ANCOMBC")
 library(ANCOMBC)
@@ -106,6 +106,21 @@ ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
 # 110K taxa 
+# remove rare taxa ############
+ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+ps
+
+
+# remove true singletons 
+ps<-prune_taxa(taxa_sums(ps) > 1, ps)
+ps
+# 
+
+#remove asvs with a mean of less than 5
+mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
+keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
+ps<-prune_taxa(keep, ps)
+ps
 
 ####DIVERSITY ####
 
@@ -131,17 +146,16 @@ rich$evenness = rich$Shannon/log(rich$Observed)
 
 
 #plots
-# Does diversity increase with number of species?
 
 p1<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_fill_manual(values = IBM)+
   geom_jitter(size=1.5)+
-  theme_classic(base_size = 14)+
+  theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  labs(title = "E",
+  labs(title = "A",
                   x="",
                   y= "Active Shannon Diversity")
 p1
@@ -151,80 +165,127 @@ p2<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_fill_manual(values=IBM) +
   geom_jitter(size=1.5)+
-  theme_classic(base_size = 14)+
+  theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  labs(title = "F",
+  labs(title = "B",
        x="",
        y= "Active ASV richness")
 p2
 
 p3<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
-  ggplot(aes(x=Treatment, y=Chao1,  fill=Treatment))+
+  ggplot(aes(x=Treatment, y=evenness,  fill=Treatment))+
   geom_boxplot(alpha=.6, outlier.shape = NA) +
   scale_color_manual(values=IBM) +
   scale_fill_manual(values = IBM)+
   geom_jitter(size=1.5)+
-  theme_classic(base_size = 16)+
+  theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("active Chao1 species richness")+
-  xlab("")
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  labs(title = "C",
+       x="",
+       y= "Active Pilou's Evenness")
   
 p3
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
-svg(file="diversity.svg",width = 8, height=4)
-
 require(gridExtra)
-#windows(6,8)
-grid.arrange(p1, p2, ncol=2)
+windows(8,3.5)
+grid.arrange(p1, p2, p3, ncol=3)
 dev.off()
 
+# inactive
 
-p3<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
+p1<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
+  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_fill_manual(values = IBM)+
+  geom_jitter(size=1.5)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  labs(title = "B",
+       x="",
+       y= "Inactive Shannon Diversity")
+p1
+
+p2<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
+  ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_fill_manual(values=IBM) +
+  geom_jitter(size=1.5)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  labs(title = "C",
+       x="",
+       y= "Inactive ASV richness")
+p2
+
+p3<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=evenness,  fill=Treatment))+
   geom_boxplot(alpha=.6, outlier.shape = NA) +
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
+  scale_color_manual(values=IBM) +
+  scale_fill_manual(values = IBM)+
   geom_jitter(size=1.5)+
-  theme_classic(base_size = 16)+
+  theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5),legend.position="none")+
-  ylab("active Chao1 species richness")+
-  xlab("")
-#scale_shape_discrete() 
+        plot.title = element_text(hjust = 0),legend.position="none")+
+  labs(title = "D",
+       x="",
+       y= "Inactive Pilou's Evenness")
+
 p3
+
+require(gridExtra)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement")
+#svg("inactive_diversity.svg", width=3, height=7)
+grid.arrange(p1, p2, p3, ncol=1)
+dev.off()
 
 
 ##DIVERSITY STATS######
 
 # active
 # remove soil
-rich <- rich %>% filter(Fraction=="Active") %>% filter(Treatment!="Soil")
-rich$Treatment   <- factor(rich$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+df <- rich %>% filter(Fraction=="Active") %>% filter(Treatment!="Soil")
+df$Treatment   <- factor(df$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 # Shannon ANOVA 
-anova1<- aov(Shannon~ Treatment, data = rich)
+anova1<- aov(Shannon~ Treatment, data = df)
 summary(anova1)
 
 #observed ANOVA
-m1<-lm(Observed ~ Treatment,  data = rich)
+m1<-lm(Observed ~ Treatment,  data = df)
 summary(m1)
 
 #chao1
-m1<-aov(Chao1 ~ Treatment,  data = rich)
+m1<-aov(Chao1 ~ Treatment,  data = df)
 summary(m1)
 
+# Evenness
+anova1<- aov(evenness ~ Treatment, data = df)
+summary(anova1)
 
-# n species
-m1<-lm(Shannon ~ rich$n_species,  data = rich)
+# inactive
+# remove soil
+df <- rich %>% filter(Fraction=="Inactive") %>% filter(Treatment!="Soil")
+df$Treatment   <- factor(df$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+# Shannon ANOVA 
+anova1<- aov(Shannon~ Treatment, data = df)
+summary(anova1)
+
+#observed ANOVA
+m1<-lm(Observed ~ Treatment,  data = df)
 summary(m1)
-m1<-lm(Observed ~ rich$n_species,  data = rich)
+
+#chao1
+m1<-aov(Chao1 ~ Treatment,  data = df)
 summary(m1)
-m1<-lm(Chao1 ~ rich$n_species,  data = rich)
-summary(m1)
+
+# Evenness
+anova1<- aov(evenness ~ Treatment, data = df)
+summary(anova1)
 
 
 
@@ -247,6 +308,418 @@ summary(m1)
   ps
   
     
+
+##### CAP ############  
+# inactive verse active 
+  # subset data  
+  ps1 <-subset_samples(ps, Treatment !="Soil" & Treatment!="CTL" )
+  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  ps1
+  metadat2<-filter(metadat, Treatment!="Soil" & Treatment!="CTL")
+  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+  metadat2$Fraction   <- factor(metadat2$Fraction)
+  
+  
+  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
+  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+  
+  # 2. Run the CAP (db-RDA) analysis
+  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+  cap_result <- capscale(dist_matrix ~ Treatment*Fraction*Block*Rep,
+                         data = metadat2,
+                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+  
+  # 3. Permutation test for significance of constraints
+  anova_cap <- anova(cap_result, permutations = 999, by = "term")
+  anova_cap
+
+  
+  ### 3. grab info for the plot
+  smry <- summary(cap_result)
+  smry
+  sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+  sc_si
+  
+  # Extract the model's adjusted R2
+  RsquareAdj(cap_result)$adj.r.squared
+  
+  # percent varience of total varience on RDA 1 and RDA 2
+  perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+  perc
+  
+  ### 4. plot 
+  
+  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")    
+ # svg("cap.svg", width = 8 , height = 4.5)
+
+  par(mfrow = c(1, 2)) # 1 row, 2 column
+ # windows(4,4)
+  par(cex.lab = 1.1) # make all fonts in graphs little bigger
+  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+           main="", cex = 1.2,
+           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+  par(adj = 0)
+  title(main= "C")
+  par(adj=.5)
+  points(sc_si, 
+         col= "black",
+         pch= c(21,22)[as.factor(metadat2$Fraction)],
+         lwd=1,cex=1,
+         bg=bw[metadat2$Fraction])
+  ordiellipse(sc_si, metadat2$Fraction,  
+              kind = "ehull", conf=0.95, label=T, 
+              draw = "polygon",
+              border = 0,
+              col= bw,
+              alpha = 30,
+              cex=1.2)
+  
+  legend("bottomleft", legend=c("Active", "Inactive"  ),
+         pch=c(1,15 ),
+         cex=1,
+         title = "",     bty = "n")
+  
+  #dev.off()
+  
+  
+  
+##### CAP active ##################
+#  Constrained ordination
+  ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  ps1
+  # 1845 taxa
+  # subset metadata
+  metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+  #factor
+  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+  metadat2$Fraction   <- factor(metadat2$Fraction)
+  
+  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
+  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+  
+  commdata = as.data.frame(otu_table(ps1))
+  # 2. Run the CAP (db-RDA) analysis
+  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+  cap_result <- capscale(dist_matrix ~ Treatment,
+                         data = metadat2,
+                         comm = commdata,
+                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+  
+  anova.cca(cap_result, by="terms")
+  
+  # additioanl CCA
+  #cap_result <- capscale(dist_matrix ~ Brassicae*Legume*Grass,
+  #                        data = metadat2,
+  #                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+  # 
+  # anova.cca(cap_result, by="terms")
+  # 
+  # 6. Perform all Pairwise Comparisons
+ #  # The function will iterate through all pairs of the 'Habitat' factor
+ # library(BiodiversityR)
+ #  pairwise_results <- multiconstrained(
+ #    formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+ #    data = metadat2,
+ #    constrained = capscale,       # Specify the constrained ordination method
+ #    permutations = 999            # Number of permutations for the test
+ #  )
+ # 
+ #  # 7. View the raw pairwise results
+ #  print(pairwise_results)
+ # 
+ #  # 8. Extract the raw p-values from the results
+ #  raw_pvalues <- pairwise_results[, "Pr(>F)"]
+ # 
+ #  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
+ #  adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
+ #  adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
+ # 
+ #  #?p.adjust
+ #  # 10. Combine the results for final interpretation
+ #  final_table <- data.frame(
+ #    Pair = rownames(pairwise_results),
+ #    Pseudo_F = pairwise_results[, "F"],
+ #    Raw_P = raw_pvalues,
+ #    fdr_adj_p = adjusted_pvalues1,
+ #    bonferroni_Adj_P = adjusted_pvalues
+ #  )
+ # 
+ #  # 11. Print the final results table
+ #  print(final_table)
+ # 
+  # 1. Create an empty plot frame (type = "n")
+  plot(cap_result, type = "n", scaling = 2)
+  points(cap_result, display = "sites", pch = 16)
+  
+  ### 3. grab info for the plot
+  smry <- summary(cap_result)
+  smry
+  sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=2)
+  sc_si
+  
+  # Extract the model's adjusted R2
+  RsquareAdj(cap_result)$adj.r.squared
+  
+  # percent varience of total varience on RDA 1 and RDA 2
+  perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+  perc
+  
+  ### 4. plot 
+  
+  #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
+  #svg("cap.active.svg", width = 6 , height = 6)
+  #windows(6,6)
+  par(cex.lab = 1.1) # make all fonts in graphs little bigger
+  ordiplot(cap_result, choices=c(1,2), scaling =2, type="none",
+           main="", cex = 1.2,
+           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+  par(adj = 0)
+  title(main= "D")
+  par(adj=.5)
+  points(sc_si, 
+         col= IBM[metadat2$Treatment],
+         pch= 21,
+         lwd=1,cex=1,
+         bg=IBM[metadat2$Treatment])
+  ordiellipse(sc_si, metadat2$Treatment,  
+              kind = "ehull", conf=0.95, label=T, 
+              draw = "polygon",
+              border = 0,
+              col= IBM,
+              alpha = 40,
+              cex=1)
+  legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+         fill= IBM,
+         cex=1,
+         bty = "n")
+  
+  
+ 
+  # dev.off()
+# look for key taxa
+ 
+  #plot(cap_result, display = c("sites", "species"))
+  plot(cap_result, display = "species")
+  
+  
+  species_scores <- as.data.frame(scores(
+    x = cap_result,
+    display = "species" # or "sp"
+  ))
+  
+  head(species_scores)
+  species_scores$asv<-row.names(species_scores)
+
+  # Calculate vector length (distance from origin)
+  species_scores <- species_scores %>%
+    mutate(dist = sqrt(CAP1^2 + CAP2^2)) %>%
+    arrange(desc(dist))
+  
+  # Select the top 10 species
+  top_spp <- head(species_scores, 20)
+  top_spp
+  
+  ggplot() +
+    # Draw a circle/origin cross for reference
+    geom_vline(xintercept = 0, linetype = "dotted", alpha = 0.5) +
+    geom_hline(yintercept = 0, linetype = "dotted", alpha = 0.5) +
+    
+    # Add the vectors (arrows)
+    geom_segment(data = top_spp, 
+                 aes(x = 0, y = 0, xend = CAP1, yend = CAP2),
+                 arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
+    
+    # Add labels with some padding
+    geom_text(data = top_spp, 
+              aes(x = CAP1, y = CAP2, label = asv), 
+              color = "black", fontface = "italic", vjust = -0.5) +
+    
+    theme_bw() +
+    labs(title = "Top 10 Species Contributing to CAP Variation",
+         x = "CAP1", y = "CAP2")
+  
+  # plot abundance of these taxa across treatments
+
+  # get data
+ps1
+  ##add add abundance and taxon infoget
+    asvkp<-unique(top_spp$asv)
+    
+    # make df relative abundance
+    df<-as.data.frame((otu_table(ps1)))
+    df<-df/rowSums(df)
+    df<- as.data.frame(t(df))
+    df$asv<-row.names(df)
+    df <- df[df$asv %in% asvkp, ]
+    
+    
+    # add treatment info
+    df$asv = NULL
+    df<-as.data.frame(t(df))
+    metadat2<-metadat2 %>% select(Treatment)
+    df<-cbind(df, metadat2)
+     
+      # summarize abundance info by each treatment 
+     df<-df %>% group_by(Treatment) %>%
+       summarise(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
+     df<-as.data.frame(t(df))
+     df
+     colnames(df) <- c( "L",  "G"  ,"B" ,"GB" ,"LB" ,"LG", "LGB")
+     df<-df[-1,] # remove first row which is row names
+     df$asv<-row.names(df)
+    
+       # add taxa info
+    tax<-as.data.frame((tax_table(ps1)))
+    df<-left_join(df, tax)
+    df<-left_join(df, species_scores)
+    df
+
+    df=df %>%
+    pivot_longer(cols = L:LGB, 
+                 names_to = "Treatment",
+                 values_to = "percent_abundance")
+    df<-as.data.frame(df)
+    df$percent_abundance <- as.numeric(df$percent_abundance)
+    df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+    # label
+    df$label <- df$Species
+    df$label[which(df$label==""  )] <- df$Genus[which(df$label=="" )]
+    
+    # plot
+    mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+   
+
+      ggplot(df)+
+      geom_bar(aes(x=asv, y=percent_abundance, fill= Phyla), 
+               stat="identity", position="dodge")+
+      #geom_errorbar(aes(x=label, ymin=-se_viable+LFC_FractionViable_Cell,
+      #                 ymax=LFC_FractionViable_Cell+se_viable))+ 
+      scale_fill_manual(values= mycols)+
+      theme_bw(base_size = 12) +
+      facet_grid(~Treatment, scales="free", space="free")+
+      theme(axis.text.x = element_text(angle=60, hjust=1),
+            plot.title = element_text(hjust = 0.5))+
+      xlab("ASVS with with highest effect in CAP")
+  
+      
+      # summary 
+      df1<-df %>% group_by(Phyla, label, Treatment, ) %>%
+        summarise(percent_abundance = sum(percent_abundance))
+        
+      
+      # plot
+      mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+      
+      
+      ggplot(df1)+
+        geom_bar(aes(x=label, y=percent_abundance, fill= Phyla), 
+                 stat="identity", position="dodge")+
+        #geom_errorbar(aes(x=label, ymin=-se_viable+LFC_FractionViable_Cell,
+        #                 ymax=LFC_FractionViable_Cell+se_viable))+ 
+        scale_fill_manual(values= mycols)+
+        theme_bw(base_size = 12) +
+        facet_grid(~Treatment, scales="free", space="free")+
+        theme(axis.text.x = element_text(angle=60, hjust=1.1),
+              plot.title = element_text(hjust = 0.5))+
+        xlab("ASVS with with highest effect in CAP")
+##### CAP inactive ##################
+  #  Constrained ordination
+  ps1 <-subset_samples(ps, Fraction=="Inactive" & Treatment!="Soil" & Treatment!="CTL")
+  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  ps1
+  # 1845 taxa
+  # subset metadata
+  metadat2<-filter(metadat, Fraction=="Inactive" & Treatment!="Soil" & Treatment!="CTL")
+  #factor
+  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+  metadat2$Fraction   <- factor(metadat2$Fraction)
+  
+  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
+  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+  
+  # 2. Run the CAP (db-RDA) analysis
+  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+  cap_result <- capscale(dist_matrix ~ Treatment,
+                         data = metadat2,
+                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+  
+  anova.cca(cap_result, by="terms")
+  
+  # 6. Perform all Pairwise Comparisons
+  # The function will iterate through all pairs of the 'Habitat' factor
+library(BiodiversityR)
+  pairwise_results <- multiconstrained(
+    formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+    data = metadat2,
+    constrained = capscale,       # Specify the constrained ordination method
+    permutations = 999            # Number of permutations for the test
+  )
+
+  # 7. View the raw pairwise results
+  print(pairwise_results)
+
+  # 8. Extract the raw p-values from the results
+  raw_pvalues <- pairwise_results[, "Pr(>F)"]
+
+  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
+  adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
+  adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
+
+  #?p.adjust
+  # 10. Combine the results for final interpretation
+  final_table <- data.frame(
+    Pair = rownames(pairwise_results),
+    Pseudo_F = pairwise_results[, "F"],
+    Raw_P = raw_pvalues,
+    fdr_adj_p = adjusted_pvalues1,
+    bonferroni_Adj_P = adjusted_pvalues
+  )
+
+  # 11. Print the final results table
+  print(final_table)
+
+
+  ### 3. grab info for the plot
+  smry <- summary(cap_result)
+  smry
+  sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+  sc_si
+  
+  # Extract the model's adjusted R2
+  RsquareAdj(cap_result)$adj.r.squared
+  
+  # percent varience of total varience on RDA 1 and RDA 2
+  perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+  perc
+  
+  ### 4. plot 
+  
+  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement") 
+  svg("cap.inactive.svg", width = 5 , height = 5)
+  par(cex.lab = 1.2) # make all fonts in graphs little bigger
+ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+           main="", cex = 1.2,
+           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
+  par(adj = 0)
+  title(main= "A")
+  par(adj=.5)
+  points(sc_si, 
+         col= IBM[metadat2$Treatment],
+         pch= 21,
+         lwd=1,cex=1,
+         bg=IBM[metadat2$Treatment])
+  ordiellipse(sc_si, metadat2$Treatment,  
+              kind = "ehull", conf=0.95, label=T, 
+              draw = "polygon",
+              border = 0,
+              col= IBM,
+              alpha = 40,
+              cex=1.2)
+  dev.off()
 ##### PCOA   ########
   
 # subset data  
@@ -381,316 +854,6 @@ df.pcoa %>%
   stat_ellipse(aes(group=Treatment), linetype=2)
   facet_wrap(~Legume, ncol=3)
 
-
-##### CAP ############  
-# inactive verse active 
-  # subset data  
-  ps1 <-subset_samples(ps, Treatment !="Soil" & Treatment!="CTL" )
-  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-  ps1
-  metadat2<-filter(metadat, Treatment!="Soil" & Treatment!="CTL")
-  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-  metadat2$Fraction   <- factor(metadat2$Fraction)
-  
-  
-  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
-  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
-  
-  # 2. Run the CAP (db-RDA) analysis
-  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~ Treatment*Fraction*Block,
-                         data = metadat2,
-                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
-  
-  # 3. Permutation test for significance of constraints
-  anova_cap <- anova(cap_result, permutations = 999, by = "term")
-  anova_cap
-
-  
-  ### 3. grab info for the plot
-  smry <- summary(cap_result)
-  smry
-  sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
-  sc_si
-  
-  # Extract the model's adjusted R2
-  RsquareAdj(cap_result)$adj.r.squared
-  
-  # percent varience of total varience on RDA 1 and RDA 2
-  perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
-  perc
-  
-  ### 4. plot 
-  
-  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")    
-  svg("cap.svg", width = 8 , height = 4.5)
-
-  par(mfrow = c(1, 2)) # 1 row, 2 column
- # windows(4,4)
-  par(cex.lab = 1.1) # make all fonts in graphs little bigger
-  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-           main="", cex = 1.2,
-           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
-           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
-  par(adj = 0)
-  title(main= "C")
-  par(adj=.5)
-  points(sc_si, 
-         col= "black",
-         pch= c(21,22)[as.factor(metadat2$Fraction)],
-         lwd=1,cex=1,
-         bg=bw[metadat2$Fraction])
-  ordiellipse(sc_si, metadat2$Fraction,  
-              kind = "ehull", conf=0.95, label=T, 
-              draw = "polygon",
-              border = 0,
-              col= bw,
-              alpha = 30,
-              cex=1.2)
-  
-  legend("bottomleft", legend=c("Active", "Inactive"  ),
-         pch=c(1,15 ),
-         cex=1,
-         title = "",     bty = "n")
-  
-  #dev.off()
-  
-  
-  
-##### CAP active ##################
-#  Constrained ordination
-  ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
-  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-  ps1
-  # 1845 taxa
-  # subset metadata
-  metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
-  #factor
-  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-  metadat2$Fraction   <- factor(metadat2$Fraction)
-  
-  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
-  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
-  
-  # 2. Run the CAP (db-RDA) analysis
-  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~ Treatment,
-                         data = metadat2,
-                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
-  
-  #anova.cca(cap_result, by="terms")
-  
-  # # 6. Perform all Pairwise Comparisons
-  # # The function will iterate through all pairs of the 'Habitat' factor
-  # 
-  # pairwise_results <- multiconstrained(
-  #   formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
-  #   data = metadat2,
-  #   constrained = capscale,       # Specify the constrained ordination method
-  #   permutations = 999            # Number of permutations for the test
-  # )
-  # 
-  # # 7. View the raw pairwise results
-  # print(pairwise_results)
-  # 
-  # # 8. Extract the raw p-values from the results
-  # raw_pvalues <- pairwise_results[, "Pr(>F)"]
-  # 
-  # # 9. Apply the Holm (Holm-Bonferroni) Adjustment
-  # adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
-  # adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
-  # 
-  # #?p.adjust
-  # # 10. Combine the results for final interpretation
-  # final_table <- data.frame(
-  #   Pair = rownames(pairwise_results),
-  #   Pseudo_F = pairwise_results[, "F"],
-  #   Raw_P = raw_pvalues,
-  #   fdr_adj_p = adjusted_pvalues1,
-  #   bonferroni_Adj_P = adjusted_pvalues
-  # )
-  # 
-  # # 11. Print the final results table
-  # print(final_table)
-  # 
-  
-  ### 3. grab info for the plot
-  smry <- summary(cap_result)
-  smry
-  sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
-  sc_si
-  
-  # Extract the model's adjusted R2
-  RsquareAdj(cap_result)$adj.r.squared
-  
-  # percent varience of total varience on RDA 1 and RDA 2
-  perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
-  perc
-  
-  ### 4. plot 
-  
-  #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
-  #svg("cap.active.svg", width = 6 , height = 6)
-  #windows(6,6)
-  par(cex.lab = 1.1) # make all fonts in graphs little bigger
-  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-           main="", cex = 1.2,
-           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
-           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
-  par(adj = 0)
-  title(main= "D")
-  par(adj=.5)
-  points(sc_si, 
-         col= IBM[metadat2$Treatment],
-         pch= 21,
-         lwd=1,cex=1,
-         bg=IBM[metadat2$Treatment])
-  ordiellipse(sc_si, metadat2$Treatment,  
-              kind = "ehull", conf=0.95, label=T, 
-              draw = "polygon",
-              border = 0,
-              col= IBM,
-              alpha = 40,
-              cex=1)
-  legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-         fill= IBM,
-         cex=1,
-         bty = "n")
-  
-  
-  dev.off()
-  
- ############ addtional cap model L +b +G 
-  
-  ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
-  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-  ps1
-  # 1845 taxa
-  # subset metadata
-  metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
-  #factor
-  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
-  metadat2$Fraction   <- factor(metadat2$Fraction)
-  
-  # 1. Calculate the distance matrix (e.g., Bray-Curtis)
-  dist_matrix<-vegdist(otu_table(ps1), method = "bray")
-  
-  # 2. Run the CAP (db-RDA) analysis
-  # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~Brassicae*Grass*Legume,
-                         data = metadat2,
-                         add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
-  
-  anova.cca(cap_result, by="terms")
-  
-# split legume present and absence in base r
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
-svg("cap.facet.svg", width = 8 , height = 4.5)
-#windows(8,4.5)  
-
-    par(mfrow = c(1, 2)) # 1 row, 2 columns  
-  # legume present 
-legume_cols<- c( #IBM colors
-    "navy", # dark royal blue L
-    "white", # french blue G
-    "white", # light purple  B 
-    "white", # magenta pink GB
-    "#FE6100", # bright orange LB
-    "#FFB000", # golden yellow LG 
-    "#865338" # medium mocha brown LGB
-  )
-  par(cex.lab = 1.1) # make all fonts in graphs little bigger
-  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-           main="Legumes present ", cex = 1.2,
-           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
-           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
-  par(adj = 0)
-  title(main= "C")
-  par(adj=.5)
-  points(sc_si, 
-         col= legume_cols[metadat2$Treatment],
-         pch= 22,
-         lwd=1,cex=1,
-         bg=legume_cols[metadat2$Treatment])
-  ordiellipse(sc_si, metadat2$Treatment,  
-              kind = "ehull", conf=0.95, label=F, 
-              draw = "polygon",
-              border = 0,
-              col= legume_cols,
-              alpha = 40,
-              cex=1)
-  #legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-  #       fill= IBM,
-  #       cex=1,
-  #       title = "",
-  #       bty = "n")
-  
-  # legume absent
-no_legumes <- c( #IBM colors
-    "white", # dark royal blue L 
-    "#648FFF", # french blue G
-    "#785EF0", # light purple B
-    "#DC267F", # magenta pink  GB
-    "white", # bright orange LB
-    "white", # golden yellow LG
-    "white" # medium mocha brown LGB
-  )
-  par(cex.lab = 1.1) # make all fonts in graphs little bigger
-  ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-           main="Legumes absent ", cex = 1.2,
-           xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
-           ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
-  par(adj = 0)
-  title(main= "D")
-  par(adj=.5)
-  points(sc_si, 
-         col= no_legumes[metadat2$Treatment],
-         pch= 22,
-         lwd=1,cex=1,
-         bg=no_legumes[metadat2$Treatment])
-  ordiellipse(sc_si, metadat2$Treatment,  
-              kind = "ehull", conf=0.95, label=F, 
-              draw = "polygon",
-              border = 0,
-              col= no_legumes,
-              alpha = 40,
-              cex=1)
-
-  
-dev.off()  
-  
-  
-# factor GGplot  
-  p1.cap <- ordinate(ps1, method='CAP',distance='bray',formula=~Treatment)      
-  # cap plot total
-  p1 <-plot_ordination(ps1,  p1.cap, color="Treatment")+
-    theme_bw()+
-    geom_point( size=2.5)+
-    #stat_ellipse(aes(group=Treatment), linetype=1)+
-    theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-          legend.position="left")+
-    scale_color_manual(values =  mycols, name="composition")+
-    ggtitle("model: composition * N")+
-    facet_grid(~mixture)
-  p1
-
-    
-p2<-  plot_ordination(ps1,  p1.cap, color="Treatment")+
-    theme_bw()+
-    geom_point( size=2.5)+
-    #stat_ellipse(aes(group=Treatment), linetype=1)+
-    theme(text=element_text(size=15), strip.text.x=element_text(size=15.5),
-          legend.position="none")+
-    scale_color_manual(values =  mycols, name="composition")+
-    ggtitle("C")+
-    facet_grid(~Legume_label)
-  
-
-#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
-#svg("cap.active.svg", width = 6 , height = 6)
-windows(6,4)
-p2
-dev.off()
 
 ###PCOA STATS: BETA DISPERSION#####
 #full dna  between trts
@@ -1803,7 +1966,7 @@ IBM <- c( #IBM colors
 )
 ## Set the working directory ###
 #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
 taxon <- read.csv("taxonomy.csv", row.names = 1)
 asvs <- read.csv("feature.table.csv", row.names = 1)
 metadat<-read.csv("metadata_predicted16S.csv", header = T)
@@ -1870,8 +2033,8 @@ perc.exp<-otus.eig/(sum(otus.eig))*100
 plot(otus.pcoa$eig)
 
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
-svg("pcoa.svg", height = 3.7, width = 3.8)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
+#svg("pcoa.svg", height = 3.7, width = 3.8)
 par(adj=.5)
 ordiplot(otus.pcoa,choices=c(1,2), type="none", main="",
          xlab=paste("PCoA1 (",pe1,"% var. explained)"),
@@ -1901,11 +2064,73 @@ legend("bottomright", legend=c("measured", "predicted"  ),
        cex=1,
        title = "",     bty = "o")
 
-dev.off()
+#dev.off()
 # permanova
 adonis2(otus.bray ~ Treatment, data = metadat2)
 adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
 
+# seperatated out by treatment
+#GB
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="GB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# 1745 taxa
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Active" & Treatment=="GB")
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
+
+# permanova
+adonis2(otus.bray ~ Measurement, data = metadat2)
+
+
+#LB
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="LB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# 1745 taxa
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LB")
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
+# permanova
+adonis2(otus.bray ~ Measurement, data = metadat2)
+
+
+
+#LG
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="LG")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# 1745 taxa
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LG")
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(5-1), eig=TRUE)
+# permanova
+adonis2(otus.bray ~ Measurement, data = metadat2) # marginal
+
+
+
+#LGB
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="LGB")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# 1745 taxa
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LGB")
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(5-1), eig=TRUE)
+# permanova
+adonis2(otus.bray ~ Measurement, data = metadat2) # significantly different
 
 #### CAP ##### 
 
@@ -2127,4 +2352,640 @@ summary(m1)
 
 m1<-lm(df$z_perc.Ndfa)
 summary(m1) 
+
+
+###### extract key taxa ####
+ 
+#  Constrained ordination
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# 1845 taxa
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+#factor
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat2$Fraction   <- factor(metadat2$Fraction)
+
+# 1. Calculate the distance matrix (e.g., Bray-Curtis)
+dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+
+commdata = as.data.frame(otu_table(ps1))
+# 2. Run the CAP (db-RDA) analysis
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ Treatment,
+                       data = metadat2,
+                       comm = commdata,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+# look for key taxa
+#plot(cap_result, display = c("sites", "species"))
+plot(cap_result, display = "species")
+species_scores <- as.data.frame(scores(
+  x = cap_result,
+  display = "species" # or "sp"
+))
+
+head(species_scores)
+species_scores$asv<-row.names(species_scores)
+
+# Calculate vector length (distance from origin)
+species_scores <- species_scores %>%
+  mutate(dist = sqrt(CAP1^2 + CAP2^2)) %>%
+  arrange(desc(dist))
+
+# Select the top 10 species
+top_spp <- head(species_scores, 20)
+top_spp
+
+ggplot() +
+  # Draw a circle/origin cross for reference
+  geom_vline(xintercept = 0, linetype = "dotted", alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dotted", alpha = 0.5) +
+  
+  # Add the vectors (arrows)
+  geom_segment(data = top_spp, 
+               aes(x = 0, y = 0, xend = CAP1, yend = CAP2),
+               arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
+  
+  # Add labels with some padding
+  geom_text(data = top_spp, 
+            aes(x = CAP1, y = CAP2, label = asv), 
+            color = "black", fontface = "italic", vjust = -0.5) +
+  
+  theme_bw() +
+  labs(title = "Top 10 Species Contributing to CAP Variation",
+       x = "CAP1", y = "CAP2")
+
+# plot abundance of these taxa across treatments
+
+# get data
+ps1
+##add add abundance and taxon infoget
+asvkp<-unique(top_spp$asv)
+
+# make df relative abundance
+df<-as.data.frame((otu_table(ps1)))
+df<-df/rowSums(df)*100
+df<- as.data.frame(t(df))
+df$asv<-row.names(df)
+df <- df[df$asv %in% asvkp, ]
+df$asv <-NULL
+
+# add treatment info
+df<-as.data.frame(t(df))
+metadat2<-metadat2 %>% select(Treatment)
+df<-cbind(df, metadat2)
+df
+
+df<-df %>%
+  pivot_longer(cols = -Treatment, 
+               names_to = "asv",
+               values_to = "percent_abundance")
+df
+# add phyla info
+tax<-as.data.frame((tax_table(ps1)))
+
+tax <- tax[tax$asv %in% asvkp, ]
+tax<-tax %>% group_by(Phyla, Genus, asv) %>% summarise()
+tax
+df<-left_join(df, tax)
+df
+
+df<-as.data.frame(df)
+
+df
+
+
+
+df$percent_abundance <- as.numeric(df$percent_abundance)
+df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+
+# plot
+mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+
+
+df %>%
+  ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
+  geom_boxplot(outliers=FALSE)+
+  geom_jitter()+
+  scale_fill_manual(values= mycols)+
+  theme_bw(base_size = 12) +
+  facet_grid(~asv, scales="free", space="free")+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+
+# genus level boxplot
+
+
+# make df relative abundance
+df<-as.data.frame((otu_table(ps1)))
+df<-df/rowSums(df)
+df<- as.data.frame(t(df))
+df$asv<-row.names(df)
+df <- df[df$asv %in% asvkp, ]
+
+# add taxa info
+tax<-as.data.frame((tax_table(ps1)))
+df<-left_join(df, tax)
+df
+
+#summarize by genus
+df<-df %>% group_by(Genus) %>%
+  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+df
+
+# save genus info
+Genus <- df$Genus
+df$Genus = NULL
+df
+# add treatment info
+df<-as.data.frame(t(df))
+colnames(df) <- Genus
+df
+
+metadat2<-metadat2 %>% select(Treatment)
+df<-cbind(df, metadat2)
+df
+
+# pivot
+df<-df %>%
+  pivot_longer(cols = starts_with(" g_"), 
+               names_to = "Genus",
+               values_to = "percent_abundance")
+df
+
+# add phyla info
+tax <- tax[tax$asv %in% asvkp, ]
+tax<-tax %>% group_by(Phyla, Genus) %>% summarise()
+tax
+df<-left_join(df, tax)
+df<-as.data.frame(df)
+df
+
+
+
+# plot
+mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+df$percent_abundance <- as.numeric(df$percent_abundance)
+df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+
+df %>%
+ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
+  geom_boxplot(outliers=FALSE)+
+  geom_jitter()+
+  scale_fill_manual(values= mycols)+
+  theme_bw(base_size = 12) +
+  facet_grid(~Genus, scales="free", space="free")+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5))
+
+
+#### g_ AC14
+df1<-df %>% filter(Genus==" g__AC-14")
+kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+
+df1<-df %>% filter(Genus==" g__Deinococcus_C")
+kruskal.test(percent_abundance ~ Treatment, data = df1)
+
+df1<-df %>% filter(Genus==" g__Microcoleus")
+kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+
+df1<-df %>% filter(Genus==" g__Escherichia")
+kruskal.test(percent_abundance ~ Treatment, data = df1) #
+
+df1<-df %>% filter(Genus==" g__Vampirovibrio")
+kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+
+df1<-df %>% filter(Genus==" g__Terrabacter")
+kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+
+df1<-df %>% filter(Genus==" g__Rhizobium_C_501058")
+m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+m1
+
+
+# fdr correction
+# raw results
+raw_pvalues<-c( " 0.5193", "0.219", "0.3148", "0.5253", "0.002285", "0.0355" , "0.01088")
+taxa <-  c(" g__AC-14", " g__Deinococcus_C", " g__Microcoleus", " g__Escherichia", " g__Vampirovibrio", " g__Terrabacter", " g__Rhizobium_C_501058"  )
+#  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
+
+ adjusted_pvalues <- p.adjust(raw_pvalues, method = "fdr")
+ adjusted_pvalues
+  final_table <- data.frame(
+    taxa = taxa,
+    Raw_P = raw_pvalues,
+    fdr_adj_p = adjusted_pvalues
+  )
+  print(final_table)
+# 
+
+### genus overall ########
+  target<-  c(" g__AC-14", " g__Deinococcus_C", " g__Microcoleus", " g__Escherichia", " g__Vampirovibrio", " g__Terrabacter", " g__Rhizobium_C_501058"  )
+  # Create a vector of the genera you want
+
+  # Subset the phyloseq object
+  ps1 <- subset_taxa(ps1, Genus %in% target)
+  ps1
+  
+  
+  # make df relative abundance
+  df<-as.data.frame((otu_table(ps1)))
+  df<-df/rowSums(df)
+  df<- as.data.frame(t(df))
+  df$asv<-row.names(df)
+  df
+  
+  # add taxa info
+  tax<-as.data.frame((tax_table(ps1)))
+  df<-left_join(df, tax)
+  df
+  
+  #summarize by genus
+  df<-df %>% group_by(Genus) %>%
+    summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+  df
+  
+  # save genus info
+  Genus <- df$Genus
+  df$Genus = NULL
+  df
+  # add treatment info
+  df<-as.data.frame(t(df))
+  colnames(df) <- Genus
+  df
+  
+  metadat2<-metadat2 %>% select(Treatment)
+  df<-cbind(df, metadat2)
+  df
+  
+  # pivot
+  df<-df %>%
+    pivot_longer(cols = starts_with(" g_"), 
+                 names_to = "Genus",
+                 values_to = "percent_abundance")
+  df
+  
+  # add phyla info
+  tax <- tax[tax$Genus %in% target, ]
+  tax<-tax %>% group_by(Phyla, Genus) %>% summarise()
+  tax
+  df<-left_join(df, tax)
+  df<-as.data.frame(df)
+  df
+  
+  
+  
+  # plot
+  mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+  df$percent_abundance <- as.numeric(df$percent_abundance)
+  df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+  
+  
+  df %>%
+    ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
+    geom_boxplot(outliers=FALSE)+
+    geom_jitter()+
+    scale_fill_manual(values= mycols)+
+    theme_bw(base_size = 12) +
+    facet_grid(~Genus, scales="free", space="free")+
+    theme(axis.text.x = element_text(angle=60, hjust=1),
+          plot.title = element_text(hjust = 0.5))
+  
+  #### g_ AC14
+  df1<-df %>% filter(Genus==" g__AC-14")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  
+  df1<-df %>% filter(Genus==" g__Deinococcus_C")
+  kruskal.test(percent_abundance ~ Treatment, data = df1)
+  
+    
+  df1<-df %>% filter(Genus==" g__Escherichia")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) 
+  
+  df1<-df %>% filter(Genus==" g__Microcoleus")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+
+  df1<-df %>% filter(Genus==" g__Rhizobium_C_501058") %>% filter(Treatment=="L" | Treatment=="B")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  m1
+  
+  df1<-df %>% filter(Genus==" g__Vampirovibrio")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  
+  df1<-df %>% filter(Genus==" g__Terrabacter")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  
+  # fdr correction
+  # raw results
+  raw_pvalues<-c( " 0.6061", "0.07953", "0.3857", "0.6035", "0.01592", "0.614" , "0.11")
+  taxa <-  c(" g__AC-14", " g__Deinococcus_C", " g__Escherichia"," g__Microcoleus",  " g__Rhizobium_C_501058", " g__Vampirovibrio", " g__Terrabacter"  )
+  #  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
+  
+  adjusted_pvalues <- p.adjust(raw_pvalues, method = "fdr")
+  adjusted_pvalues
+  final_table <- data.frame(
+    taxa = taxa,
+    Raw_P = raw_pvalues,
+    fdr_adj_p = adjusted_pvalues
+  )
+  print(final_table)
+  # 
+  
+  
+  #### g_ AC14
+  df1<-df %>% filter(Genus==" g__AC-14")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  
+  df1<-df %>% filter(Genus==" g__Deinococcus_C")
+  kruskal.test(percent_abundance ~ Treatment, data = df1)
+  
+  
+  df1<-df %>% filter(Genus==" g__Escherichia")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) 
+  
+  df1<-df %>% filter(Genus==" g__Microcoleus")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  
+  df1<-df %>% filter(Genus==" g__Rhizobium_C_501058")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  m1
+  
+  df1<-df %>% filter(Genus==" g__Vampirovibrio")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  
+  df1<-df %>% filter(Genus==" g__Terrabacter")
+  kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  
+  
+
+#### ANCOM asv level ####
+
+
+
+#  active
+ps <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+ps <-prune_taxa(taxa_sums(ps) > 0, ps1)
+ps
+
+# between monocultures ###########
+# LGB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G"  )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+levels(sample_data(ps1)$Treatment)
+##3LG
+LG = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  p_adj_method = "fdr",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+res = LG$res
+
+
+
+# Lb
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B"  )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+levels(sample_data(ps1)$Treatment)
+#LG
+LB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  p_adj_method = "fdr",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+res = LB$res
+globalLB<-LB$res_global
+
+# LGB
+ps1<-subset_samples(ps , Treatment=="G" | Treatment=="B"  )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+levels(sample_data(ps1)$Treatment)
+#LG
+GB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+res = GB$res
+globalGB<-GB$res_global
+
+
+
+#############mixtures ######
+
+# LG
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="LG" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LG", "L", "G"))
+levels(sample_data(ps1)$Treatment)
+#LG
+LG = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LG = LG$res
+LG 
+
+
+#Grass GB
+ps1<-subset_samples(ps , Treatment=="G" | Treatment=="B" | Treatment=="GB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("GB", "G", "B"))
+levels(sample_data(ps1)$Treatment)
+
+#GB
+GB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+GB = GB$res
+
+
+
+# LB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B" | Treatment=="LB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LB", "L", "B"))
+levels(sample_data(ps1)$Treatment)
+LB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LB = LB$res
+LB
+
+
+# LGB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="B" |  Treatment=="LGB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LGB", "G", "L", "B"))
+levels(sample_data(ps1)$Treatment)
+output = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LGB = output$res
+LGB
+
+
+
+
+##### used only asvskp ####
+
+#  active
+ps <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+ps <-prune_taxa(taxa_sums(ps) > 0, ps)
+ps
+# prune taxa
+ps<-prune_taxa(asvkp, ps)
+ps
+
+#legume LG
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="LG" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LG", "L", "G"))
+levels(sample_data(ps1)$Treatment)
+#LG
+LG = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LG = LG$res
+LG
+
+
+#Grass GB
+ps1<-subset_samples(ps , Treatment=="G" | Treatment=="B" | Treatment=="GB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("GB", "G", "B"))
+levels(sample_data(ps1)$Treatment)
+
+#GB
+GB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+GB = GB$res
+GB
+
+
+# LB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B" | Treatment=="LB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LB", "L", "B"))
+levels(sample_data(ps1)$Treatment)
+LB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LB = LB$res
+LB
+
+
+# LGB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="B" |  Treatment=="LGB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LGB", "G", "L", "B"))
+levels(sample_data(ps1)$Treatment)
+output = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "Genus",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LGB = output$res
+LGB
 

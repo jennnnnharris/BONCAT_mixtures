@@ -160,7 +160,6 @@ rich %>% group_by(n_species) %>% summarise(mean(Observed), sd(Observed))
 #
 rich$Treatment   <- factor(rich$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
-
 # caculate pilou's evenness where formula J= H/ln(S), 
 rich$evenness = rich$Shannon/log(rich$Observed)
 
@@ -170,35 +169,44 @@ rich$evenness = rich$Shannon/log(rich$Observed)
 
 # nitrogen effect
 p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
-  ggplot(aes(x=as.factor(N), y=Shannon))+
+  ggplot(aes(x=as.factor(Nitrogen_label), y=Shannon))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   geom_jitter(size=1.5)+
-  theme_classic(base_size = 16)+
-  labs(
-       x="Nitrogen",
-       y= "Total DNA Shannon diversity")+
-  annotate("text", x=1.5, y=8, label="*")
-
+  theme_classic(base_size = 12)+
+  labs(title = "A",
+       x="",
+       y= "Total DNA Shannon diversity")
+  #annotate("text", x=1.5, y=8, label="*")
+p1
 p2<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
-  ggplot(aes(x=as.factor(N), y=Observed))+
+  ggplot(aes(x=as.factor(Nitrogen_label), y=Observed))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   geom_jitter(size=1.5)+
-  theme_classic(base_size = 16)+
-  labs(
-       x="Nitrogen",
-       y= "Total DNA ASV richness")+
-  annotate("text", x=1.5, y=5500, label="*")
+  theme_classic(base_size = 12)+
+  labs(title = "B",
+       x="",
+       y= "Total DNA ASV richness")
 
+p2
+p3<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+  ggplot(aes(x=as.factor(Nitrogen_label), y=evenness))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  geom_jitter(size=1.5)+
+  theme_classic(base_size = 12)+
+  labs(title = "C",
+       x="",
+       y= "Total DNA Pilou's Eveness")
+  #annotate("text", x=1.5, y=5500, label="*")
+p3
 require(gridExtra)
-grid.arrange(p1, p2, ncol=2)
+windows(8, 3.5)
+grid.arrange(p1, p2, p3, ncol=3)
 
 
-# Treatment effect?
-# shannon diversity letters
+# shannon diversity
 rich<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil")
 N1<-rich %>% filter(N==1)
 N0 <- rich %>% filter(N==0)
-
 
 # nitrogen +  
 lab<-as.character(N1$Treatment)
@@ -210,8 +218,6 @@ lab <- gsub("L", "A", lab)
 lab <- gsub("G", "A", lab) 
 lab <- gsub("B", "A", lab) 
 lab
-
-
 
 
 N1$Nitrogen_label<-as.factor(N1$Nitrogen_label)
@@ -232,11 +238,8 @@ p1<-N1%>%
        y= "Total DNA Shannon Diversity")+
   scale_shape_manual(values = c(17, 16))+
   ylim(6.6, 8)
-
-
 p1
-
-# nitrogen minus shannon 
+# nitrogen - shannon 
 #  L  G    B   GB   LB   LG  LGB    
 # "c" "ab"  "a" "ab" "ab" "ab" "bc" 
 lab<-as.character(N0$Treatment)
@@ -285,62 +288,106 @@ dev.off()
 
 
 
-#label for observed
+# OBSERVED ASVS
+rich<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil")
+N1<-rich %>% filter(N==1)
+N0 <- rich %>% filter(N==0)
 
-lab<-as.character(rich$Treatment)
-lab<- gsub("LGB", "X", lab)
-lab<- gsub("LB", "Y", lab)
-lab<- gsub("GB", "Y", lab)
-lab<- gsub("LG", "Y", lab)
-lab<- gsub("B", "Y", lab)
-lab<- gsub("G", "X", lab)
-lab<- gsub("L", "Z", lab)
-#sub letters
-lab<- gsub("X", "AB", lab)
-lab<- gsub("Y", "B", lab)
-lab<- gsub("Z", "A", lab)
-
-
-p2<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+N1$Nitrogen_label<-as.factor(N1$Nitrogen_label)
+p1<-N1%>%  
   ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
   geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
-  
-  theme_classic(base_size = 16)+
+  theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0),legend.position="none")+
-  geom_text(y= 5300, label = lab, size=5)+
-  labs(title = "F",
+        plot.title = element_text(hjust = 0),legend.position="none",
+        plot.subtitle = element_text(hjust = 0.5))+
+  #geom_text(y=7.89, label = lab, size=5)+
+  labs(title = "A",
+       subtitle = "Nitrogen +",
        x="",
        y= "Total DNA ASV richness")+
-  scale_shape_manual(values = c(17, 16)) +
-  facet_grid(~N)
+  scale_shape_manual(values = c(17, 16))+
+  ylim(2500, 5500)
+p1
 
+# nitrogen minus OBSERVED ASV
+# L   G    B   GB   LB   LG  LGB   
+#"b" "ab"  "a"  "a" "ab"  "a" "ab"  
+lab<-as.character(N0$Treatment)
+lab<- gsub("LGB", "AX", lab)
+lab <- gsub("LG", "A", lab)
+lab <- gsub("LB", "AX", lab)
+lab <- gsub("GB", "A", lab)
+lab <- gsub("L", "X", lab) 
+lab <- gsub("G", "AX", lab) 
+lab <- gsub("B", "A", lab) 
+lab <- gsub("X", "B", lab) 
 
+N0$Nitrogen_label<-as.factor(N0$Nitrogen_label)
+p2<-N0%>%  
+  ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
+  theme_classic(base_size = 12)+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),legend.position="none",
+        plot.subtitle = element_text(hjust = 0.5))+
+  geom_text(y=5300, label = lab, size=4)+
+  labs(title = "B",
+       subtitle = "Nitrogen -",
+       x="",
+       y= "Total DNA  ASV Richness")+
+  scale_shape_manual(values = c(17, 16))+
+  ylim(2500, 5500)
 p2
 
-p3<- rich%>% filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
+# EVENESSS
+rich$Nitrogen_label<-as.factor(rich$Nitrogen_label)
+# L  G    B   GB   LB   LG  LGB    
+#"b" "a"  "a" "ab" "ab" "ab" "ab"  
+
+lab<-as.character(rich$Treatment)
+lab<- gsub("LGB", "AX", lab)
+lab <- gsub("LG", "AX", lab)
+lab <- gsub("LB", "AX", lab)
+lab <- gsub("GB", "AX", lab)
+lab <- gsub("L", "X", lab) 
+lab <- gsub("G", "A", lab) 
+lab <- gsub("B", "A", lab) 
+lab <- gsub("X", "B", lab) 
+lab
+
+p3<-rich%>%  
   ggplot(aes(x=Treatment, y=evenness,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
-  #geom_jitter(aes(shape = as.factor(Rep) ), width = .1, size=2,  )+
-  geom_jitter(width = .1,size=1.5)+
-  theme_classic(base_size = 16)+
+  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
+  theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0),legend.position="none")+
-  #geom_text(y= 5300, label = lab, size=5)+
-  facet_grid(~N)
+        plot.title = element_text(hjust = 0),
+        plot.subtitle = element_text(hjust = 0.5),
+        legend.position = "none")+
+  geom_text(y=.945, label = lab, size=4)+
+  labs(title = "C",
+       subtitle = "Evenness",
+       x="",
+       y= " Pilou's Evenness")+
+  scale_shape_manual(values = c(17, 16))+
+  ylim(.85, .95)
+
+  p3
+
+windows(8,3.5)
+grid.arrange(p1, p2, p3, ncol=3)
 
 
-p3
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-svg(file="diversity.svg",width = 8, height=4)
-require(gridExtra)
-#windows(10,4)
-grid.arrange(p1, p2, ncol=2)
-dev.off()
 
 #STATS#
 # remove soil
@@ -354,11 +401,9 @@ m1<-lm(Shannon ~ N,  data = rich)
 summary(m1)
 
 anova1<- aov(Shannon ~ Treatment*N, data = rich)
-summary(anova1)
-# no interaction with nitrogen, so I'm just gonna bin +N =N together
+summary(anova1) # block droped because not sig
 
-# Analysis of variance 
-# block droped because not sig
+# shannon N+ anonva
 N1<-rich %>% filter(N==1)
 N0 <- rich %>% filter(N==0)
 anova1<- aov(Shannon ~ Treatment, data = N1)
@@ -373,7 +418,7 @@ p_values <- tukey.a1$Treatment[, 4]
 cld <- multcompLetters(p_values)
 print(cld)
 
-## 
+# shannon N- anova
 anova1<- aov(Shannon ~ Treatment, data = N0)
 summary(anova1)
 library(multcompView)
@@ -406,7 +451,7 @@ p_values <- tukey.a1$Treatment[, 4]
 cld <- multcompLetters(p_values)
 print(cld)
 
-## 
+## N-
 anova1<- aov(Observed ~ Treatment, data = N0)
 summary(anova1)
 library(multcompView)
@@ -606,7 +651,7 @@ pairwise_results <- multiconstrained(
 print(pairwise_results)
 #Extract the raw p-values from the results
 raw_pvalues <- pairwise_results[, "Pr(>F)"]
-Apply the Holm (Holm-Bonferroni) Adjustment
+#Apply the Holm (Holm-Bonferroni) Adjustment
 adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
 adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
 #p.adjust
@@ -639,7 +684,8 @@ perc
 
 ###  5. plot 
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-svg("cap.total2.svg", width = 8 , height = 4)
+#svg("cap.total2.svg", width = 8 , height = 4)
+
 #windows(6,6)
 par(mfrow=c(1,2))
 par(cex.lab = 1.2) # make all fonts in graphs little bigger
@@ -1765,4 +1811,438 @@ summary(m1)
 m1<-lm(df$PC1~df$z_n_fix_per_legume)
 summary(m1) 
 plot(m1)
+
+
+#
+###### extract key taxa ####
+
+#  Constrained ordination
+ps<-subset_samples(ps,  Treatment!="Soil" & Treatment!="CTL")
+
+# subset data
+ps <-subset_samples(ps, Treatment !="Soil" & N=="1" )
+ps<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil"  & N=="1")
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+# 1. Calculate the distance matrix (e.g., Bray-Curtis)
+dist_matrix<-vegdist(otu_table(ps), method = "bray")
+
+commdata = as.data.frame(otu_table(ps))
+# 2. Run the CAP (db-RDA) analysis
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ Treatment,
+                       data = metadat2,
+                       comm = commdata,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+# look for key taxa
+plot(cap_result, display = c("sites", "species"))
+plot(cap_result, display = "species")
+species_scores <- as.data.frame(scores(
+  x = cap_result,
+  display = "species" # or "sp"
+))
+
+head(species_scores)
+species_scores$asv<-row.names(species_scores)
+
+# Calculate vector length (distance from origin)
+species_scores <- species_scores %>%
+  mutate(dist = sqrt(CAP1^2 + CAP2^2)) %>%
+  arrange(desc(dist))
+
+# Select the top 10 species
+top_spp <- head(species_scores, 20)
+top_spp
+
+ggplot() +
+  # Draw a circle/origin cross for reference
+  geom_vline(xintercept = 0, linetype = "dotted", alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dotted", alpha = 0.5) +
+  
+  # Add the vectors (arrows)
+  geom_segment(data = top_spp, 
+               aes(x = 0, y = 0, xend = CAP1, yend = CAP2),
+               arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
+  
+  # Add labels with some padding
+  geom_text(data = top_spp, 
+            aes(x = CAP1, y = CAP2, label = asv), 
+            color = "black", fontface = "italic", vjust = -0.5) +
+  
+  theme_bw() +
+  labs(title = "Top 10 Species Contributing to CAP Variation",
+       x = "CAP1", y = "CAP2")
+
+
+# plot abundance of these taxa across treatments
+
+# get data
+ps1
+##add add abundance and taxon infoget
+asvkp<-unique(top_spp$asv)
+
+# make df relative abundance
+df<-as.data.frame((otu_table(ps1)))
+df<-df/rowSums(df)
+df<- as.data.frame(t(df))
+df$asv<-row.names(df)
+df <- df[df$asv %in% asvkp, ]
+
+# add taxa info
+tax<-as.data.frame((tax_table(ps1)))
+df<-left_join(df, tax)
+df
+
+#summarize by genus
+df<-df %>% group_by(Genus) %>%
+  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+df
+
+# save genus info
+Genus <- df$Genus
+df$Genus = NULL
+# add treatment info
+df<-as.data.frame(t(df))
+metadat2<-metadat2 %>% select(Treatment)
+df<-cbind(df, metadat2)
+df
+# summarize abundance info by each treatment 
+df<-df %>% group_by(Treatment) %>%
+  summarise(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
+df<-as.data.frame(t(df))
+df
+colnames(df) <- c( "L",  "G"  ,"B" ,"GB" ,"LB" ,"LG", "LGB")
+df<-df[-1,] # remove first row which is row names
+df$Genus <- Genus
+df
+
+# add phyla info
+tax <- tax[tax$asv %in% asvkp, ]
+tax<-tax %>% group_by(Phyla, Genus) %>% summarise()
+df<-left_join(df, tax)
+df
+
+df<-as.data.frame(df)
+
+df
+
+df<-df %>%
+  pivot_longer(cols = L:LGB, 
+               names_to = "Treatment",
+               values_to = "percent_abundance")
+df<-as.data.frame(df)
+df$percent_abundance <- as.numeric(df$percent_abundance)
+df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+
+# plot
+mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+
+
+ggplot(df)+
+  geom_bar(aes(x=Genus, y=percent_abundance, fill = Phyla), 
+           stat="identity", position="dodge")+
+  #geom_errorbar(aes(x=label, ymin=-se_viable+LFC_FractionViable_Cell,
+  #                 ymax=LFC_FractionViable_Cell+se_viable))+ 
+  scale_fill_manual(values= mycols)+
+  theme_bw(base_size = 12) +
+  facet_grid(~Treatment, scales="free", space="free")+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5))+
+  xlab("ASVS with with highest effect in CAP")
+
+# boxplot
+
+
+# make df relative abundance
+df<-as.data.frame((otu_table(ps1)))
+df<-df/rowSums(df)
+df<- as.data.frame(t(df))
+df$asv<-row.names(df)
+df <- df[df$asv %in% asvkp, ]
+
+# add taxa info
+tax<-as.data.frame((tax_table(ps1)))
+df<-left_join(df, tax)
+df
+
+#summarize by genus
+df<-df %>% group_by(Genus) %>%
+  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+df
+
+# save genus info
+Genus <- df$Genus
+df$Genus = NULL
+df
+# add treatment info
+df<-as.data.frame(t(df))
+colnames(df) <- Genus
+df
+
+metadat2<-metadat2 %>% select(Treatment)
+df<-cbind(df, metadat2)
+df
+
+# pivot
+df<-df %>%
+  pivot_longer(cols = starts_with(" g_"), 
+               names_to = "Genus",
+               values_to = "percent_abundance")
+df
+
+# add phyla info
+tax <- tax[tax$asv %in% asvkp, ]
+tax<-tax %>% group_by(Phyla, Genus) %>% summarise()
+tax
+df<-left_join(df, tax)
+df<-as.data.frame(df)
+df
+
+
+
+# plot
+mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+df$percent_abundance <- as.numeric(df$percent_abundance)
+df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+
+df %>%
+  ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
+  geom_boxplot(outliers=FALSE)+
+  geom_jitter()+
+  scale_fill_manual(values= mycols)+
+  theme_bw(base_size = 12) +
+  facet_grid(~Genus, scales="free", space="free")+
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0.5))
+
+
+#### ANCOM asv level ####
+library(ANCOMBC)
+#BiocManager::install("microbiome")
+#install.packages("microbiome")
+library(microbiome)
+
+#asv level #
+# LGB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+#sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+#                                     levels = c("B", "L", "G"))
+levels(sample_data(ps1)$Treatment)
+#LGB
+LGB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+res = LGB$res
+globalLGB<-LGB$res_global
+
+# LG
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="LG" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LG", "L", "G"))
+levels(sample_data(ps1)$Treatment)
+#LG
+LG = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LG = LG$res
+LG 
+
+
+#Grass GB
+ps1<-subset_samples(ps , Treatment=="G" | Treatment=="B" | Treatment=="GB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("GB", "G", "B"))
+levels(sample_data(ps1)$Treatment)
+
+#GB
+GB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+GB = GB$res
+
+
+
+# LB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B" | Treatment=="LB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LB", "L", "B"))
+levels(sample_data(ps1)$Treatment)
+LB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LB = LB$res
+LB
+
+
+# LGB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="B" |  Treatment=="LGB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LGB", "G", "L", "B"))
+levels(sample_data(ps1)$Treatment)
+output = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LGB = output$res
+LGB
+
+
+
+
+##### used only asvskp ####
+
+#  active
+ps <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
+ps <-prune_taxa(taxa_sums(ps) > 0, ps)
+ps
+# prune taxa
+ps<-prune_taxa(asvkp, ps)
+ps
+
+#legume LG
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="LG" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LG", "L", "G"))
+levels(sample_data(ps1)$Treatment)
+#LG
+LG = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LG = LG$res
+LG
+
+
+#Grass GB
+ps1<-subset_samples(ps , Treatment=="G" | Treatment=="B" | Treatment=="GB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("GB", "G", "B"))
+levels(sample_data(ps1)$Treatment)
+
+#GB
+GB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+GB = GB$res
+GB
+
+
+# LB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B" | Treatment=="LB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LB", "L", "B"))
+levels(sample_data(ps1)$Treatment)
+LB = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "asv",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LB = LB$res
+LB
+
+
+# LGB
+ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="B" |  Treatment=="LGB" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1 # 1785
+sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
+                                     levels = c("LGB", "G", "L", "B"))
+levels(sample_data(ps1)$Treatment)
+output = ancombc2(
+  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
+  assay_name = "counts", 
+  tax_level = "Genus",    # Or NULL if data is already at the desired level
+  fix_formula = "Treatment",  # The variable must be in your fixed effects
+  group = "Treatment",        # Specify the variable for pairwise testing
+  #pairwise = TRUE,        # Enable all-pairs comparisons
+  #global = TRUE,          # Recommended for multi-group designs
+  p_adj_method = "holm",  # Method for p-value adjustment
+  alpha = 0.05            # Significance threshold
+)
+LGB = output$res
+LGB
+
+
 
