@@ -2270,8 +2270,8 @@ df$z_foxtail_prop_nongerm<-as.vector(scale(log(df$foxtail_prop_nongerm+1)))
 df$z_pigweed_prop_nongerm<-as.vector(scale(log(df$pigweed_prop_nongerm+1)))
 df$z_boncat_freq<-as.vector(scale(df$boncat_freq))
 df$z_active_cel_per_g<-as.vector(scale(log(df$active_cel_per_g+1)))
-df$z_perc.Ndfa<-as.vector(scale(df$perc.Ndfa))
-df$z_n_fix_per_legume<-as.vector(scale(df$n_fix_per_legume))
+#df$z_perc.Ndfa<-as.vector(scale(df$perc.Ndfa))
+#df$z_n_fix_per_legume<-as.vector(scale(df$n_fix_per_legume))
 
 # hist 
 hist(df$z_Root.Biomass) # okay 
@@ -2280,8 +2280,8 @@ hist(df$z_pigweed_prop_nongerm) # okay
 hist(df$z_foxtail_prop_nongerm) # okay after log transform
 hist(df$z_boncat_freq) # okay
 hist(df$z_active_cel_per_g) # okay after log transform
-hist(df$z_perc.Ndfa) # okay
-hist(df$z_n_fix_per_legume)
+#hist(df$z_perc.Ndfa) # okay
+#hist(df$z_n_fix_per_legume)
 
 
 # 4. Add it to your data frame
@@ -2302,7 +2302,7 @@ plot(df$PC1, df$z_pigweed_prop_nongerm, main= "active p=.06, Rsq=.07")
 
 ###ggplot 
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
-svg("shoot_pc1.svg", width=4.5, height=3.5)
+svg("shoot_pc1.svg", width=6, height=3)
 ggplot(df, aes(y=z_Shoot.Biomass, x=PC1, col=Treatment))+
   geom_point()+
   theme_bw(base_size = 12)+
