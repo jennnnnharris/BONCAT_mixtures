@@ -16,7 +16,7 @@ library(lubridate)
 # set colors
 IBM <- c( #IBM colors
   "navy", # dark royal blue
-  "#648FFF", # french blue
+  "#a4bdfc",  # "#648FFF", # french blue
   "#785EF0", # light purple
   "#DC267F", # magenta pink 
   "#FE6100", # bright orange
@@ -56,8 +56,8 @@ fc$Date_Sorted<-mdy(fc$Date_Sorted)
 
 # remove outliers
 # filter out day were pos ctl didn't work
-#fc <- filter(fc, Trt_ID!="B+N6")
-#fc<-filter(fc, Date_Sorted != "2023-05-25")
+fc <- filter(fc, Trt_ID!="B+N6")
+fc<-filter(fc, Date_Sorted != "2023-05-25")
 head(fc)
 
 # make treatment and day factors
@@ -180,6 +180,12 @@ cld_result <- cld(emm_object,
 print(cld_result)
 
 
+# monocultures
+prop<-prop%>% filter(n_species==1)
+y<-cbind(prop$success, prop$n_failures)
+m1<-glm(data= prop, y~Treatment, family = binomial)
+summary(m1)
+
 
 
 # p1<-fc  %>%
@@ -249,8 +255,6 @@ dev.off()
 library(multcompView)
 a1<- aov(active_cel_per_g~ Treatment, data = fc)
 summary(a1)
-
-#tukey test
 tukey_results <- TukeyHSD(a1)
 print(tukey_results)
 p_values <- tukey_results$Treatment[, 4]#Extract the p-values for the factor of interest
@@ -258,6 +262,19 @@ cld <- multcompLetters(p_values)# The 'multcompLetters()' function takes a named
 print(cld)#Print the results
 
 
+# monocultures
+fc1<-fc %>% filter(n_species==1)
+a1<- aov(active_cel_per_g~ Treatment, data = fc1)
+summary(a1)
+tukey_results <- TukeyHSD(a1)
+print(tukey_results)
+p_values <- tukey_results$Treatment[, 4]#Extract the p-values for the factor of interest
+cld <- multcompLetters(p_values)# The 'multcompLetters()' function takes a named vector of p-values
+print(cld)#Print the results
+
+
+
+#legume effect
 p1<-fc  %>%
   filter(Treatment!="Soil") %>%
   ggplot(aes(x=as.factor(Legume), y=active_cel_per_g, fill = as.factor(Legume))) +
@@ -271,113 +288,81 @@ p1<-fc  %>%
 
 p1
 m1<-lm(data= fc, active_cel_per_g~Legume)
-
-m1
 summary(m1)
 
 
 
 # corr plot activity with weed seed ####
 # weed seed
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 weed<-read.csv("weed_seed_decay.csv", row.names = 1)
-
-  
+weed
+fc  
 df<- left_join(weed, fc)
 head(df)  
 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
-svg("pigweed_active.svg", width=4.5, height=3.5)
-ggplot(df, aes(y=pigweed_num_nongerm, x=active_cel_per_g))+
+
+p1<-df %>% filter(Treatment!="S" & Legume!="NA") %>%
+ggplot( aes(y=pigweed_num_nongerm, x=active_cel_per_g, col=Treatment))+
   geom_point()+
+  scale_color_manual(values=IBM)+
   theme_bw(base_size = 12)+
-  labs(y = "non germinating pigweed",
-       x = "Active cells / g rhizosphere")
+  facet_grid(~Legume_lonmg)
+#dev.off()
+p2<-df %>% filter(Treatment!="S" & Legume!="NA") %>%
+  ggplot( aes(y=pigweed_num_nongerm, x=boncat_freq, col=Treatment))+
+  geom_point()+
+  scale_color_manual(values=IBM)+
+  theme_bw(base_size = 12)+
+  facet_grid(~Legume_lonmg)
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
+svg("pigweed_active.svg", width=6, height= 6)
+require(gridExtra)
+grid.arrange(p1, p2, ncol=1)
 dev.off()
 
 
-# pigweed vs boncat freq
-#plot(df$boncat_freq, df$pigweed_prop_nongerm)
-# log tranform
-#plot(df$boncat_freq, log(df$pigweed_prop_nongerm+1))
-m1<-lm(pigweed_prop_nongerm~log(df$boncat_freq+1), data=df)
-summary(m1) # trend
-# number of seeds
-plot(df$boncat_freq, log(df$pigweed_num_nongerm+1))
-m1<-lm(pigweed_prop_nongerm~log(df$boncat_freq+1), data=df)
-summary(m1) # trend .07 # probaly specifc taxa matter
+# does not seem to be a relationship for fox tail
+df %>% filter(Treatment!="S" & Legume!="NA") %>%
+  ggplot( aes(y=foxtail_num_nongerm, x=active_cel_per_g, col=Treatment))+
+  geom_point()+
+  theme_bw(base_size = 12)
+
+df %>% filter(Treatment!="S" & Legume!="NA") %>%
+  ggplot( aes(y=foxtail_num_nongerm, x=boncat_freq, col=Treatment))+
+  geom_point()+
+  theme_bw(base_size = 12)
+
 
 
 # pigweed vs number of active cells
-plot(df$pigweed_prop_nongerm, df$active_cel_per_g)
-m1<-lm(pigweed_prop_nongerm~df$active_cel_per_g, data=df)
-summary(m1) 
-# log tranform
-plot(log(df$active_cel_per_g+1), log(df$pigweed_prop_nongerm+1))
-m1<-lm(log(pigweed_prop_nongerm+1)~log(df$active_cel_per_g+1), data=df)
-summary(m1) 
-# number of seeds
-plot(log(df$active_cel_per_g+1), log(df$pigweed_num_nongerm+1))
-m1<-lm(log(df$pigweed_num_nongerm+1)~log(df$active_cel_per_g+1), data=df)
-summary(m1) 
-# poisson
-plot(df$active_cel_per_g, df$pigweed_num_nongerm)
-m1<-glm(pigweed_num_nongerm~active_cel_per_g, data=df, family=poisson)
-summary(m1) 
-plot(m1) 
-
-# foxtail 
-hist(df$foxtail_num_germ)
-plot(log(df1$active_cel_per_g), log(df1$foxtail_num_nongerm))
-m1<-lm(df$foxtail_prop_nongerm~df$active_cel_per_g)
-summary(m1)
-
-# foxtail 
-hist(df$boncat_freq)
-plot(df$boncat_freq, log(df$foxtail_num_nongerm))
-m1<-lm(foxtail_prop_nongerm~df$boncat_freq, data=df)
-summary(m1)
-# no pattern
+y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
+m1<-glm(data= df, y~active_cel_per_g*Treatment, family = binomial)
+summary(m1) # legume interaction
 
 
-### nitrogen fixed with microbial activity
-fc
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-nfix<-read.csv("Nfix.csv")
+# pigweed vs boncat freq
+y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
+m1<-glm(data= df, y~boncat_freq*Legume*Brassicae, family = binomial)
+summary(m1) # legume interaction
 
-colnames(nfix) 
-df<-left_join(nfix, fc)
-# plots
-plot(df$active_cel_per_g, df$perc.Ndfa)
-plot(df$boncat_freq, df$perc.Ndfa)
-plot(df$active_cel_per_g, df$n_fix_per_legume)
-plot(df$boncat_freq, df$n_fix_per_legume)
+# foxtail vs number of active cells
+y<-cbind(df$foxtail_num_nongerm, df$foxtail_num_germ)
+m1<-glm(data= df, y~active_cel_per_g*Treatment, family = binomial)
+summary(m1) # legume interaction
 
 
-# frequency boncat
-m1<-lm(df$perc.Ndfa~df$boncat_freq, data=df)
-summary(m1)
-#plot(m1)
-m1<-lm(df$n_fix_per_legume~df$boncat_freq, data=df)
-summary(m1)
-# cells boncat
-m1<-lm(df$n_fix_per_legume~df$active_cel_per_g)
-summary(m1)
-m1<-lm(df$perc.Ndfa~df$active_cel_per_g)
-summary(m1)
+# pigweed vs boncat freq
+y<-cbind(df$foxtail_num_nongerm, df$foxtail_num_germ)
+m1<-glm(data= df, y~boncat_freq*Legume*Brassicae, family = binomial)
+summary(m1) # legume interaction
 
-# log transformed
-m1<-lm(df$n_fix_per_legume~log(df$active_cel_per_g+1))
-summary(m1)
-m1<-lm(df$perc.Ndfa~log(df$active_cel_per_g+1))
-summary(m1)
-
-# no signals 
 
 
 # corplot biomass increase verse activity ####
 fc
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 biomass<-read.csv("biomass_potlevel.csv")
 colnames(biomass) 
 df<-left_join(biomass, fc)
@@ -396,27 +381,36 @@ plot(df$Total.Root.g~log(df$active_cel_per_g+1), main="not sig")
 plot(df$Total.Root.g~log(df$boncat_freq+1), data=df, main="p=.09")
 
 # ggplot
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
-svg("shoot.active.svg", width=4.5, height = 3.5)
-ggplot(df, aes(y=Stem.Biomass.g, x=active_cel_per_g))+
+
+p1<-ggplot(df, aes(y=Stem.Biomass.g, x=active_cel_per_g, col=Treatment))+
   geom_point()+
-  geom_smooth(method = lm)+
-  annotate("text", x = 1500, y = 5, label = "p<0.001, Rsq=.38", 
-           color = "black", size = 5, fontface = "bold")+
+  #geom_smooth(method = lm)+
+  scale_color_manual(values=IBM)+
+  #annotate("text", x = 1500, y = 5, label = "p<0.001, Rsq=.38", 
+  #         color = "black", size = 5, fontface = "bold")+
   labs(y = "Shoot biomass (g)",
        x = "Active cells / g rhizosphere")+
   theme_bw(base_size = 12)
+
+
+p2<-df %>%
+ggplot(aes(y=Stem.Biomass.g, x=log(df$boncat_freq+1), col=Treatment))+
+  geom_point()+
+  #geom_smooth(method = lm)+
+  scale_color_manual(values=IBM)+
+  theme_bw()
+  #annotate("text", x = 5, y = 2, label = "p=0.09", 
+  #         color = "red", size = 5, fontface = "bold")
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
+svg("shoot.active.svg", width=6, height = 6)
+require(gridExtra)
+grid.arrange(p1, p2, ncol=1)
 dev.off()
 
 
-ggplot(df, aes(y=Total.Root.g, x=log(df$boncat_freq+1)))+
-  geom_point()+
-  geom_smooth(method = lm)+
-  annotate("text", x = 5, y = 2, label = "p=0.09", 
-           color = "red", size = 5, fontface = "bold")
-
 # shoots X number cells
-m1<-lm(df$Stem.Biomass.g~df$active_cel_per_g, data=df)
+m1<-lm(df$Stem.Biomass.g~df$active_cel_per_g*Legume, data=df)
 summary(m1)
 # big plants more cells bb
 
@@ -512,6 +506,7 @@ library(dplyr)
 fc %>% filter(Treatment=="L") 
 fc %>% dplyr::select(boncat_freq)
 df<-fc %>% filter(Treatment=="L") %>% dplyr::select(boncat_freq, active_cel_per_g )
+df
 # get biomass info and multiply by L biomass
 head(biomass)
 sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="legume") %>% arrange(Pot_ID)
@@ -558,61 +553,11 @@ LG
 # filter fc for L treatment
 # check
 fc %>% filter(Treatment=="L") 
-df<-fc %>% filter(Treatment=="L")%>% filter(Rep!="5") %>% dplyr::select(boncat_freq, active_cel_per_g ) 
+df<-fc %>% filter(Treatment=="L")%>% filter(Rep!="6" & Rep!="4") %>% dplyr::select(boncat_freq, active_cel_per_g ) 
 df
 # get biomass info and multiply by L biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% filter(Rep!="5") 
-sp1
-vector<-sp1$percent/100
-vector
-data_frame_multiplied1 <- df %>%
-  mutate(
-    across(
-      everything(),  # Selects columns starting with "Value"
-      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
-    )
-  )
-data_frame_multiplied1
-# filter for B treat
-fc %>% filter(Treatment=="B")
-df<-fc %>% filter(Treatment=="B") %>%filter(Rep!="5") %>%  dplyr::select(boncat_freq, active_cel_per_g )
-df
-# get biomass info and multiply by G biomass
-head(biomass)
-sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="brassica") %>% arrange(Pot_ID)
-sp1
-vector<-sp1$percent/100
-vector
-
-data_frame_multiplied2<- df %>%
-  mutate(
-    across(
-      everything(),  # Selects columns starting with "Value"
-      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
-    )
-  )
-
-print(data_frame_multiplied2)
-# add together
-LB<-data_frame_multiplied1 + data_frame_multiplied2
-LB$Trt_ID<-c("predict_LB+N1", "predict_LB+N2", "predict_LB+N3", "predict_LB+N4",  "predict_LB+N6" )
-LB$Treatment<-c("LB.predict", "LB.predict", "LB.predict", "LB.predict", "LB.predict" )
-LB$Rep <- c(1, 2, 3, 4, 6 )
-LB
-
-
-
-
-# GB
-# filter fc for G treatment
-fc %>% filter(Treatment=="G") 
-df<-fc %>% filter(Treatment=="G")  %>% 
-  dplyr::select(boncat_freq, active_cel_per_g ) 
-df
-# get biomass info and multiply by L biomass
-head(biomass)
-sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="grass") %>% arrange(Pot_ID) #%>% filter(Rep!="5") 
+sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% filter( Rep!="6") 
 sp1
 vector<-sp1$percent/100
 vector
@@ -628,9 +573,58 @@ data_frame_multiplied1
 fc %>% filter(Treatment=="B")
 df<-fc %>% filter(Treatment=="B") %>%  dplyr::select(boncat_freq, active_cel_per_g )
 df
-# get biomass info and multiply by G biomass
+# get biomass info and multiply by B biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="brassica") %>% arrange(Pot_ID)
+sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="brassica") %>%  filter(Rep!="6") %>% arrange(Pot_ID)
+sp1
+vector<-sp1$percent/100
+vector
+
+data_frame_multiplied2<- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+
+print(data_frame_multiplied2)
+# add together
+LB<-data_frame_multiplied1 + data_frame_multiplied2
+LB$Trt_ID<-c("predict_LB+N1", "predict_LB+N2", "predict_LB+N3", "predict_LB+N4" )
+LB$Treatment<-c("LB.predict", "LB.predict", "LB.predict", "LB.predict")
+LB$Rep <- c(1, 2, 3, 4 )
+LB
+
+
+
+
+# GB
+# filter fc for G treatment
+fc %>% filter(Treatment=="G") 
+df<-fc %>% filter(Treatment=="G")  %>% filter(Rep!="6"  & Rep!="4" ) %>%dplyr::select(boncat_freq, active_cel_per_g ) 
+df
+# get biomass info and multiply by L biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="grass") %>% arrange(Pot_ID)  %>% filter(Rep!="6"  & Rep!="4" )
+sp1
+vector<-sp1$percent/100
+vector
+data_frame_multiplied1 <- df %>%
+  mutate(
+    across(
+      everything(),  # Selects columns starting with "Value"
+      .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
+    )
+  )
+data_frame_multiplied1
+# filter for B treat
+fc %>% filter(Treatment=="B")
+df<-fc %>% filter(Treatment=="B") %>%  dplyr::select(boncat_freq, active_cel_per_g )
+df
+# get biomass info and multiply by B biomass
+head(biomass)
+sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="brassica") %>% arrange(Pot_ID)  %>% filter(Rep!="6" & Rep!="4")
 sp1
 vector<-sp1$percent/100
 vector
@@ -646,24 +640,24 @@ data_frame_multiplied2<- df %>%
 print(data_frame_multiplied2)
 # add together
 GB<-data_frame_multiplied1 + data_frame_multiplied2
-GB$Trt_ID<-c("predict_GB+N1", "predict_GB+N2", "predict_GB+N3", "predict_GB+N4", "predict_GB+N5",  "predict_GB+N6" )
-GB$Treatment<-c("GB.predict", "GB.predict", "GB.predict", "GB.predict", "GB.predict" , "GB.predict")
-GB$Rep <- c(1, 2, 3, 4,5, 6 )
+GB$Trt_ID<-c("predict_GB+N1", "predict_GB+N2", "predict_GB+N3", "predict_GB+N5" )
+GB$Treatment<-c("GB.predict", "GB.predict", "GB.predict", "GB.predict" )
+GB$Rep <- c(1, 2, 3, 5)
 GB
 
 
 
 
 
-
+library(dplyr)
 # LGB
 # filter fc for L treatment
 fc %>% filter(Treatment=="L") 
-df<-fc %>% filter(Treatment=="L") %>%  dplyr::select(boncat_freq, active_cel_per_g ) 
+df<-fc %>% filter(Treatment=="L") %>%  filter(Rep!="6"& Rep!="4" )  %>% dplyr::select(boncat_freq, active_cel_per_g )
 df
 # get biomass info and multiply by L biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="legume") %>% arrange(Pot_ID)# 
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% filter(Rep!="6"  & Rep!="4" ) 
 sp1
 
 vector<-sp1$percent/100
@@ -679,11 +673,11 @@ data_frame_multiplied0
 
 # filter fc for G treatment
 fc %>% filter(Treatment=="G") 
-df<-fc %>% filter(Treatment=="G")  %>%    dplyr::select(boncat_freq, active_cel_per_g ) 
+df<-fc %>% filter(Treatment=="G") %>%  filter(Rep!="6"& Rep!="4" ) %>%    dplyr::select(boncat_freq, active_cel_per_g ) 
 df
 # get biomass info and multiply by biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="grass") %>% arrange(Pot_ID) #%>% filter(Rep!="5") # has all reps
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="grass") %>% arrange(Pot_ID) %>%  filter(Rep!="6"& Rep!="4" )
 sp1
 vector<-sp1$percent/100
 vector
@@ -702,7 +696,7 @@ df<-fc %>% filter(Treatment=="B") %>%    dplyr::select(boncat_freq, active_cel_p
 df
 # get biomass info and multiply by G biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) # has all reps 
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>%  filter(Rep!="6"& Rep!="4" )
 sp1
 vector<-sp1$percent/100
 vector
@@ -718,9 +712,9 @@ data_frame_multiplied2<- df %>%
 print(data_frame_multiplied2)
 # add together
 LGB<-data_frame_multiplied0 + data_frame_multiplied1 + data_frame_multiplied2
-LGB$Trt_ID<-c("predict_LGB+N1", "predict_LGB+N2", "predict_LGB+N3", "predict_LGB+N4", "predict_LGB+N5",  "predict_LGB+N6" )
-LGB$Treatment<-c("LGB.predict", "LGB.predict", "LGB.predict", "LGB.predict", "LGB.predict" , "LGB.predict")
-LGB$Rep <- c(1, 2, 3, 4,5, 6 )
+LGB$Trt_ID<-c("predict_LGB+N1", "predict_LGB+N2", "predict_LGB+N3", "predict_LGB+N4")
+LGB$Treatment<-c("LGB.predict", "LGB.predict", "LGB.predict", "LGB.predict")
+LGB$Rep <- c(1, 2, 3, 4)
 LGB
 
 
@@ -731,9 +725,9 @@ df<-full_join(fc, predict)
 
 
 mycols <- c( #IBM colors
- # "navy", # dark royal blue L
-#  "#648FFF", # french blue G
-#  "#785EF0", # light purple B
+  "navy", # dark royal blue L
+ "#648FFF", # french blue G
+  "#785EF0", # light purple B
   "#DC267F", # magenta pink GB
   "grey",
   "#FE6100", # bright orange LB
@@ -746,14 +740,14 @@ mycols <- c( #IBM colors
 
 
 df<-df %>% filter(Treatment!="Soil")
-df<-df %>% filter(Treatment!="G" & Treatment!="B" & Treatment!="L")
+#df<-df %>% filter(Treatment!="G" & Treatment!="B" & Treatment!="L")
 
 unique(df$Treatment)
 
-df$Treatment<-factor(df$Treatment, levels = c( "GB", "GB.predict", "LB", "LB.predict",  "LG", 
+df$Treatment<-factor(df$Treatment, levels = c("L", "G", "B", "GB", "GB.predict", "LB", "LB.predict",  "LG", 
                                                 "LG.predict", "LGB", "LGB.predict" ))
 
-
+df
 # plot
 p1<-df  %>% 
   ggplot(aes(x=Treatment, y=active_cel_per_g, fill = Treatment)) +
@@ -786,8 +780,8 @@ labs(title = "B",
 
 p2
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
-svg("activity.predict.svg", width=6, height=3)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
+svg("activity.predict.svg", width=10, height=3.5)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
 
@@ -796,17 +790,24 @@ dev.off()
 #GB
 df1<-df%>% filter(Treatment=="GB" | Treatment=="GB.predict")
 m1<-glm(data= df1, active_cel_per_g~Treatment)
-summary(m1)
+m<-summary(m1)
+m$coefficients
 
 #LB
 df1<-df%>% filter(Treatment=="LB" | Treatment=="LB.predict")
 m1<-glm(data= df1, active_cel_per_g~Treatment)
 summary(m1)
+m<-summary(m1)
+m$coefficients
+
 
 #LG
 df1<-df%>% filter(Treatment=="LG" | Treatment=="LG.predict")
 m1<-glm(data= df1, active_cel_per_g~Treatment)
 summary(m1)
+summary(m1)
+m<-summary(m1)
+m$coefficients
 
 #LGB
 df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")

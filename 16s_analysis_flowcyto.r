@@ -74,6 +74,10 @@ metadat
 asvs<-asvs[which(metadat$Fraction!="Total"),]
 metadat<-metadat[which(metadat$Fraction!="Total"),]
 dim(metadat)
+metadat$Legume   <- factor(metadat$Legume)
+metadat$Brassicae   <- factor(metadat$Brassicae)
+metadat$Grass   <- factor(metadat$Grass)
+
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
 
@@ -291,7 +295,7 @@ summary(anova1)
 
 
 
-# remove rare taxa ############
+# remove rare taxa ############ 
   ps<-prune_taxa(taxa_sums(ps) > 0, ps)
   ps
   
@@ -1956,9 +1960,9 @@ write.csv(tax_table, "taxonomy.csv")
 
 ##### import predicted #####
 IBM <- c( #IBM colors
-  #"navy", # dark royal blue
-  #"#648FFF", # french blue
-  #"#785EF0", # light purple
+  "navy", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
   "#DC267F", # magenta pink 
   "#FE6100", # bright orange
   "#FFB000", # golden yellow
@@ -1989,9 +1993,11 @@ metadat<-as.data.frame(metadat[order(metadat$SampleID),])
 row.names(metadat) <- metadat$SampleID
 metadat
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+#factor(metadat$Treatment)
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
 
 # import it phyloseq
+
 Workshop_OTU <- otu_table(as.matrix(asvs), taxa_are_rows = FALSE)
 Workshop_metadat <- sample_data(metadat)
 Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
@@ -2002,15 +2008,15 @@ ps
 
 
 ##### predicted plot #####
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" & n_species!="1")
+ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" )
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
 # 1745 taxa
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" & n_species!="1")
+metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" )
 #factor
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "GB", "LB", "LG", "LGB"))
-metadat2$Fraction   <- factor(metadat2$Fraction)
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+#metadat2$Fraction   <- factor(metadat2$Fraction)
 
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps1), method = "bray")
@@ -2033,14 +2039,14 @@ perc.exp<-otus.eig/(sum(otus.eig))*100
 plot(otus.pcoa$eig)
 
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
-#svg("pcoa.svg", height = 3.7, width = 3.8)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
+svg("pcoa.predicted1.svg", height = 4, width = 4)
 par(adj=.5)
 ordiplot(otus.pcoa,choices=c(1,2), type="none", main="",
          xlab=paste("PCoA1 (",pe1,"% var. explained)"),
          ylab=paste("PCoA2 (",pe2,"% var. explained)"))
   par(adj = 0)
-title(main= "C")
+title(main= "E")
 par(adj=.5)
 points(otus.p, 
        col= IBM[as.factor(metadat2$Treatment)],
@@ -2055,16 +2061,16 @@ points(otus.p,
 #             col= IBM,
 #             alpha = 50,
 #             cex=1.5)
-legend("topright", legend=c( "GB", "LB", "LG", "LGB"),
-       fill= IBM,
-       cex=1,
-       bty = "n")
+# legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+#        fill= IBM,
+#        cex=1,
+#        bty = "n")
 legend("bottomright", legend=c("measured", "predicted"  ),
        pch=c(16,8 ),
        cex=1,
        title = "",     bty = "o")
 
-#dev.off()
+dev.off()
 # permanova
 adonis2(otus.bray ~ Treatment, data = metadat2)
 adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
@@ -2228,7 +2234,7 @@ pc1_variable <- pca_result$x[, 1]
 metadat2<-metadat2 %>% select(SampleID, Trt_ID, Pot_ID, Treatment, Rep, Block)
 
 # biomass
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 biomass<-read.csv("biomass_potlevel.csv", row.names = 1)
 biomass<-biomass %>% select(Trt_ID, Total.Root.g, Stem.Biomass.g ) %>%
   mutate(Root.Biomass=Total.Root.g, Shoot.Biomass= Stem.Biomass.g) %>%
@@ -2236,14 +2242,14 @@ biomass<-biomass %>% select(Trt_ID, Total.Root.g, Stem.Biomass.g ) %>%
 df<-left_join(metadat2, biomass)
 
 # fc 
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
 fc <-read.csv("processed_flow_cyto.csv")
 head(fc)
 fc<-fc %>% select(Trt_ID, boncat_freq, active_cel_per_g )
 df<-left_join(df, fc)
 
 # n fix 
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 nfix<-read.csv("Nfix.csv")
 head(nfix)
 nfix<-nfix %>% 
@@ -2251,7 +2257,7 @@ nfix<-nfix %>%
 df<-left_join(df, nfix)
 
 # weeds
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 weed<-read.csv("weed_seed_decay.csv", row.names = 1)
 head(weed)
 weed<-weed %>% select(Trt_ID, foxtail_prop_nongerm, pigweed_prop_nongerm)
@@ -2264,7 +2270,6 @@ df$z_foxtail_prop_nongerm<-as.vector(scale(log(df$foxtail_prop_nongerm+1)))
 df$z_pigweed_prop_nongerm<-as.vector(scale(log(df$pigweed_prop_nongerm+1)))
 df$z_boncat_freq<-as.vector(scale(df$boncat_freq))
 df$z_active_cel_per_g<-as.vector(scale(log(df$active_cel_per_g+1)))
-
 df$z_perc.Ndfa<-as.vector(scale(df$perc.Ndfa))
 df$z_n_fix_per_legume<-as.vector(scale(df$n_fix_per_legume))
 
@@ -2320,13 +2325,14 @@ ggplot(df, aes(y=z_pigweed_prop_nongerm, x=PC1))+
   
 dev.off()
 
-m1<-lm(df$z_pigweed_prop_nongerm~df$PC1)
-summary(m1) # trend
-
 
 # lm 
 m1<-lm(df$PC1~df$z_Root.Biomass)
-summary(m1) # trend
+m<-summary(m1) # trend
+m<-m$coefficients
+m[4]
+
+
 
 m1<-lm(df$PC1~df$z_Shoot.Biomass)
 summary(m1)
@@ -2346,7 +2352,6 @@ summary(m1) # trend
 m1<-lm(df$z_pigweed_prop_nongerm~df$PC1)
 summary(m1) # trend
 
-
 m1<-lm(df$PC1~df$z_n_fix_per_legume)
 summary(m1)
 
@@ -2354,7 +2359,7 @@ m1<-lm(df$z_perc.Ndfa)
 summary(m1) 
 
 
-###### extract key taxa ####
+######extract key taxa ####
  
 #  Constrained ordination
 ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
@@ -2395,7 +2400,7 @@ species_scores <- species_scores %>%
   arrange(desc(dist))
 
 # Select the top 10 species
-top_spp <- head(species_scores, 20)
+top_spp <- head(species_scores, 15)
 top_spp
 
 ggplot() +
@@ -2447,13 +2452,11 @@ df
 tax<-as.data.frame((tax_table(ps1)))
 
 tax <- tax[tax$asv %in% asvkp, ]
+tax<-tax %>% group_by(Phyla, Genus, Species, asv) %>% summarise()
 tax<-tax %>% group_by(Phyla, Genus, asv) %>% summarise()
 tax
 df<-left_join(df, tax)
-df
-
 df<-as.data.frame(df)
-
 df
 
 
@@ -2465,8 +2468,8 @@ df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG",
 # plot
 mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
 
-
-df %>%
+df$Phyla
+df %>% filter(Phyla==" p__Cyanobacteriota") %>%
   ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
   geom_boxplot(outliers=FALSE)+
   geom_jitter()+
@@ -2477,118 +2480,10 @@ df %>%
         plot.title = element_text(hjust = 0.5))
 
 
-
-
-# genus level boxplot
-
-
-# make df relative abundance
-df<-as.data.frame((otu_table(ps1)))
-df<-df/rowSums(df)
-df<- as.data.frame(t(df))
-df$asv<-row.names(df)
-df <- df[df$asv %in% asvkp, ]
-
-# add taxa info
-tax<-as.data.frame((tax_table(ps1)))
-df<-left_join(df, tax)
-df
-
-#summarize by genus
-df<-df %>% group_by(Genus) %>%
-  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
-df
-
-# save genus info
-Genus <- df$Genus
-df$Genus = NULL
-df
-# add treatment info
-df<-as.data.frame(t(df))
-colnames(df) <- Genus
-df
-
-metadat2<-metadat2 %>% select(Treatment)
-df<-cbind(df, metadat2)
-df
-
-# pivot
-df<-df %>%
-  pivot_longer(cols = starts_with(" g_"), 
-               names_to = "Genus",
-               values_to = "percent_abundance")
-df
-
-# add phyla info
-tax <- tax[tax$asv %in% asvkp, ]
-tax<-tax %>% group_by(Phyla, Genus) %>% summarise()
-tax
-df<-left_join(df, tax)
-df<-as.data.frame(df)
-df
-
-
-
-# plot
-mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
-df$percent_abundance <- as.numeric(df$percent_abundance)
-df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-
-df %>%
-ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
-  geom_boxplot(outliers=FALSE)+
-  geom_jitter()+
-  scale_fill_manual(values= mycols)+
-  theme_bw(base_size = 12) +
-  facet_grid(~Genus, scales="free", space="free")+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5))
-
-
-#### g_ AC14
-df1<-df %>% filter(Genus==" g__AC-14")
-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
-
-df1<-df %>% filter(Genus==" g__Deinococcus_C")
-kruskal.test(percent_abundance ~ Treatment, data = df1)
-
-df1<-df %>% filter(Genus==" g__Microcoleus")
-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
-
-df1<-df %>% filter(Genus==" g__Escherichia")
-kruskal.test(percent_abundance ~ Treatment, data = df1) #
-
-df1<-df %>% filter(Genus==" g__Vampirovibrio")
-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
-
-df1<-df %>% filter(Genus==" g__Terrabacter")
-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
-
-df1<-df %>% filter(Genus==" g__Rhizobium_C_501058")
-m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
-m1
-
-
-# fdr correction
-# raw results
-raw_pvalues<-c( " 0.5193", "0.219", "0.3148", "0.5253", "0.002285", "0.0355" , "0.01088")
-taxa <-  c(" g__AC-14", " g__Deinococcus_C", " g__Microcoleus", " g__Escherichia", " g__Vampirovibrio", " g__Terrabacter", " g__Rhizobium_C_501058"  )
-#  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
-
- adjusted_pvalues <- p.adjust(raw_pvalues, method = "fdr")
- adjusted_pvalues
-  final_table <- data.frame(
-    taxa = taxa,
-    Raw_P = raw_pvalues,
-    fdr_adj_p = adjusted_pvalues
-  )
-  print(final_table)
-# 
-
 ### genus overall ########
-  target<-  c(" g__AC-14", " g__Deinococcus_C", " g__Microcoleus", " g__Escherichia", " g__Vampirovibrio", " g__Terrabacter", " g__Rhizobium_C_501058"  )
-  # Create a vector of the genera you want
+target<-unique(df$Genus)
+
+# Create a vector of the genera you want
 
   # Subset the phyloseq object
   ps1 <- subset_taxa(ps1, Genus %in% target)
@@ -2633,13 +2528,18 @@ taxa <-  c(" g__AC-14", " g__Deinococcus_C", " g__Microcoleus", " g__Escherichia
   df
   
   # add phyla info
-  tax <- tax[tax$Genus %in% target, ]
+  tax<-as.data.frame((tax_table(ps1)))
+    tax <- tax[tax$Genus %in% target, ]
+  tax
   tax<-tax %>% group_by(Phyla, Genus) %>% summarise()
   tax
   df<-left_join(df, tax)
   df<-as.data.frame(df)
   df
   
+  df$Genus<-gsub(" g__", "", df$Genus)
+  df$Genus<-gsub("_501058", "", df$Genus)
+  df$Genus<-gsub("_C", "", df$Genus)
   
   
   # plot
@@ -2647,345 +2547,277 @@ taxa <-  c(" g__AC-14", " g__Deinococcus_C", " g__Microcoleus", " g__Escherichia
   df$percent_abundance <- as.numeric(df$percent_abundance)
   df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
   
-  
+  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predict_mbiome")
+  #svg("active.genus.svg", height = 4, width=8)
   df %>%
     ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
     geom_boxplot(outliers=FALSE)+
     geom_jitter()+
     scale_fill_manual(values= mycols)+
-    theme_bw(base_size = 12) +
+    theme_classic(base_size = 12) +
     facet_grid(~Genus, scales="free", space="free")+
     theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0.5))
+          plot.title = element_text(hjust = 0.5),
+          legend.position = "none")
+
+  #### global genus tests
+  df1<-df %>% filter(Genus=="AC-14")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n1<-m1$p.value
   
-  #### g_ AC14
-  df1<-df %>% filter(Genus==" g__AC-14")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  df1<-df %>% filter(Genus=="Deinococcus")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1)
+  n2<-m1$p.value
+    
+  df1<-df %>% filter(Genus=="Escherichia")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) 
+  n3<-m1$p.value
   
-  df1<-df %>% filter(Genus==" g__Deinococcus_C")
-  kruskal.test(percent_abundance ~ Treatment, data = df1)
+  df1<-df %>% filter(Genus=="Microcoleus")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n4<-m1$p.value
+
+  df1<-df %>% filter(Genus=="Rhizobium") 
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  n5<-m1$p.value
+  
+  df1<-df %>% filter(Genus=="Vampirovibrio")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  n6<-m1$p.value
+  
+  
+  # raw results
+  raw_pvalues<-c( n1, n2, n3, n4,  n5, n6)
+  taxa <-  unique(df$Genus) 
+  test <- "Global"
+  # pvalue Adjustment
+  adjusted_pvalues <- p.adjust(raw_pvalues, method = "fdr")
+  adjusted_pvalues
+  final_table <- data.frame(
+    taxa = taxa,
+    test = test,
+    Raw_P = raw_pvalues,
+    fdr_adj_p = adjusted_pvalues
+    #fdr_adj_p_nonsci = format(adjusted_pvalues, scientific = FALSE)
+    
+  )
+  print(final_table)
   
     
-  df1<-df %>% filter(Genus==" g__Escherichia")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) 
+## pairwise stats
+  #   "Deinococcus_C"
+  n<-unique(df$Genus)
+  n
+  df1<-df %>% filter(Genus=="Deinococcus")  %>% filter(Treatment=="L"| Treatment=="B")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n1<-m1$p.value
   
-  df1<-df %>% filter(Genus==" g__Microcoleus")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) # 
-
-  df1<-df %>% filter(Genus==" g__Rhizobium_C_501058") %>% filter(Treatment=="L" | Treatment=="B")
-  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
-  m1
+  n<-unique(df$Genus)
+  df1<-df %>% filter(Genus=="Deinococcus")  %>% filter(Treatment=="L"| Treatment=="G")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n2<-m1$p.value 
   
-  df1<-df %>% filter(Genus==" g__Vampirovibrio")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  n<-unique(df$Genus)
+  df1<-df %>% filter(Genus=="Deinococcus")  %>% filter(Treatment=="B"| Treatment=="G")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n3<-m1$p.value 
+    
+  df1<-df %>% filter(Genus=="Deinococcus")  %>% filter(Treatment=="B"| Treatment=="GB")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n4<-m1$p.value 
   
-  df1<-df %>% filter(Genus==" g__Terrabacter")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
   
-  # fdr correction
+  df1<-df %>% filter(Genus=="Deinococcus")  %>% filter(Treatment=="B"| Treatment=="LB")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n5<-m1$p.value 
+  
   # raw results
-  raw_pvalues<-c( " 0.6061", "0.07953", "0.3857", "0.6035", "0.01592", "0.614" , "0.11")
-  taxa <-  c(" g__AC-14", " g__Deinococcus_C", " g__Escherichia"," g__Microcoleus",  " g__Rhizobium_C_501058", " g__Vampirovibrio", " g__Terrabacter"  )
+  raw_pvalues<-c( n1, n2, n3, n4,  n5)
+  taxa <-  "Deinococcus_C"
+  pair <- c("L-B", "L-G", "B-G", "B-GB", "B-LB")
   #  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
   
   adjusted_pvalues <- p.adjust(raw_pvalues, method = "fdr")
   adjusted_pvalues
   final_table <- data.frame(
     taxa = taxa,
+    pair = pair,
     Raw_P = raw_pvalues,
-    fdr_adj_p = adjusted_pvalues
+    fdr_adj_p = adjusted_pvalues,
+    fdr_adj_p_nonsci = format(adjusted_pvalues, scientific = FALSE)
+    
   )
   print(final_table)
-  # 
+ 
+  
+  ### rhizobium 
+  n<-unique(df$Genus)
+  n
+  df1<-df %>% filter(Genus=="Rhizobium")  %>% filter(Treatment=="L"| Treatment=="B")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n1<-m1$p.value
+  
+  n<-unique(df$Genus)
+  df1<-df %>% filter(Genus=="Rhizobium")  %>% filter(Treatment=="L"| Treatment=="G")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n2<-m1$p.value 
+  
+  n<-unique(df$Genus)
+  df1<-df %>% filter(Genus=="Rhizobium")  %>% filter(Treatment=="B"| Treatment=="G")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n3<-m1$p.value 
+  
+  n<-unique(df$Genus)
+  df1<-df %>% filter(Genus=="Rhizobium")  %>% filter(Treatment=="L"| Treatment=="LG")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n4<-m1$p.value 
+  
+  n<-unique(df$Genus)
+  df1<-df %>% filter(Genus=="Rhizobium")  %>% filter(Treatment=="L"| Treatment=="LB")
+  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  n5<-m1$p.value 
   
   
-  #### g_ AC14
-  df1<-df %>% filter(Genus==" g__AC-14")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) # 
+  # raw results
+  raw_pvalues<-c( n1, n2, n3, n4, n5)
+  taxa <-  "Rhizobium_C"
+  pair <- c("L-B", "L-G", "B-G", "L-LG", "L-LB")
+  #  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
   
-  df1<-df %>% filter(Genus==" g__Deinococcus_C")
-  kruskal.test(percent_abundance ~ Treatment, data = df1)
-  
-  
-  df1<-df %>% filter(Genus==" g__Escherichia")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) 
-  
-  df1<-df %>% filter(Genus==" g__Microcoleus")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) # 
-  
-  df1<-df %>% filter(Genus==" g__Rhizobium_C_501058")
-  m1<-kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
-  m1
-  
-  df1<-df %>% filter(Genus==" g__Vampirovibrio")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
-  
-  df1<-df %>% filter(Genus==" g__Terrabacter")
-  kruskal.test(percent_abundance ~ Treatment, data = df1) # sig
+  adjusted_pvalues <- p.adjust(raw_pvalues, method = "fdr")
+  adjusted_pvalues
+  final_table <- data.frame(
+    taxa = taxa,
+    pair = pair,
+    Raw_P = raw_pvalues,
+    fdr_adj_p = adjusted_pvalues,
+    fdr_adj_p_nonsci = format(adjusted_pvalues, scientific = FALSE)
+    
+  )
+  print(final_table)
   
   
+### deseq ##########
+  library(phyloseq)
+  library(DESeq2)
+  library(ggplot2)
+  
+  
+  # 1. Convert phyloseq object to DESeq2 format
+  # We add 1 to all counts to handle zeros (Laplace smoothing)
+   # import it phyloseq
+   Workshop_OTU <-otu_table(ps1)+1
+   Workshop_metadat <- sample_data(ps1)
+   Workshop_taxo <- tax_table(ps1) 
+   ps.plusone <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
+   ps.plusone
+  
+  
+  
+  # Focus only on specific genera
+  ps.subset <- subset_taxa(ps.plusone, Genus %in% target)
+ 
+    
+  #  DESeq2 
+  ds <- phyloseq_to_deseq2(ps.subset, ~ factor(Legume))
+  # 'test="Wald"' is standard for two-group comparisons
+  # 'fitType="local"' is often better for sparse microbial data 
+  diagdds <- DESeq(ds, test="Wald", fitType="local")
+  res <- results(diagdds)
+  # check results
+  alpha = 0.05
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps)[rownames(sigtab), ], "matrix"))  
+  sigtab  
+    
+  
+  # DEseq2
+  ds <- phyloseq_to_deseq2(ps.subset, ~ Grass)
+  diagdds <- DESeq(ds, test="Wald", fitType="local")
+  res <- results(diagdds)
+  # check
+  alpha = 0.05
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps)[rownames(sigtab), ], "matrix"))  
+  sigtab  
+  
+  
+  # DEseq
+  ds <- phyloseq_to_deseq2(ps.subset, ~ Brassicae)
+  diagdds <- DESeq(ds, test="Wald", fitType="local")
+  res <- results(diagdds)
+  # check
+  alpha = 0.05
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps)[rownames(sigtab), ], "matrix"))  
+  sigtab  
+  
+  
+### aggregate 2 genus level
+  # 1. Convert phyloseq object to DESeq2 format
+  # We add 1 to all counts to handle zeros (Laplace smoothing)
+  # import it phyloseq
+  
+  ps.subset <- subset_taxa(ps1, Genus %in% target)
+  
+  
+  # aggregate by genus
+  df<-as.data.frame(t(otu_table(ps.subset)))
+  tax<- as.data.frame(tax_table(ps.subset))
+  tax <- tax %>% select(-Confidence)
+  df<-cbind(df,tax)
+  # aggregate df
+  df<-df %>% group_by(Genus) %>%
+  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+  df<-as.data.frame(df)
+  row.names(df)<-df$Genus
+  df<-df %>% select(-Genus)
+  df<-df+1
+  df
+  # aggregate tax
+  tax
+  tax<-tax %>% select(-asv, -Species) %>%
+    group_by( Phyla,Class, Order, Family , Genus) %>%
+    summarise()
+  tax<-as.data.frame(tax)
+  row.names(tax) <- tax$Genus
+  tax<-as.data.frame(tax[order(tax$Genus),])
+  as.matrix(tax)
+  
+  Workshop_OTU <- otu_table(df, taxa_are_rows = TRUE)
+  Workshop_metadat <- sample_data(ps1)
+  Workshop_taxo <- tax_table(as.matrix(tax))
+  ps.subset <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
+  ps.subset
+  
 
-#### ANCOM asv level ####
+  #  DESeq2 
+  ds <- phyloseq_to_deseq2(ps.subset, ~ factor(Legume))
+  diagdds <- DESeq(ds, test="Wald", fitType="local")
+  res <- results(diagdds)
+  alpha = 0.05
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.subset)[rownames(sigtab), ], "matrix"))  
+  sigtab
+  
+  # DEseq2
+  ds <- phyloseq_to_deseq2(ps.subset, ~ Grass)
+  diagdds <- DESeq(ds, test="Wald", fitType="local")
+  res <- results(diagdds)
+  # check
+  alpha = 0.05
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.subset)[rownames(sigtab), ], "matrix"))  
+  sigtab  
 
-
-
-#  active
-ps <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
-ps <-prune_taxa(taxa_sums(ps) > 0, ps1)
-ps
-
-# between monocultures ###########
-# LGB
-ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G"  )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-levels(sample_data(ps1)$Treatment)
-##3LG
-LG = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  p_adj_method = "fdr",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-res = LG$res
-
-
-
-# Lb
-ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B"  )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-levels(sample_data(ps1)$Treatment)
-#LG
-LB = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  p_adj_method = "fdr",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-res = LB$res
-globalLB<-LB$res_global
-
-# LGB
-ps1<-subset_samples(ps , Treatment=="G" | Treatment=="B"  )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-levels(sample_data(ps1)$Treatment)
-#LG
-GB = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  #global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-res = GB$res
-globalGB<-GB$res_global
-
-
-
-#############mixtures ######
-
-# LG
-ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="LG" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
-                                     levels = c("LG", "L", "G"))
-levels(sample_data(ps1)$Treatment)
-#LG
-LG = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-LG = LG$res
-LG 
-
-
-#Grass GB
-ps1<-subset_samples(ps , Treatment=="G" | Treatment=="B" | Treatment=="GB" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
-                                     levels = c("GB", "G", "B"))
-levels(sample_data(ps1)$Treatment)
-
-#GB
-GB = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  #global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-GB = GB$res
-
-
-
-# LB
-ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B" | Treatment=="LB" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
-                                     levels = c("LB", "L", "B"))
-levels(sample_data(ps1)$Treatment)
-LB = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  #global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-LB = LB$res
-LB
-
-
-# LGB
-ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="B" |  Treatment=="LGB" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
-                                     levels = c("LGB", "G", "L", "B"))
-levels(sample_data(ps1)$Treatment)
-output = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  #global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-LGB = output$res
-LGB
-
-
-
-
-##### used only asvskp ####
-
-#  active
-ps <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
-ps <-prune_taxa(taxa_sums(ps) > 0, ps)
-ps
-# prune taxa
-ps<-prune_taxa(asvkp, ps)
-ps
-
-#legume LG
-ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="LG" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 
-sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
-                                     levels = c("LG", "L", "G"))
-levels(sample_data(ps1)$Treatment)
-#LG
-LG = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  #global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-LG = LG$res
-LG
-
-
-#Grass GB
-ps1<-subset_samples(ps , Treatment=="G" | Treatment=="B" | Treatment=="GB" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
-                                     levels = c("GB", "G", "B"))
-levels(sample_data(ps1)$Treatment)
-
-#GB
-GB = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  #global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-GB = GB$res
-GB
-
-
-# LB
-ps1<-subset_samples(ps , Treatment=="L" | Treatment=="B" | Treatment=="LB" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
-                                     levels = c("LB", "L", "B"))
-levels(sample_data(ps1)$Treatment)
-LB = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "asv",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  #global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-LB = LB$res
-LB
-
-
-# LGB
-ps1<-subset_samples(ps , Treatment=="L" | Treatment=="G" | Treatment=="B" |  Treatment=="LGB" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1 # 1785
-sample_data(ps1)$Treatment <- factor(sample_data(ps1)$Treatment, 
-                                     levels = c("LGB", "G", "L", "B"))
-levels(sample_data(ps1)$Treatment)
-output = ancombc2(
-  data = ps1,             # Your TreeSummarizedExperiment or phyloseq object
-  assay_name = "counts", 
-  tax_level = "Genus",    # Or NULL if data is already at the desired level
-  fix_formula = "Treatment",  # The variable must be in your fixed effects
-  group = "Treatment",        # Specify the variable for pairwise testing
-  #pairwise = TRUE,        # Enable all-pairs comparisons
-  #global = TRUE,          # Recommended for multi-group designs
-  p_adj_method = "holm",  # Method for p-value adjustment
-  alpha = 0.05            # Significance threshold
-)
-LGB = output$res
-LGB
-
+  
+  # DEseq
+  ds <- phyloseq_to_deseq2(ps.subset, ~ Brassicae)
+  diagdds <- DESeq(ds, test="Wald", fitType="local")
+  res <- results(diagdds)
+  # check
+  alpha = 0.05
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.subset)[rownames(sigtab), ], "matrix"))  
+  sigtab  
+  
