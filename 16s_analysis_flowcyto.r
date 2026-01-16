@@ -2248,13 +2248,13 @@ head(fc)
 fc<-fc %>% select(Trt_ID, boncat_freq, active_cel_per_g )
 df<-left_join(df, fc)
 
-# n fix 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-nfix<-read.csv("Nfix.csv")
-head(nfix)
-nfix<-nfix %>% 
-  filter(duplicate=="N") %>%select(Trt_ID, perc.Ndfa, n_fix_per_legume )
-df<-left_join(df, nfix)
+# # n fix 
+# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+# nfix<-read.csv("Nfix.csv")
+# head(nfix)
+# nfix<-nfix %>% 
+#   filter(duplicate=="N") %>%select(Trt_ID, perc.Ndfa, n_fix_per_legume )
+# df<-left_join(df, nfix)
 
 # weeds
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
@@ -2297,21 +2297,22 @@ plot(df$PC1, df$z_boncat_freq, main = "active, not sig")
 plot(df$PC1, df$z_active_cel_per_g, main = "active, p=.01, rsq=.25")
 
 par(mfrow=c(1,2))
-plot(df$PC1, df$z_foxtail_prop_nongerm, main= "active, not sig")
 plot(df$PC1, df$z_pigweed_prop_nongerm, main= "active p=.06, Rsq=.07")
-plot(df$PC1, df$z_n_fix_per_legume, main= "active, not sig  ")
-plot(df$PC1, df$z_perc.Ndfa, main= "active, not sig")
 
 
-##### ggplot ####
+###ggplot 
 setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
 svg("shoot_pc1.svg", width=4.5, height=3.5)
-ggplot(df, aes(y=z_Shoot.Biomass, x=PC1))+
+ggplot(df, aes(y=z_Shoot.Biomass, x=PC1, col=Treatment))+
   geom_point()+
   theme_bw(base_size = 12)+
-  labs(y = "shoot biomass",
+  scale_color_manual(values=IBM)+
+  labs(y = "Z transformed shoot biomass",
        x = "PC1 active microbiome")
 dev.off()
+
+
+
 
 svg("weed_pc1.svg", width=4.5, height=3.5)
 ggplot(df, aes(y=z_pigweed_prop_nongerm, x=PC1))+
@@ -2329,12 +2330,13 @@ dev.off()
 # lm 
 m1<-lm(df$PC1~df$z_Root.Biomass)
 m<-summary(m1) # trend
+m
 m<-m$coefficients
 m[4]
 
 
 
-m1<-lm(df$PC1~df$z_Shoot.Biomass)
+m1<-lm(df$PC1~z_Shoot.Biomass*Treatment, data=df)
 summary(m1)
 
 m1<-lm(df$PC1~df$z_boncat_freq)
