@@ -450,8 +450,8 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
 library(readxl)
 library(tidyverse)
 library(lubridate)
-library(lme4)
-library(nlme)
+#library(lme4)
+#library(nlme)
 
 #### import biomass data and process
 biomasspath <- "C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
@@ -586,13 +586,13 @@ p2<-df1  %>%
 
 p2
 
-# put the tow plots together
+# put the plots together
 
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-svg("biomasspredict.svg", height = 6, width = 4.5)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
+#svg("biomasspredict.svg", height = 6, width = 4.5)
 grid.arrange(p1, p2, ncol=1)
-dev.off()
+#dev.off()
 
 
 ######### example calculation  #####
@@ -682,22 +682,22 @@ p1
 
 #GB
 #filter
-df2<-dfb1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LB
-df2<-dfb1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LG
-df2<-dfb1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
 anova(m1)
 
 #LGB
-df2<-dfb1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
 anova(m1)
 
