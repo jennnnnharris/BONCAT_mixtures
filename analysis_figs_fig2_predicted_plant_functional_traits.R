@@ -9,9 +9,9 @@ rm(list=ls())
 library(readxl)
 library(tidyverse)
 library(lubridate)
-library(lme4)
-library(nlme)
-#library(emmeans)
+#library(lme4)
+#library(nlme)
+library(emmeans)
 #library(multcomp)
 #library(dplyr)
 
@@ -34,7 +34,7 @@ legume_cols <- c( #IBM colors
 
 #plant functional traits without prediction 
 #biomass####
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 df <- read.csv("biomass_potlevel.csv") # biomass data
 
 # process to make n species column, summarize at pot level, make treatment a factor.
@@ -88,9 +88,11 @@ grid.arrange(p1, p2, ncol=2)
 df1<-df %>% filter(n_species==1)
 m1<-aov(Root.Biomass.g ~ Treatment, data = df1)
 summary(m1) # difference between treatments
+library(emmeans)
 emm_object <- emmeans(m1, specs = ~ Treatment)
 # Perform all pairwise comparisons with Tukey adjustment
 pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+
 summary(pairwise_comparison)
 cld_result <- cld(emm_object, 
                   adjust = "tukey", 
@@ -108,6 +110,7 @@ summary(m1) # difference between treatments
 emm_object <- emmeans(m1, specs = ~ Treatment)
 # Perform all pairwise comparisons with Tukey adjustment
 pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+library(multcomp)
 summary(pairwise_comparison)
 cld_result <- cld(emm_object, 
                   adjust = "tukey", 
@@ -451,7 +454,7 @@ library(lme4)
 library(nlme)
 
 #### import biomass data and process
-biomasspath <- "C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
+biomasspath <- "C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
 setwd(biomasspath)
 df <- read.csv("biomass_potlevel.csv", row.names = 1) # biomass data
 
