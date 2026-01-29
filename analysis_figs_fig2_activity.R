@@ -26,24 +26,6 @@ IBM <- c( #IBM colors
 
 
 
-### clean data  #############
-# 
-# # import data
-# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
-# df1<-read_excel("Flow_cyto_master.xlsx", sheet = 2)
-# 
-# # avg the technical reps that are adj for day.
-# df1
-# df1<-df1%>% group_by( Rep, Group, Treatment,  Pot_ID) %>%
-#   summarise(BONCAT_freq = mean(BONCAT_freq_adj), 
-#             n_events_cells= round(mean(n_events_cells), digits = 0),
-#             n_events_BONCAT= round(mean(success_adj), digits = 0) , 
-#             n = n())
-# # import data
-# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
-# df<-read_excel("Flow_cyto_master.xlsx", sheet = 1)
-# biggie<-left_join(df1, df)
-# write.csv(biggie, "flow_cyto.csv")
 
 ####### import data #####
 #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
@@ -103,7 +85,7 @@ fc$Date_Sorted   <- factor(fc$Date_Sorted)
 #  theme(axis.text.x = element_text(angle=60, hjust=1))
 
 
-###### plot ###########
+###### precent active ###########
 
 fc<-fc  %>%   filter(Treatment!="Soil")
 lab = as.character(fc$Treatment)
@@ -177,6 +159,7 @@ cld_result <- cld(emm_object,
                   # The Letters argument is optional, but common for CLDs
                   Letters = letters) 
 
+
 print(cld_result)
 
 
@@ -187,22 +170,6 @@ m1<-glm(data= prop, y~Treatment, family = binomial)
 summary(m1)
 
 
-
-# p1<-fc  %>%
-#   filter(Treatment!="Soil") %>%
-#   ggplot(aes(x=as.factor(Legume), y=boncat_freq, fill = as.factor(Legume))) +
-#   geom_jitter(width = .2, size=2 )+
-#   geom_boxplot(alpha=.5, outlier.shape = NA)+
-#   scale_fill_manual(values = IBM)+
-#   theme_classic(base_size = 16)+
-#   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-#         plot.title = element_text(hjust = 0))+
-#   ylab("percent active")
-# 
-# p1
- m1<-glm(data= prop, y~Legume, family = binomial)
- m1
- summary(m1)
 
 
 ###################################number of cells ########################
@@ -292,239 +259,7 @@ summary(m1)
 
 
 
-# corr plot activity with weed seed ####
-# weed seed
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-weed<-read.csv("weed_seed_decay.csv", row.names = 1)
-weed
-fc  
-df<- left_join(fc, weed)
-head(df)  
 
-
-
-
-p1<-df %>% filter(Treatment!="Soil" & Legume!="NA") %>%
-ggplot( aes(y=pigweed_num_nongerm, x=active_cel_per_g, col=Treatment))+
-  geom_point()+
-  scale_color_manual(values=IBM)+
-  theme_bw(base_size = 12)+
-  facet_grid(~Legume_lonmg)
-#dev.off()
-p2<-df %>% filter(Treatment!="Soil" & Legume!="NA") %>%
-  ggplot( aes(y=pigweed_num_nongerm, x=boncat_freq, col=Treatment))+
-  geom_point()+
-  scale_color_manual(values=IBM)+
-  theme_bw(base_size = 12)+
-  facet_grid(~Legume_lonmg)
-
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_functional")
-svg("pigweed_active.svg", width=6, height= 6)
-require(gridExtra)
-grid.arrange(p1, p2, ncol=1)
-dev.off()
-
-
-# does not seem to be a relationship for fox tail
-df %>% filter(Treatment!="S" & Legume!="NA") %>%
-  ggplot( aes(y=foxtail_num_nongerm, x=active_cel_per_g, col=Treatment))+
-  geom_point()+
-  theme_bw(base_size = 12)
-
-df %>% filter(Treatment!="S" & Legume!="NA") %>%
-  ggplot( aes(y=foxtail_num_nongerm, x=boncat_freq, col=Treatment))+
-  geom_point()+
-  theme_bw(base_size = 12)
-
-
-
-# pigweed vs number of active cells
-y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
-m1<-glm(data= df, y~active_cel_per_g*Legume*Brassicae, family = binomial)
-summary(m1) # legume interaction but not brassicae so drop brassicae from model
-
-y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
-m1<-glm(data= df, y~active_cel_per_g*Legume, family = binomial)
-summary(m1) # legume interaction but not brassicae so drop brassicae from model
-
-df1<-df %>% filter(Legume=="1")
-y<-cbind(df1$pigweed_num_nongerm, df1$pigweed_num_germ)
-m1<-glm(data= df1, y~active_cel_per_g, family = binomial)
-summary(m1) # legume present there is a postive effect
-
-df1<-df %>% filter(Legume=="0")
-y<-cbind(df1$pigweed_num_nongerm, df1$pigweed_num_germ)
-m1<-glm(data= df1, y~active_cel_per_g, family = binomial)
-summary(m1) # legume absent there is a negative effect
-
-
-
-
-# pigweed vs percent active cells
-y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
-m1<-glm(data= df, y~boncat_freq*Legume*Brassicae, family = binomial)
-summary(m1) # legume interaction but not brassicae so drop brassicae from model
-
-y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
-m1<-glm(data= df, y~active_cel_per_g*Legume, family = binomial)
-summary(m1) # legume interaction but not brassicae so drop brassicae from model
-
-df1<-df %>% filter(Legume=="1")
-y<-cbind(df1$pigweed_num_nongerm, df1$pigweed_num_germ)
-m1<-glm(data= df1, y~active_cel_per_g, family = binomial)
-summary(m1) # legume present there is a postive effect
-
-df1<-df %>% filter(Legume=="0")
-y<-cbind(df1$pigweed_num_nongerm, df1$pigweed_num_germ)
-m1<-glm(data= df1, y~active_cel_per_g, family = binomial)
-summary(m1) # legume absent there is a negative effect
-
-
-
-
-
-
-
-
-# foxtail vs number of active cells
-y<-cbind(df$foxtail_num_nongerm, df$foxtail_num_germ)
-m1<-glm(data= df, y~active_cel_per_g*Treatment, family = binomial)
-summary(m1) # legume interaction
-
-
-# pigweed vs boncat freq
-y<-cbind(df$foxtail_num_nongerm, df$foxtail_num_germ)
-m1<-glm(data= df, y~boncat_freq*Legume*Brassicae, family = binomial)
-summary(m1) # legume interaction
-
-
-
-# corplot biomass increase verse activity ####
-fc
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-biomass<-read.csv("biomass_potlevel.csv")
-colnames(biomass) 
-df<-left_join(biomass, fc)
-
-# distributions look okay 
-hist(df$boncat_freq)
-hist(log(df$active_cel_per_g))
-hist(df$Total.Root.g)
-hist(df$Stem.Biomass.g)
-
-
-# figure 
-plot(df$active_cel_per_g, df$Stem.Biomass.g, main= "p=0.01")
-plot(df$boncat_freq, df$Stem.Biomass.g, main= "not sig")
-plot(df$Total.Root.g~log(df$active_cel_per_g+1), main="not sig")
-plot(df$Total.Root.g~log(df$boncat_freq+1), data=df, main="p=.09")
-
-# ggplot
-
-p1<-ggplot(df, aes(y=Stem.Biomass.g, x=active_cel_per_g, col=Treatment))+
-  geom_point()+
-  #geom_smooth(method = lm)+
-  scale_color_manual(values=IBM)+
-  #annotate("text", x = 1500, y = 5, label = "p<0.001, Rsq=.38", 
-  #         color = "black", size = 5, fontface = "bold")+
-  labs(y = "Shoot biomass (g)",
-       x = "Active cells / g rhizosphere")+
-  theme_bw(base_size = 12)
-
-
-p2<-df %>%
-ggplot(aes(y=Stem.Biomass.g, x=log(df$boncat_freq+1), col=Treatment))+
-  geom_point()+
-  #geom_smooth(method = lm)+
-  scale_color_manual(values=IBM)+
-  theme_bw()
-  #annotate("text", x = 5, y = 2, label = "p=0.09", 
-  #         color = "red", size = 5, fontface = "bold")
-
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
-svg("shoot.active.svg", width=6, height = 6)
-require(gridExtra)
-grid.arrange(p1, p2, ncol=1)
-dev.off()
-
-
-# shoots X number cells
-m1<-lm(df$Stem.Biomass.g~df$active_cel_per_g*Legume, data=df)
-summary(m1)
-# big plants more cells bb
-
-# shoots X frequency boncat
-m1<-lm(df$Stem.Biomass.g~df$boncat_freq, data=df)
-summary(m1)
-# no pattern
-
-# roots X number of cells 
-m1<-lm(df$Total.Root.g~log(df$active_cel_per_g+1), data=df)
-summary(m1)
-
-# root X freq
-m1<-lm(df$Total.Root.g~log(df$boncat_freq+1), data=df)
-summary(m1)
-### marginal trend
-#plot(m1)
-
-# cells boncat
-m1<-lm(df$Stem.Biomass.g~df$active_cel_per_g)
-summary(m1)  # sig
-m1<-lm(df$Total.Root.g~df$active_cel_per_g)
-summary(m1)
-
-# log transformed
-m1<-lm(df$Stem.Biomass.g~log(df$active_cel_per_g+1))
-summary(m1)  # sig
-m1<-lm(df$Total.Root.g~log(df$active_cel_per_g+1))
-summary(m1)
-m1<-lm(df$Total.Root.g~log(df$boncat_freq+1))
-summary(m1)
-
-##### difference between predicted and not ## 
-fc
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-biomass<-read.csv("predicted.biomass.csv")
-colnames(biomass) 
-df<-left_join(biomass, fc)
-
-
-# distributions
-hist(df$active_cel_per_g)
-hist(df$boncat_freq)
-hist(df$root.difference)
-hist(df$shoot.difference)
-
-
-# plots
-
-plot(df$active_cel_per_g, df$shoot.difference)
-plot(df$active_cel_per_g, df$root.difference)
-plot(df$boncat_freq, df$shoot.difference)
-plot(df$boncat_freq, df$root.difference)
-
-
-# frequency boncat
-m1<-lm(df$shoot.difference~df$boncat_freq, data=df)
-summary(m1)
-#plot(m1)
-
-m1<-lm(df$root.difference~df$boncat_freq, data=df)
-summary(m1) ### marginal sig
-#plot(m1)
-
-# cells boncat
-m1<-lm(df$shoot.difference~df$active_cel_per_g)
-summary(m1)  
-m1<-lm(df$root.difference~df$active_cel_per_g)
-summary(m1)
-
-# log transformed
-m1<-lm(df$shoot.difference~log(df$active_cel_per_g+1))
-summary(m1)  # sig
-m1<-lm(df$root.difference~log(df$active_cel_per_g+1))
-summary(m1)
 
 ###################predicting microbial activity with biomass ##############
 

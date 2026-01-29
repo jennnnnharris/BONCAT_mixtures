@@ -93,3 +93,30 @@ del
 # that would give the increase. 
 
 df$viablecells_count * .2
+
+
+
+
+
+
+
+
+
+### clean data  #############
+# 
+# # import data
+# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+# df1<-read_excel("Flow_cyto_master.xlsx", sheet = 2)
+# 
+# # avg the technical reps that are adj for day.
+# df1
+# df1<-df1%>% group_by( Rep, Group, Treatment,  Pot_ID) %>%
+#   summarise(BONCAT_freq = mean(BONCAT_freq_adj), 
+#             n_events_cells= round(mean(n_events_cells), digits = 0),
+#             n_events_BONCAT= round(mean(success_adj), digits = 0) , 
+#             n = n())
+# # import data
+# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+# df<-read_excel("Flow_cyto_master.xlsx", sheet = 1)
+# biggie<-left_join(df1, df)
+# write.csv(biggie, "flow_cyto.csv")
