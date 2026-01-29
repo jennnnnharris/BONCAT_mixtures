@@ -29,7 +29,7 @@ IBM <- c( #IBM colors
 
 ####### import data #####
 #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto")
 fc <-read.csv("processed_flow_cyto.csv")
 head(fc)
 
@@ -85,7 +85,7 @@ fc$Date_Sorted   <- factor(fc$Date_Sorted)
 #  theme(axis.text.x = element_text(angle=60, hjust=1))
 
 
-###### precent active ###########
+###### percent active ###########
 
 fc<-fc  %>%   filter(Treatment!="Soil")
 lab = as.character(fc$Treatment)
@@ -164,10 +164,29 @@ print(cld_result)
 
 
 # monocultures
-prop<-prop%>% filter(n_species==1)
-y<-cbind(prop$success, prop$n_failures)
-m1<-glm(data= prop, y~Treatment, family = binomial)
+prop1<-prop%>% filter(n_species==1)
+y<-cbind(prop1$success, prop1$n_failures)
+m1<-glm(data= prop1, y~Treatment, family = binomial)
 summary(m1)
+
+# pairwise tests
+library(emmeans)
+# Get the EMMs for your treatment groups
+emm_object <- emmeans(m1, ~ Treatment)
+# Perform all pairwise comparisons with Tukey adjustment
+pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+summary(pairwise_comparison)
+# This will perform the pairwise tests on the log-odds scale, 
+# apply the sidek adjustment, and assign letters based on the results.
+library(multcomp)
+cld_result <- cld(emm_object, 
+                  adjust = "tukey", 
+                  alpha = 0.05,
+                  # The Letters argument is optional, but common for CLDs
+                  Letters = letters) 
+
+
+print(cld_result)
 
 
 
@@ -212,10 +231,10 @@ p2
 
 
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
-svg("activity.svg", width=8, height=4)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
+#svg("activity.svg", width=8, height=4)
 grid.arrange(p1, p2, ncol=2)
-dev.off()
+#dev.off()
 
  
 # stats
@@ -265,7 +284,7 @@ summary(m1)
 
 #load libraries
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 biomass<-read.csv("percent.biomass.csv")
 # only n+ 
 biomass<-biomass %>% filter(N==1)
@@ -559,17 +578,18 @@ svg("activity.predict.svg", width=10, height=3.5)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
 
-
+# stats #####
 # anova active cells
 #GB
 df1<-df%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<-glm(data= df1, active_cel_per_g~Treatment)
+m1<-lm(data= df1, active_cel_per_g~Treatment)
+summary(m1)
 m<-summary(m1)
 m$coefficients
 
 #LB
 df1<-df%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<-glm(data= df1, active_cel_per_g~Treatment)
+m1<-lm(data= df1, active_cel_per_g~Treatment)
 summary(m1)
 m<-summary(m1)
 m$coefficients
