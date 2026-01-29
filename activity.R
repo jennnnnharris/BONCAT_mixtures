@@ -298,25 +298,27 @@ setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Bur
 weed<-read.csv("weed_seed_decay.csv", row.names = 1)
 weed
 fc  
-df<- left_join(weed, fc)
+df<- left_join(fc, weed)
 head(df)  
 
 
-p1<-df %>% filter(Treatment!="S" & Legume!="NA") %>%
+
+
+p1<-df %>% filter(Treatment!="Soil" & Legume!="NA") %>%
 ggplot( aes(y=pigweed_num_nongerm, x=active_cel_per_g, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
   theme_bw(base_size = 12)+
   facet_grid(~Legume_lonmg)
 #dev.off()
-p2<-df %>% filter(Treatment!="S" & Legume!="NA") %>%
+p2<-df %>% filter(Treatment!="Soil" & Legume!="NA") %>%
   ggplot( aes(y=pigweed_num_nongerm, x=boncat_freq, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
   theme_bw(base_size = 12)+
   facet_grid(~Legume_lonmg)
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_functional")
 svg("pigweed_active.svg", width=6, height= 6)
 require(gridExtra)
 grid.arrange(p1, p2, ncol=1)
@@ -338,14 +340,51 @@ df %>% filter(Treatment!="S" & Legume!="NA") %>%
 
 # pigweed vs number of active cells
 y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
-m1<-glm(data= df, y~active_cel_per_g*Treatment, family = binomial)
-summary(m1) # legume interaction
+m1<-glm(data= df, y~active_cel_per_g*Legume*Brassicae, family = binomial)
+summary(m1) # legume interaction but not brassicae so drop brassicae from model
+
+y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
+m1<-glm(data= df, y~active_cel_per_g*Legume, family = binomial)
+summary(m1) # legume interaction but not brassicae so drop brassicae from model
+
+df1<-df %>% filter(Legume=="1")
+y<-cbind(df1$pigweed_num_nongerm, df1$pigweed_num_germ)
+m1<-glm(data= df1, y~active_cel_per_g, family = binomial)
+summary(m1) # legume present there is a postive effect
+
+df1<-df %>% filter(Legume=="0")
+y<-cbind(df1$pigweed_num_nongerm, df1$pigweed_num_germ)
+m1<-glm(data= df1, y~active_cel_per_g, family = binomial)
+summary(m1) # legume absent there is a negative effect
 
 
-# pigweed vs boncat freq
+
+
+# pigweed vs percent active cells
 y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
 m1<-glm(data= df, y~boncat_freq*Legume*Brassicae, family = binomial)
-summary(m1) # legume interaction
+summary(m1) # legume interaction but not brassicae so drop brassicae from model
+
+y<-cbind(df$pigweed_num_nongerm, df$pigweed_num_germ)
+m1<-glm(data= df, y~active_cel_per_g*Legume, family = binomial)
+summary(m1) # legume interaction but not brassicae so drop brassicae from model
+
+df1<-df %>% filter(Legume=="1")
+y<-cbind(df1$pigweed_num_nongerm, df1$pigweed_num_germ)
+m1<-glm(data= df1, y~active_cel_per_g, family = binomial)
+summary(m1) # legume present there is a postive effect
+
+df1<-df %>% filter(Legume=="0")
+y<-cbind(df1$pigweed_num_nongerm, df1$pigweed_num_germ)
+m1<-glm(data= df1, y~active_cel_per_g, family = binomial)
+summary(m1) # legume absent there is a negative effect
+
+
+
+
+
+
+
 
 # foxtail vs number of active cells
 y<-cbind(df$foxtail_num_nongerm, df$foxtail_num_germ)

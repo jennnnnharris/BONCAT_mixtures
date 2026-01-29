@@ -2161,9 +2161,10 @@ perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
 perc
 
 ### 4. plot 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
 
 #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
-#svg("cap.active.svg", width = 6 , height = 6)
+svg("cap.active.svg", width = 5 , height = 5)
 #windows(6,6)
 par(cex.lab = 1.1) # make all fonts in graphs little bigger
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
@@ -2171,25 +2172,28 @@ ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
          xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
          ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
 par(adj = 0)
-title(main= "D")
+title(main= "E")
 par(adj=.5)
 points(sc_si, 
        col= IBM[metadat2$Treatment],
-       pch= c(16,18)[as.factor(metadat2$Measurement)],
+       pch= c(16,8)[as.factor(metadat2$Measurement)],
        lwd=1,cex=2,
        bg=IBM[metadat2$Treatment])
-ordiellipse(sc_si, metadat2$Treatment,  
-            kind = "ehull", conf=0.95, label=T, 
+ordiellipse(sc_si, metadat2$Treatment,
+            kind = "ehull", conf=0.95, label=F,
             draw = "polygon",
             border = 0,
             col= IBM,
             alpha = 40,
             cex=1)
-legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-       fill= IBM,
+# legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+#        fill= IBM,
+#        cex=1,
+#        bty = "n")
+legend("bottomleft", legend=c("measured", "predicted"  ),
+       pch=c(16,8 ),
        cex=1,
-       bty = "n")
-
+       title = "",     bty = "o")
 
 dev.off()
 
@@ -2228,6 +2232,7 @@ pca_result <- prcomp(dist_matrix, center = TRUE, scale. = TRUE)
 # 2. Extract the first principal component (PC1)
 # This is your new one-dimensional variable
 pc1_variable <- pca_result$x[, 1]
+pc2_variable <- pca_result$x[,2]
 
 # get variables of interest - weed seed decay, biomass, nfix, activity
 # clean up metadat2
@@ -2258,7 +2263,7 @@ df<-left_join(df, fc)
 
 # weeds
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-weed<-read.csv("weed_seed_decay.csv", row.names = 1)
+weed<-read.csv("weed_seed_decay.csv")
 head(weed)
 weed<-weed %>% select(Trt_ID, foxtail_prop_nongerm, pigweed_prop_nongerm)
 df<-left_join(df, weed)
@@ -2274,10 +2279,8 @@ df$z_active_cel_per_g<-as.vector(scale(log(df$active_cel_per_g+1)))
 #df$z_n_fix_per_legume<-as.vector(scale(df$n_fix_per_legume))
 
 # hist 
-hist(df$z_Root.Biomass) # okay 
 hist(df$z_Shoot.Biomass) # okay 
 hist(df$z_pigweed_prop_nongerm) # okay
-hist(df$z_foxtail_prop_nongerm) # okay after log transform
 hist(df$z_boncat_freq) # okay
 hist(df$z_active_cel_per_g) # okay after log transform
 #hist(df$z_perc.Ndfa) # okay
@@ -2286,7 +2289,7 @@ hist(df$z_active_cel_per_g) # okay after log transform
 
 # 4. Add it to your data frame
 df$PC1 <- pc1_variable
-
+df$PC2 <- pc2_variable
 
 # corrplots
 
@@ -2301,7 +2304,7 @@ plot(df$PC1, df$z_pigweed_prop_nongerm, main= "active p=.06, Rsq=.07")
 
 
 ###ggplot 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_mbiome_functional")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_functional")
 svg("shoot_pc1.svg", width=6, height=3)
 ggplot(df, aes(y=z_Shoot.Biomass, x=PC1, col=Treatment))+
   geom_point()+
@@ -2311,6 +2314,29 @@ ggplot(df, aes(y=z_Shoot.Biomass, x=PC1, col=Treatment))+
        x = "PC1 active microbiome")
 dev.off()
 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_functional")
+svg("shoot_pc1.svg", width=6, height=3)
+ggplot(df, aes(y=z_Shoot.Biomass, x=PC2, col=Treatment))+
+  geom_point()+
+  theme_bw(base_size = 12)+
+  scale_color_manual(values=IBM)+
+  labs(y = "Z transformed shoot biomass",
+       x = "PC1 active microbiome")
+dev.off()
+
+
+
+svg("weed_pc1.svg", width=4.5, height=3.5)
+ggplot(df, aes(y=z_pigweed_prop_nongerm, x=PC2))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  theme_bw(base_size = 12)+
+  labs(y = "non germinating pigweed",
+       x = "PC1 active microbiome")
+  #annotate("text", x = 1, y = .5, label = "p=0.05, Rsq=.11", 
+  #         color = "black", size = 5, fontface = "bold")
+  
+dev.off()
 
 
 
@@ -2320,10 +2346,10 @@ ggplot(df, aes(y=z_pigweed_prop_nongerm, x=PC1))+
   geom_smooth(method=lm)+
   theme_bw(base_size = 12)+
   labs(y = "non germinating pigweed",
-       x = "PC1 active microbiome")+
-  annotate("text", x = 1, y = .5, label = "p=0.05, Rsq=.11", 
-           color = "black", size = 5, fontface = "bold")
-  
+       x = "PC1 active microbiome")
+#annotate("text", x = 1, y = .5, label = "p=0.05, Rsq=.11", 
+#         color = "black", size = 5, fontface = "bold")
+
 dev.off()
 
 
@@ -2362,7 +2388,7 @@ summary(m1)
 
 
 ######extract key taxa ####
- 
+
 #  Constrained ordination
 ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
@@ -2402,28 +2428,29 @@ species_scores <- species_scores %>%
   arrange(desc(dist))
 
 # Select the top 10 species
-top_spp <- head(species_scores, 15)
+top_spp <- head(species_scores, 20)
 top_spp
 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
+svg(filename="active.vectors.svg", height = 6, width = 6)
 ggplot() +
   # Draw a circle/origin cross for reference
   geom_vline(xintercept = 0, linetype = "dotted", alpha = 0.5) +
   geom_hline(yintercept = 0, linetype = "dotted", alpha = 0.5) +
-  
-  # Add the vectors (arrows)
-  geom_segment(data = top_spp, 
+    # Add the vectors (arrows)
+  geom_segment(data = top_spp,
                aes(x = 0, y = 0, xend = CAP1, yend = CAP2),
                arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
-  
-  # Add labels with some padding
-  geom_text(data = top_spp, 
-            aes(x = CAP1, y = CAP2, label = asv), 
-            color = "black", fontface = "italic", vjust = -0.5) +
-  
-  theme_bw() +
-  labs(title = "Top 10 Species Contributing to CAP Variation",
-       x = "CAP1", y = "CAP2")
 
+  # Add labels with some padding
+  geom_text(data = top_spp,
+            aes(x = CAP1, y = CAP2, label = asv),
+            color = "black", fontface = "italic", vjust = -0.5) +
+
+  theme_bw() +
+  labs(title = "Top 15 ASV Contributing to Active CAP Variation",
+       x = "CAP1", y = "CAP2")
+dev.off()
 # plot abundance of these taxa across treatments
 
 # get data
@@ -2441,12 +2468,12 @@ df$asv <-NULL
 
 # add treatment info
 df<-as.data.frame(t(df))
-metadat2<-metadat2 %>% select(Treatment)
-df<-cbind(df, metadat2)
+metadat3<-metadat2 %>% select(Treatment, Trt_ID)
+df<-cbind(df, metadat3)
 df
 
 df<-df %>%
-  pivot_longer(cols = -Treatment, 
+  pivot_longer(cols = c(-Treatment, -Trt_ID) ,
                names_to = "asv",
                values_to = "percent_abundance")
 df
@@ -2454,39 +2481,196 @@ df
 tax<-as.data.frame((tax_table(ps1)))
 
 tax <- tax[tax$asv %in% asvkp, ]
-tax<-tax %>% group_by(Phyla, Genus, Species, asv) %>% summarise()
-tax<-tax %>% group_by(Phyla, Genus, asv) %>% summarise()
-tax
-df<-left_join(df, tax)
-df<-as.data.frame(df)
-df
-
-
-
-df$percent_abundance <- as.numeric(df$percent_abundance)
-df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-
-# plot
-mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
-
-df$Phyla
-df %>% filter(Phyla==" p__Cyanobacteriota") %>%
-  ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
-  geom_boxplot(outliers=FALSE)+
-  geom_jitter()+
-  scale_fill_manual(values= mycols)+
-  theme_bw(base_size = 12) +
-  facet_grid(~asv, scales="free", space="free")+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0.5))
-
+tax<-tax %>% group_by(Phyla, Order, Family, Genus, Species, asv) %>% summarise()
+# tax
+#
+# tax<-tax %>% group_by(Phyla, Genus, asv) %>% summarise()
+# # tax
+# # tax$Blast_ID <- c(
+#   "Uncultured Actinomycetes",
+#   "Uncultured Actinomycetes" ,
+#   "Uncultured Actinomycetes" ,
+#   "Uncultured Cyanobacterium",
+#   "Uncultured Cyanobacterium",
+#   "Uncultured Cyanobacterium",
+#   "Uncultured Cyanobacterium",
+#   "Uncultured Cyanobacterium",
+#   "Deinococcus sp.",
+#   "Deinococcus sp.",
+#   "Deinococcus sp.",
+#   "Deinococcus sp.",
+#   "Escherichia sp.",
+#   "Escherichia sp.",
+# #   "Rhizobium Leguminosarum")
+# tax
+# df<-left_join(df, tax)
+# df<-as.data.frame(df)
+# df
+#
+# df$percent_abundance <- as.numeric(df$percent_abundance)
+# df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+#
+# #
+# # # plot
+# # mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+# #
+# # df$Phyla
+# # df %>%
+#   ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
+#   geom_boxplot(outliers=FALSE)+
+#   geom_jitter()+
+#   scale_fill_manual(values= mycols)+
+#   theme_bw(base_size = 12) +
+#   facet_grid( ~asv, scales="free", space="free")+
+#   theme(axis.text.x = element_text(angle=60, hjust=1),
+#         plot.title = element_text(hjust = 0.5))
+#
+#
+# # aggregate by taxa after blasting the sequences
+# df
+#
+# df<-df %>% group_by(Phyla, Treatment, Trt_ID, Blast_ID) %>%
+#   summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+# df
+#
+# df %>%
+#   ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
+#   geom_boxplot(outliers=FALSE)+
+#   geom_jitter()+
+#   scale_fill_manual(values= mycols)+
+#   theme_bw(base_size = 12) +
+#   facet_grid(~Blast_ID, scales="free", space="free")+
+#   theme(axis.text.x = element_text(angle=60, hjust=1),
+#         plot.title = element_text(hjust = 0.5))
+#
+#
+#
+# # top 20 asvs #############
+#
+#
+# # Select the top 10 species
+# top_spp <- head(species_scores, 20)
+# top_spp
+#
+# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
+# svg(filename="active.vectors20.svg", height = 6, width = 6)
+# ggplot() +
+#   # Draw a circle/origin cross for reference
+#   geom_vline(xintercept = 0, linetype = "dotted", alpha = 0.5) +
+#   geom_hline(yintercept = 0, linetype = "dotted", alpha = 0.5) +
+#   # Add the vectors (arrows)
+#   geom_segment(data = top_spp,
+#                aes(x = 0, y = 0, xend = CAP1, yend = CAP2),
+#                arrow = arrow(length = unit(0.2, "cm")), color = "darkred") +
+#
+#   # Add labels with some padding
+#   geom_text(data = top_spp,
+#             aes(x = CAP1, y = CAP2, label = asv),
+#             color = "black", fontface = "italic", vjust = -0.5) +
+#
+#   theme_bw() +
+#   labs(title = "Top 15 ASV Contributing to Active CAP Variation",
+#        x = "CAP1", y = "CAP2")
+# dev.off()
+# # plot abundance of these taxa across treatments
+#
+# # get data
+# ps1
+# ##add add abundance and taxon infoget
+# asvkp<-unique(top_spp$asv)
+#
+# # make df relative abundance
+# df<-as.data.frame((otu_table(ps1)))
+# df<-df/rowSums(df)*100
+# df<- as.data.frame(t(df))
+# df$asv<-row.names(df)
+# df <- df[df$asv %in% asvkp, ]
+# df$asv <-NULL
+#
+# # add treatment info
+# df<-as.data.frame(t(df))
+# metadat3<-metadat2 %>% select(Treatment, Trt_ID)
+# df<-cbind(df, metadat3)
+# df
+#
+# df<-df %>%
+#   pivot_longer(cols = c(-Treatment, -Trt_ID) ,
+#                names_to = "asv",
+#                values_to = "percent_abundance")
+# df
+# # add phyla info
+# tax<-as.data.frame((tax_table(ps1)))
+# tax <- tax[tax$asv %in% asvkp, ]
+# tax<-tax %>% group_by(Phyla, Order, Family, Genus, Species, asv) %>% summarise()
+#
+#
+# tax<-tax %>% group_by(Phyla, Genus, asv) %>% summarise()
+# print(tax)
+# tax$Blast_ID <- c("Actinomycetes",
+#                   "Actinomycetes",
+#                   "Actinomycetes",
+#                   "Actinomycetes",
+#                   "Terrabacter sp.",
+#                   "Cyanobacterium",
+#                   "Cyanobacterium",
+#                   "Cyanobacterium",
+#                   "Cyanobacterium",
+#                   "Cyanobacterium",
+#                   "Cyanobacterium",
+#                   "Deinococcus sp.",
+#                   "Deinococcus sp.",
+#                   "Deinococcus sp.",
+#                   "Deinococcus sp.",
+#                   "Escherichia sp.",
+#                   "Escherichia sp.",
+#                   "Escherichia sp.",
+#                   "Rhizobium sp.",
+#                   "Rhizobium sp."
+# )
+# tax
+# df<-left_join(df, tax)
+# df<-as.data.frame(df)
+# df
+#
+# df$percent_abundance <- as.numeric(df$percent_abundance)
+# df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+#
+#
+# # plot
+# mycols<-c("#06568c",   "#52b8d1",   "#d40d63", "#B2DF8A",  "#FF7F00")
+#
+#
+#
+# # aggregate by taxa after blasting the sequences
+# df
+#
+# df<-df %>% group_by(Phyla, Treatment, Trt_ID, Blast_ID) %>%
+#   summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+# df
+#
+#
+# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
+# svg(filename="active.taxa20.svg", height = 4, width = 9)
+# df %>%
+#   ggplot(aes(x=Treatment, y=percent_abundance, fill = Phyla))+
+#   geom_boxplot(outliers=FALSE)+
+#   geom_jitter()+
+#   scale_fill_manual(values= mycols)+
+#   theme_bw(base_size = 12) +
+#   facet_grid(~Blast_ID, scales="free", space="free")+
+#   theme(axis.text.x = element_text(angle=60, hjust=1),
+#         plot.title = element_text(hjust = 0.5))
+# dev.off()
+#
+#
 
 ### genus overall ########
-target<-unique(df$Genus)
+tax<-as.data.frame((tax_table(ps1)))
 
-# Create a vector of the genera you want
-
+tax <- tax[tax$asv %in% asvkp, ]
+tax<-tax %>% group_by(Phyla, Order, Family, Genus, Species, asv) %>% summarise()
+print(tax)
+target<-unique(tax$Genus)
   # Subset the phyloseq object
   ps1 <- subset_taxa(ps1, Genus %in% target)
   ps1
@@ -2518,8 +2702,8 @@ target<-unique(df$Genus)
   colnames(df) <- Genus
   df
   
-  metadat2<-metadat2 %>% select(Treatment)
-  df<-cbind(df, metadat2)
+  metadat3<-metadat2 %>% select(Treatment, Trt_ID)
+  df<-cbind(df, metadat3)
   df
   
   # pivot
@@ -2714,10 +2898,10 @@ target<-unique(df$Genus)
    ps.plusone <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
    ps.plusone
   
-  
+  asvkp
   
   # Focus only on specific genera
-  ps.subset <- subset_taxa(ps.plusone, Genus %in% target)
+  ps.subset <- subset_taxa(ps.plusone, asv %in% asvkp)
  
     
   #  DESeq2 
@@ -2753,6 +2937,18 @@ target<-unique(df$Genus)
   sigtab = res[which(res$padj < alpha), ]
   sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps)[rownames(sigtab), ], "matrix"))  
   sigtab  
+  
+  
+  # DEseq
+  ds <- phyloseq_to_deseq2(ps.subset, ~ Brassicae*Grass)
+  diagdds <- DESeq(ds, test="Wald", fitType="local")
+  res <- results(diagdds)
+  # check
+  alpha = 0.05
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps)[rownames(sigtab), ], "matrix"))  
+  sigtab  
+  
   
   
 ### aggregate 2 genus level
