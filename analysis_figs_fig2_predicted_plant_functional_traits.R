@@ -34,7 +34,7 @@ legume_cols <- c( #IBM colors
 
 #plant functional traits without prediction 
 #biomass####
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 df <- read.csv("biomass_potlevel.csv") # biomass data
 
 # process to make n species column, summarize at pot level, make treatment a factor.
@@ -230,6 +230,7 @@ dev.off()
 
 
 
+
 #### model just monocultures ####
 
 # model - binomial model with percent data##
@@ -240,6 +241,15 @@ df1<-df %>% filter(df$n_species==1) %>% filter(Treatment!="S")
 y<-cbind(df1$foxtail_num_germ, df1$foxtail_num_nongerm)
 m1<-glm(data= df1, y~Treatment, family = binomial)
 summary(m1) # no treatmen effect 
+library(emmeans)
+emm_object <- emmeans(m1, specs = ~ Treatment)
+pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+summary(pairwise_comparison)
+library(multcomp)
+cld_result <- cld(emm_object, adjust = "tukey", alpha = 0.05, Letters = letters) 
+print(cld_result)
+
+
 
 
 # model pigweed
@@ -288,11 +298,13 @@ p1<- ggplot(df.leg, aes(x=Treatment, y=perc.Ndfa, fill=Treatment)) +
 
 p1
 
-
 # Analysis of variance 
+# full model 
+one.way.Nadd <- aov(n_fix_per_legume ~ Treatment*Nitrogen, data = df.leg)
+summary(one.way.Nadd) # difference between treatments
+
 df<-df.leg %>% filter(Nitrogen==0)
 one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
-summary(one.way.Nadd) # difference between treatments
 tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
 print(tukey.result.Nadd) # All difference except LG-LB
 #plot(one.way.Nadd) #homoscedasticity looks fine
@@ -355,6 +367,28 @@ ggplot(df.leg, aes(x=treatment, y=totalN.mg.g.1, fill=treatment)) +
   scale_fill_manual(values = mycols4)+
   facet_grid( ~spp.number, scales = "free", space = "free")
 
+
+
+
+
+
+
+# Analysis of variance 
+# full model 
+one.way.Nadd <- aov(perc.Ndfa ~ Treatment*Nitrogen, data = df.leg)
+summary(one.way.Nadd) # difference between treatments
+
+df<-df.leg %>% filter(Nitrogen==0)
+one.way.Nadd <- aov(perc.Ndfa ~ Treatment, data = df)
+print(tukey.result.Nadd) # All difference except LG-LB
+#plot(one.way.Nadd) #homoscedasticity looks fine
+
+
+df<-df.leg %>% filter(Nitrogen==1)
+one.way.Nadd <- aov(perc.Ndfa ~ Treatment, data = df)
+tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
+print(tukey.result.Nadd) # All difference except LG-LB
+#plot(one.way.Nadd) #homoscedasticity looks fine
 
 
 ###############write functions for predictions###############
@@ -454,7 +488,7 @@ library(lubridate)
 #library(nlme)
 
 #### import biomass data and process
-biomasspath <- "C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
+biomasspath <- "C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
 setwd(biomasspath)
 df <- read.csv("biomass_potlevel.csv", row.names = 1) # biomass data
 
@@ -595,6 +629,58 @@ grid.arrange(p1, p2, ncol=1)
 #dev.off()
 
 
+######### anova#####
+
+# root biomass
+#GB
+#filter
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+m1<- lm(Root.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LB
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+m1<- lm(Root.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LG
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+m1<- lm(Root.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LGB
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+m1<- lm(Root.Biomass~ Treatment, data=df2)
+anova(m1)
+
+# shoots
+#GB
+#filter
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LB
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LG
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+#LGB
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+anova(m1)
+
+
+
+
+
+
+
 ######### example calculation  #####
 
 
@@ -673,55 +759,6 @@ p1<-df1  %>%
         plot.title = element_text(hjust = 0, size=14))+
   xlab("") 
 p1
-
-
-
-
-######### anova#####
-
-
-#GB
-#filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-# shoots
-#GB
-#filter
-df2<-dfb1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-dfb1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-dfb1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-dfb1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
 
 
 
@@ -902,12 +939,12 @@ p2
 
 # put the two plots together
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-svg("weeddecay.predict.svg", width = 4.5, height = 6)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
+#svg("weeddecay.predict.svg", width = 4.5, height = 6)
 grid.arrange(p1, p2, ncol=1)
-dev.off()
+#dev.off()
 
-##########weed prop non germinated #####
+##########stats weed prop non germinated #####
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 df<-read.csv("weed_seed_decay.csv", row.names = 1)
 head(df)
@@ -1023,140 +1060,4 @@ summary(m1)
 
 
 # there are difference between the predicted verse measured for weed seed decay for some treatments
-
-
-
-# predicted vs measured for activity ######
-
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto")
-df<-read.csv("processed_flow_cyto.csv")
-head(df)
-df<-df %>% filter(Treatment!="S")
-# group by
-df<- df %>% group_by(Rep, Nitrogen)
-df
-
-# boncat freq
-LG<-get.predict(df, "L", "G", "boncat_freq")
-LB<-get.predict(df, "L", "B", "boncat_freq")
-GB<-get.predict(df, "G", "B", "boncat_freq")
-LGB<-get.predict(df, "L", "G", "boncat_freq", "B")
-LG
-
-predict<-rbind(GB, LB, LG, LGB)
-predict$boncat_freq<-round(as.numeric(predict$boncat_freq), 3)
-predict$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
-predict
-
-
-# active cells
-LG<-get.predict(df, "L", "G", "active_cel_per_g")
-LB<-get.predict(df, "L", "B", "active_cel_per_g")
-GB<-get.predict(df, "G", "B", "active_cel_per_g")
-LGB<-get.predict(df, "L", "G", "active_cel_per_g", "B")
-LG
-
-predict1<-rbind(GB, LB, LG, LGB)
-predict1$active_cel_per_g<-round(as.numeric(predict1$active_cel_per_g), 3)
-predict1$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
-predict1
-predict<-full_join(predict, predict1)
-
-## add to df
-df1<-df %>% filter(n_species!="1")
-
-df1<-full_join(df1, predict) 
-df1<-df1 %>% ungroup()
-as.factor(df1$Treatment)
-
-#### plot
-mycols <- c( #IBM colors
-  "#DC267F", # magenta pink GB
-  "grey",
-  "#FE6100", # bright orange LB
-  "grey",
-  "#FFB000", # golden yellow LG
-  "grey",
-  "#865338", # medium mocha brown LGB
-  "grey"
-)
-p2<-df1  %>% 
-  ggplot(aes(x=Treatment, y=boncat_freq, fill = Treatment)) +
-  geom_jitter(width = .2, size=2 )+
-  geom_boxplot(alpha=.5, outlier.shape = NA)+
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 16)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
-        plot.title = element_text(hjust = 0.5))
-p2
-p3<-df1  %>% 
-  ggplot(aes(x=Treatment, y=active_cel_per_g, fill = Treatment)) +
-  geom_jitter(width = .2, size=2 )+
-  geom_boxplot(alpha=.5, outlier.shape = NA)+
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 16)+
-  #geom_text(y=8, label =label , nudge_x = -.8, size=7)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        legend.position="none",
-        plot.title = element_text(hjust = 0.5))
-p3
-# put the two plots together
-require(gridExtra)
-grid.arrange(p2, p3, ncol=2)
-
-
-# anova number cells plain linear model
-#GB
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(active_cel_per_g~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(active_cel_per_g~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(active_cel_per_g~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(active_cel_per_g~ Treatment, data=df2)
-anova(m1)
-
-
-# anova boncat freeq
-
-df1$failures<-round(100 - df1$boncat_freq,0)
-
-
-#GB
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-y<-cbind(df2$boncat_freq, df2$failures)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-y<-cbind(df2$boncat_freq, df2$failures)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-y<-cbind(df2$boncat_freq, df2$failures)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-y<-cbind(df2$boncat_freq, df2$failures)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-
 
