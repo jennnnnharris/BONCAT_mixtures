@@ -264,6 +264,8 @@ library(multcomp)
 cld_result <- cld(emm_object, adjust = "tukey", alpha = 0.05, Letters = letters) 
 print(cld_result)
 
+df1<-df %>% filter(df$n_species==1) %>% filter(Treatment!="S")
+
 
 
 
