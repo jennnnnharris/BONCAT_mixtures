@@ -248,19 +248,26 @@ p1<-df %>%
   ggplot( aes(y=z_pigweed, x=z_boncat_freq, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
-  theme_bw(base_size = 12)
+  geom_smooth(method = lm, col="grey")+
+  theme_bw(base_size = 12)+
+  labs(y= "z transformed pigweed seed decay",
+       x= "z transformed % active microbes")
 
 p2<-df %>% 
   ggplot( aes(y=z_pigweed, x=PC1, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
-  theme_bw(base_size = 12)
+  geom_smooth(method = lm, col="grey")+
+  theme_bw(base_size = 12)+
+  labs(y= "z transformed pigweed seed decay",
+       x= "Total rhizosphere community PC1 ")
 
 
 
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_functional")
-svg("weed_seed_total.svg", width=6, height=6)
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_correlations")
+svg("weed_seed_total.svg", width=5, height=6)
 require(gridExtra)
 grid.arrange(p1, p2,ncol=1)
 dev.off()
@@ -270,7 +277,7 @@ dev.off()
 
 
 
-# Shoot biomass  ################
+# root biomass  ################
 
 ### model selection
 numeric_data<-df %>% select(PC1, PC2, boncat_freq, active_cel_per_g, Stem.Biomass.g, Root.Biomass.g)
@@ -292,42 +299,44 @@ corrplot.mixed(cor_matrix,
 
 # biomass verse activity 
 #
-m1<-lm(data= df, Stem.Biomass.g~PC1*z_active_cel_per_g*Legume)
+m1<-lm(data= df, z_Root.Biomass~PC1)
 summary(m1) 
 
-m1<-lm(data= df, Stem.Biomass.g~PC1*z_active_cel_per_g)
+m1<-lm(data= df, z_Root.Biomass~z_boncat_freq)
 summary(m1) 
 
-m1<-lm(data= df, Stem.Biomass.g~PC1)
+m1<-lm(data= df, z_Root.Biomass~z_boncat_freq*PC1)
 summary(m1) 
 
 
 # ggplot
 df<-df %>% filter(Treatment!="Soil")
-p1<-ggplot(df, aes(y=Stem.Biomass.g, x=active_cel_per_g, col=Treatment))+
+p1<-ggplot(df, aes(y=z_Root.Biomass, x=z_boncat_freq, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
-  #annotate("text", x = 1500, y = 5, label = "p<0.001, Rsq=.38", 
-  #         color = "black", size = 5, fontface = "bold")+
-  labs(y = "Shoot biomass (g)",
-       x = "Active cells / g rhizosphere")+
-  theme_bw(base_size = 12)#+
-#geom_smooth(method = "lm", se = FALSE, color = "black")
+  labs(y = "Z transformed root biomass",
+       x = "z transformed %active microbes")+
+  theme_bw(base_size = 12)+
+  geom_smooth(method = "lm", se = FALSE, color = "grey")
 p1
 
-p2<-df %>%
-  ggplot(aes(y=Stem.Biomass.g, x=PC1, col=Treatment))+
+df<-df %>% filter(Treatment!="Soil")
+p2<-ggplot(df, aes(y=z_Root.Biomass, x=PC1, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
-  theme_bw()+
-  labs(y = "Shoot biomass (g)",
-       x= "Active PC1")
-# geom_smooth(method = "lm", color = "black")
+  labs(y = "Z transformed root biomass",
+       x = "Total rhizosphere community PC1")+
+  theme_bw(base_size = 12)+
+geom_smooth(method = "lm", se = FALSE, color = "grey")
 p2
 
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_functional")
-svg("shoot.active.svg", width=6, height = 6)
+
+
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_correlations")
+
+svg("root.active.total.svg", width=5, height = 6)
 require(gridExtra)
 grid.arrange(p1, p2 , ncol=1)
 dev.off()

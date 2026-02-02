@@ -492,10 +492,11 @@ mono_cols <-
     "#0a3170", # dark royal blue L
     "#cdddf7", # french blue G
     "#785EF0" # light purple B
-  )]
+  )
 
 windows(6,4)
-ggplot(df, aes(fill=Species, y=percent, x=Trt_ID)) + 
+df%>% filter(Treatment!="B" & Treatment!="L" & Treatment!="G") %>%
+ggplot(aes(fill=Species, y=percent, x=Trt_ID)) + 
   theme_bw(base_size = 12)+
   geom_bar(position="stack", stat="identity")+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+

@@ -20,9 +20,9 @@ library(BiodiversityR)
 IBM <- c( #IBM colors
   
   "navy", # dark royal blue
-  "#a4bdfc",  # "#648FFF", # french blue
-  "#785EF0", # light purple
-  "#DC267F", # magenta pink 
+  #"#a4bdfc",  # "#648FFF", # french blue
+  #"#785EF0", # light purple
+  #"#DC267F", # magenta pink 
   "#FE6100", # bright orange
   "#FFB000", # golden yellow
   "#865338" ,# medium mocha brown,
@@ -47,7 +47,7 @@ fc$Date_Sorted<-mdy(fc$Date_Sorted)
 fc$Treatment   <- factor(fc$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 fc$Date_Sorted   <- factor(fc$Date_Sorted)
 
-fc<-fc %>% select(	Trt_ID, boncat_freq, active_cel_per_g)
+fc<-fc %>% select(Trt_ID, boncat_freq, active_cel_per_g)
 
 
 # import nfix
@@ -192,7 +192,7 @@ pc2_variable <- pca_result$x[,2]
 
 # get variables of interest - weed seed decay, biomass, nfix, activity
 # clean up metadat2
-metadat2<-metadat2 %>% select(Trt_ID,)
+metadat2<-metadat2 %>% select(Treatment, Trt_ID,)
 #metadat2$Pot_ID<-as.numeric(metadat2$Pot_ID)
 metadat2$PC1 <- pc1_variable
 metadat2$PC2 <- pc2_variable
@@ -215,7 +215,7 @@ hist(df$z_perc.Ndfa)
 hist(df$z_nfix_per_legume)
 hist(df$PC1)
 hist(df$PC2)
-# Weed Seed decay ################
+# nfix ################
 
 ### model selection
 numeric_data<-df %>% select(PC1, PC2, z_active_cel_per_g, z_boncat_freq)
@@ -233,40 +233,41 @@ corrplot.mixed(cor_matrix,
 library(car)
 
 
-m1<-lm(data= df, z_perc.Ndfa~PC2)
+m1<-lm(data= df, z_perc.Ndfa~PC2*z_boncat_freq)
 summary(m1)
 vif_values <- vif(m1)
 print(vif_values)
 plot(m1)
 
-m1<-lm(data= df, df$z_nfix_per_legume~PC1*PC2*z_boncat_freq)
+m1<-lm(data= df, df$z_perc.Ndfa~z_boncat_freq)
 summary(m1)
 vif_values <- vif(m1)
 print(vif_values)
-plot(m1)
-
 
 p1<-df %>% 
-  ggplot( aes(y=z_perc.Ndfa, x=PC2))+
+  ggplot( aes(y=z_perc.Ndfa, x=z_boncat_freq, colour = Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
-  theme_bw(base_size = 12)
+  theme_bw(base_size = 12)+
+  labs(y = "Z transformed % N from BNF ",
+       x = "z transform % active microbes")
+
 p1
 
 
-p1<-df %>% 
-  ggplot( aes(y=z_nfix_per_legume, x=PC2))+
+p2<-df %>% 
+  ggplot( aes(y=z_perc.Ndfa, x=PC2, colour = Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
-  theme_bw(base_size = 12)
-p1
+  theme_bw(base_size = 12)+
+ labs(y = "Z transformed % N from BNF ",
+       x = "Total rhizosphere community PC2")+
+  geom_smooth(method = "lm", se = FALSE, color = "grey")
+p2
 
 
-
-
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_functional")
-svg("weed_seed_total.svg", width=6, height=6)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig6_mbiome_correlations")
+svg("nfix.active.total.svg", width=5, height = 6)
 require(gridExtra)
-grid.arrange(p1, p2,ncol=1)
+grid.arrange(p1, p2 , ncol=1)
 dev.off()
-
