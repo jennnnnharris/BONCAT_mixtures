@@ -54,9 +54,14 @@ fc<-fc %>% select(Trt_ID, boncat_freq, active_cel_per_g)
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 nfix <- read.csv("Nfix.csv")
 head (nfix)
-nfix<-nfix %>% filter(Nitrogen==1) %>%
+nfix<-nfix %>% filter(nitrogen.added=="Y") 
+
+#
+ nfix<- nfix %>%
+  mutate(Trt_ID = paste0(treatment, "+N", rep)) %>%
 select(Trt_ID, perc.Ndfa, n_fix_per_legume)
-df<- left_join(nfix, fc)
+
+ df<- left_join(nfix, fc)
 head(df)
 
 # # import biomass
@@ -233,13 +238,13 @@ corrplot.mixed(cor_matrix,
 library(car)
 
 
-m1<-lm(data= df, z_perc.Ndfa~PC2*z_boncat_freq)
+m1<-lm(data= df, z_perc.Ndfa~z_boncat_freq)
 summary(m1)
 vif_values <- vif(m1)
 print(vif_values)
 plot(m1)
 
-m1<-lm(data= df, df$z_perc.Ndfa~z_boncat_freq)
+m1<-lm(data= df, df$z_perc.Ndfa~z_active_cel_per_g)
 summary(m1)
 vif_values <- vif(m1)
 print(vif_values)
@@ -253,6 +258,16 @@ p1<-df %>%
        x = "z transform % active microbes")
 
 p1
+
+p2<-df %>% 
+  ggplot( aes(y=z_perc.Ndfa, x=z_active_cel_per_g, colour = Treatment))+
+  geom_point()+
+  scale_color_manual(values=IBM)+
+  theme_bw(base_size = 12)+
+  labs(y = "Z transformed % N from BNF ",
+       x = "z transformed active cells/g")
+
+p2
 
 
 p2<-df %>% 

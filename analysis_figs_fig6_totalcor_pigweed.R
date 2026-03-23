@@ -228,6 +228,17 @@ corrplot.mixed(cor_matrix,
                tl.col = "black")
 library(car)
 
+m1<-lm(data= df, z_pigweed~z_active_cel_per_g)
+summary(m1)
+vif_values <- vif(m1)
+print(vif_values)
+plot(m1)
+
+m1<-lm(data= df, z_pigweed~z_boncat_freq)
+summary(m1)
+vif_values <- vif(m1)
+print(vif_values)
+plot(m1)
 
 m1<-lm(data= df, z_pigweed~PC1*z_boncat_freq)
 summary(m1)
@@ -241,6 +252,16 @@ vif_values <- vif(m1)
 print(vif_values)
 plot(m1)
 
+quad<-lm(data= df, z_pigweed~PC1+ I(PC1^2))
+summary(quad)
+
+vif_values <- vif(m1)
+print(vif_values)
+plot(m1)
+
+
+anova(m1, quad)
+
 
 df$pigweed_perc<-df$pigweed_prop_nongerm*100
 
@@ -248,20 +269,32 @@ p1<-df %>%
   ggplot( aes(y=z_pigweed, x=z_boncat_freq, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
-  geom_smooth(method = lm, col="grey")+
+  #geom_smooth(method = lm, col="grey")+
   theme_bw(base_size = 12)+
   labs(y= "z transformed pigweed seed decay",
        x= "z transformed % active microbes")
+p1
+
+p2<-df %>% 
+  ggplot( aes(y=z_pigweed, x=z_active_cel_per_g, col=Treatment))+
+  geom_point()+
+  scale_color_manual(values=IBM)+
+  #geom_smooth(method = lm, col="grey")+
+  theme_bw(base_size = 12)+
+  labs(y= "z transformed pigweed seed decay",
+       x= "z transformed active cells/ g")
+p2
 
 p2<-df %>% 
   ggplot( aes(y=z_pigweed, x=PC1, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
-  geom_smooth(method = lm, col="grey")+
+  #geom_smooth(method = lm, col="grey")+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2), col="grey") +
   theme_bw(base_size = 12)+
   labs(y= "z transformed pigweed seed decay",
        x= "Total rhizosphere community PC1 ")
-
+p2
 
 
 
@@ -305,6 +338,9 @@ summary(m1)
 m1<-lm(data= df, z_Root.Biomass~z_boncat_freq)
 summary(m1) 
 
+m1<-lm(data= df, z_Root.Biomass~z_active_cel_per_g)
+summary(m1) 
+
 m1<-lm(data= df, z_Root.Biomass~z_boncat_freq*PC1)
 summary(m1) 
 
@@ -319,6 +355,18 @@ p1<-ggplot(df, aes(y=z_Root.Biomass, x=z_boncat_freq, col=Treatment))+
   theme_bw(base_size = 12)+
   geom_smooth(method = "lm", se = FALSE, color = "grey")
 p1
+
+
+p2<-ggplot(df, aes(y=z_Root.Biomass, x=z_active_cel_per_g, col=Treatment))+
+  geom_point()+
+  scale_color_manual(values=IBM)+
+  labs(y = "Z transformed root biomass",
+       x = "z transformed active cells/g")+
+  theme_bw(base_size = 12)
+  #geom_smooth(method = "lm", se = FALSE, color = "grey")
+p2
+
+
 
 df<-df %>% filter(Treatment!="Soil")
 p2<-ggplot(df, aes(y=z_Root.Biomass, x=PC1, col=Treatment))+

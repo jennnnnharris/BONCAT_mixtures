@@ -98,23 +98,29 @@ setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Bur
 df.leg<- read.csv("Nfix.csv")
 head(df.leg) 
 
-# by treatment 
-  label <- df.leg$Treatment
-  label
-  label <- gsub("LGB", "C" ,label )
-  label<- gsub("LG", "B" ,label )
-  label <- gsub("LB", "B" ,label )
-  label<- gsub("L", "A" ,label )
+# by treatment
+  # label <- df.leg$Treatment
+  # label
+  # label <- gsub("LGB", "C" ,label )
+  # label<- gsub("LG", "B" ,label )
+  # label <- gsub("LB", "B" ,label )
+  # label<- gsub("L", "A" ,label )
+
+# add nitrogen label
+  df.leg<-df.leg%>%
+    mutate(Nitrogen_label = recode(nitrogen.added,
+                             "N" = "Nitrogen -",
+                             "Y" = "Nitrogen +")) 
 
 
-p1<- ggplot(df.leg, aes(x=Treatment, y=perc.Ndfa, fill=Treatment)) + 
+p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
   # geom_text(y=92, label = label, size=4)+
-   labs(title = "E",
+   labs(#title = "E",
        x="",
        y= "Nitrogen from Fixation (%)") +
   scale_shape_manual(values = c(17, 16)) +
@@ -125,15 +131,15 @@ p1
 
 
 # Analysis of variance 
-df<-df.leg %>% filter(Nitrogen==0)
-one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
+df<-df.leg %>% filter(nitrogen.added=="N")
+one.way.Nadd <- aov(n_fix_per_legume ~ treatment, data = df)
 summary(one.way.Nadd) # difference between treatments
 tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
 print(tukey.result.Nadd) # All difference except LG-LB
 #plot(one.way.Nadd) #homoscedasticity looks fine
 
  # by treatment 
- label <- df.leg$Treatment
+ label <- df.leg$treatment
  label
  
  label <- gsub("LGB", "B" ,label )
@@ -141,16 +147,16 @@ print(tukey.result.Nadd) # All difference except LG-LB
  label <- gsub("LB", "AB" ,label )
  label<- gsub("L", "A" ,label )
  
-p2<- ggplot(df.leg, aes(x=Treatment, y=n_fix_per_legume, fill=Treatment)) + 
+p2<- ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
    theme_classic(base_size = 12) +
    theme(legend.position = "none")+
    scale_fill_manual(values = legume_cols)+
   # geom_text(y=.07, label = label, size=4)+
-   labs(title = "F",
+   labs(#title = "F",
        x="",
-       y= "N fixed (mg per legume)")  +
+       y= "N fixed (g per legume)")  +
   scale_shape_manual(values = c(17, 16)) +
   facet_grid(~Nitrogen_label)#
 
@@ -158,23 +164,29 @@ p2
  
 
  # Analysis of variance 
-df<-df.leg %>% filter(Nitrogen==1)
- one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
+df<-df.leg %>% filter(nitrogen.added=="N")
+ one.way.Nadd <- aov(n_fix_per_legume ~ treatment, data = df)
  summary(one.way.Nadd) # difference between treatments
- tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
- print(tukey.result.Nadd) # All difference except LG-LB
- #plot(one.way.Nadd) #homoscedasticity looks fine\
- 
- df<-df.leg %>% filter(Nitrogen==0)
- one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
+ tukey <- TukeyHSD(one.way.Nadd)
+ print(tukey) # All different except LG-LB
+ #print letters
+  library(multcompView)
+ p_values <- tukey$treatment[, "p adj"]
+ letters <- multcompLetters(p_values)
+  print(letters)
+  
+ df<-df.leg %>% filter(nitrogen.added=="Y")
+ one.way.Nadd <- aov(n_fix_per_legume ~ treatment, data = df)
  summary(one.way.Nadd) # difference between treatments
- tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
- print(tukey.result.Nadd) # All difference except LG-LB
+ tukey <- TukeyHSD(one.way.Nadd)
+ print(tukey)
  #plot(one.way.Nadd) #homoscedasticity looks fine
+
  
 
  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
- svg("nfix.svg", height = 3, width = 8)
+ svg("nfix.svg", height = 2.5, width = 9)
+  require(gridExtra)
   grid.arrange(p1, p2, ncol=2)
  dev.off()
  
