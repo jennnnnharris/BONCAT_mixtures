@@ -11,7 +11,7 @@ library(tidyverse)
 library(lubridate)
 #library(lme4)
 #library(nlme)
-library(emmeans)
+#library(emmeans)
 #library(multcomp)
 #library(dplyr)
 
@@ -44,8 +44,6 @@ df$Brassicae<-as.numeric(df$Brassicae)
 df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
 df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
-
-head(df)
 
 p1<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Root.Biomass.g, fill = Treatment)) +
@@ -83,12 +81,18 @@ require(gridExtra)
 grid.arrange(p1, p2, ncol=2)
 
 
-#root biomass N
-#dfN0<- df %>% filter(N==0)
+#root biomass overall model 
 df1<-df %>% filter(n_species==1)
-m1<-aov(Root.Biomass.g ~ Treatment, data = df1)
-summary(m1) # difference between treatments
+m1<-aov(Root.Biomass.g ~ Treatment*N, data = df1)
+summary(m1) # difference between treatments and nitrogen interaction
+
+library(multcomp)
 library(emmeans)
+# nitrogen -
+dfN0<- df1 %>% filter(N==0)
+m1<-aov(Root.Biomass.g ~ Treatment, data = dfN0)
+summary(m1) 
+
 emm_object <- emmeans(m1, specs = ~ Treatment)
 # Perform all pairwise comparisons with Tukey adjustment
 pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
@@ -99,298 +103,67 @@ cld_result <- cld(emm_object,
                   alpha = 0.05,
                   Letters = letters) 
 print(cld_result)
-     
+
+#nitrogen +
+dfN1<- df1 %>% filter(N==1)
+m1<-aov(Root.Biomass.g ~ Treatment, data = dfN1)
+summary(m1) 
+# Perform all pairwise comparisons with Tukey adjustment
+emm_object <- emmeans(m1, specs = ~ Treatment)
+pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+summary(pairwise_comparison)
+
+cld_result <- cld(emm_object, 
+                  adjust = "tukey", 
+                  alpha = 0.05,
+                  Letters = letters) 
+print(cld_result)
 
 
-#shoot biomass
+# #############################shoot biomass
 df1<-df %>% filter(n_species==1)
-
+# overall model
 m1<-aov(Stem.Biomass.g ~ Treatment*N, data = df1)
-summary(m1) # difference between treatments
-emm_object <- emmeans(m1, specs = ~ Treatment)
-# Perform all pairwise comparisons with Tukey adjustment
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+summary(m1) # difference between treatments and nitrogen interaction
+
 library(multcomp)
+library(emmeans)
+
+# nitrogen -
+dfN0<- df1 %>% filter(N==0)
+m1<-aov(Stem.Biomass.g  ~ Treatment, data = dfN0)
+summary(m1)
+
+# Perform all pairwise comparisons with Tukey adjustment
+emm_object <- emmeans(m1, specs = ~ Treatment)
+pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
 summary(pairwise_comparison)
+
 cld_result <- cld(emm_object, 
                   adjust = "tukey", 
                   alpha = 0.05,
                   Letters = letters) 
 print(cld_result)
 
-#G  L   B    GB  LB    LGB  LG
-#bc cd  a    ab  bc    cd   d 
-
-
-
-
-
-####### weed seed decay #######
-#load libraries
-library(readxl)
-library(tidyverse)
-library(lubridate)
-library(lme4)
-library(nlme)
-
-IBM <- c( #IBM colors
-  "navy", # dark royal blue L
-  "#648FFF", # french blue G
-  "#785EF0", # light purple B
-  "#DC267F", # magenta pink GB
-  "#FE6100", # bright orange LB
-  "#FFB000", # golden yellow LG
-  "#865338" # medium mocha brown LGB
-)
-
-# load data 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df <- read.csv("weed_seed_decay.csv", row.names = 1 )
-head(df)
-
-# set factor
-df$Treatment   <- factor(df$Treatment, levels= c("S", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-unique(df$Treatment)
-
-
-# foxtail
-#L G B LB GB LG LGB
-# a a a ab ab ab b
-df1<-df  %>%   filter(Treatment!="S") 
-df1$Treatment   <- factor(df1$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-lab = as.character(df1$Treatment)
-unique(lab)
-lab<-gsub("LGB", "X", lab)
-lab<-gsub("GB", "AX", lab)
-lab<-gsub("LG", "AX", lab)
-lab<-gsub("LB", "AX", lab)
-lab<-gsub("B", "A", lab)
-lab<-gsub("G", "A", lab)
-lab<-gsub("L", "A", lab)
-
-lab<-gsub("X", "B", lab)
-unique(lab)
-length(lab)
-
-
-p1<- df1 %>% 
-  ggplot(aes(x=Treatment, y=foxtail_prop_nongerm, fill=Treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(size=.5)+
-  theme_classic(base_size = 12) +
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        legend.position = "none")+
-  scale_fill_manual(values = IBM)+
-  geom_text(y=.21, label = lab, size=3)+
-  labs(title = "A",
-       x="",
-       y="non germinating foxtail (%)")
-p1
-
-
-
-
-
-# pigweed
-# L   G   B   GB    LB  LG  LGB
-# bc abc  d   ab    a   abc cd
-
-lab = as.character(df1$Treatment)
-unique(lab)
-lab<-gsub("LGB", "CD", lab)
-lab<-gsub("GB", "AX", lab)
-lab<-gsub("LG", "AXC", lab)
-lab<-gsub("LB", "A", lab)
-lab<-gsub("B", "D", lab)
-lab<-gsub("G", "ABC", lab)
-lab<-gsub("L", "XC", lab)
-lab<-gsub("X", "B", lab)
-
-p2<-df1 %>%
-  ggplot(aes(x=Treatment, y=pigweed_prop_nongerm, fill=Treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(size=.5)+
-  theme_classic(base_size = 12) +
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        legend.position = "none")+
-  scale_fill_manual(values = IBM)+
-  geom_text(y=.73, label = lab, size=3)+
-  labs(title = "B",
-       x="",
-       y="non germinating pigweed (%)")
-p2
-
-
-require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-svg("weeddecay.svg", width = 5, height = 2.5)
-grid.arrange(p1, p2, ncol=2)
-dev.off()
-
-
-
-
-#### model just monocultures ####
-
-# model - binomial model with percent data##
-# make vector of successes and failures
-df1<-df %>% filter(df$n_species==1) %>% filter(Treatment!="S")
-
-# model foxtail
-y<-cbind(df1$foxtail_num_germ, df1$foxtail_num_nongerm)
-m1<-glm(data= df1, y~Treatment, family = binomial)
-summary(m1) # no treatmen effect 
-library(emmeans)
+#nitrogen +
+dfN1<- df1 %>% filter(N==1)
+m1<-aov(Stem.Biomass.g  ~ Treatment, data = dfN1)
+summary(m1) 
+# Perform all pairwise comparisons with Tukey adjustment
 emm_object <- emmeans(m1, specs = ~ Treatment)
 pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
 summary(pairwise_comparison)
-library(multcomp)
-cld_result <- cld(emm_object, adjust = "tukey", alpha = 0.05, Letters = letters) 
+#library(multcomp)
+cld_result <- cld(emm_object, 
+                  adjust = "tukey", 
+                  alpha = 0.05,
+                  Letters = letters) 
 print(cld_result)
 
 
 
 
-# model pigweed
-y<-cbind(df1$pigweed_num_germ, df1$pigweed_num_nongerm)
-m1<-glm(data= df1, y~Treatment, family = binomial)
-summary(m1) # no treatmen effect 
-library(emmeans)
-emm_object <- emmeans(m1, specs = ~ Treatment)
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-summary(pairwise_comparison)
-library(multcomp)
-cld_result <- cld(emm_object, adjust = "tukey", alpha = 0.05, Letters = letters) 
-print(cld_result)
 
-df1<-df %>% filter(df$n_species==1) %>% filter(Treatment!="S")
-
-
-
-
-############## N fix figures ####################
-
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df.leg<- read.csv("Nfix.csv")
-head(df.leg) 
-
-# by treatment 
-label <- df.leg$Treatment
-label
-label <- gsub("LGB", "C" ,label )
-label<- gsub("LG", "B" ,label )
-label <- gsub("LB", "B" ,label )
-label<- gsub("L", "A" ,label )
-
-
-p1<- ggplot(df.leg, aes(x=Treatment, y=perc.Ndfa, fill=Treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
-  theme_classic(base_size = 12) +
-  theme(legend.position = "none")+
-  scale_fill_manual(values = legume_cols)+
-  # geom_text(y=92, label = label, size=4)+
-  labs(title = "E",
-       x="",
-       y= "Nitrogen from Fixation (%)") +
-  scale_shape_manual(values = c(17, 16)) +
-  facet_grid(~Nitrogen_label)#
-
-
-p1
-
-# Analysis of variance 
-# full model 
-one.way.Nadd <- aov(n_fix_per_legume ~ Treatment*Nitrogen, data = df.leg)
-summary(one.way.Nadd) # difference between treatments
-
-df<-df.leg %>% filter(Nitrogen==0)
-one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
-tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
-print(tukey.result.Nadd) # All difference except LG-LB
-#plot(one.way.Nadd) #homoscedasticity looks fine
-
-# by treatment 
-label <- df.leg$Treatment
-label
-
-label <- gsub("LGB", "B" ,label )
-label<- gsub("LG", "AB" ,label )
-label <- gsub("LB", "AB" ,label )
-label<- gsub("L", "A" ,label )
-
-p2<- ggplot(df.leg, aes(x=Treatment, y=n_fix_per_legume, fill=Treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(aes(shape=Nitrogen_label), size=1, width=.2)+
-  theme_classic(base_size = 12) +
-  theme(legend.position = "none")+
-  scale_fill_manual(values = legume_cols)+
-  # geom_text(y=.07, label = label, size=4)+
-  labs(title = "F",
-       x="",
-       y= "N fixed (mg per legume)")  +
-  scale_shape_manual(values = c(17, 16)) +
-  facet_grid(~Nitrogen_label)#
-
-p2
-
-
-# Analysis of variance 
-df<-df.leg %>% filter(Nitrogen==1)
-one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
-summary(one.way.Nadd) # difference between treatments
-tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
-print(tukey.result.Nadd) # All difference except LG-LB
-#plot(one.way.Nadd) #homoscedasticity looks fine\
-
-df<-df.leg %>% filter(Nitrogen==0)
-one.way.Nadd <- aov(n_fix_per_legume ~ Treatment, data = df)
-summary(one.way.Nadd) # difference between treatments
-tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
-print(tukey.result.Nadd) # All difference except LG-LB
-#plot(one.way.Nadd) #homoscedasticity looks fine
-
-
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-svg("nfix.svg", height = 3, width = 8)
-grid.arrange(p1, p2, ncol=2)
-dev.off()
-
-
-# nfixed per mg of soil
-ggplot(df.leg, aes(x=treatment, y=totalN.mg.g.1, fill=treatment)) + 
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  geom_jitter(size=.5)+
-  ylab('Total Nitrogen Fixed per gram of soil') +
-  xlab("Treatment") +
-  theme_classic(base_size = 12) +
-  theme(legend.position = "none")+
-  scale_fill_manual(values = mycols4)+
-  facet_grid( ~spp.number, scales = "free", space = "free")
-
-
-
-
-
-
-
-# Analysis of variance 
-# full model 
-one.way.Nadd <- aov(perc.Ndfa ~ Treatment*Nitrogen, data = df.leg)
-summary(one.way.Nadd) # difference between treatments
-
-df<-df.leg %>% filter(Nitrogen==0)
-one.way.Nadd <- aov(perc.Ndfa ~ Treatment, data = df)
-print(tukey.result.Nadd) # All difference except LG-LB
-#plot(one.way.Nadd) #homoscedasticity looks fine
-
-
-df<-df.leg %>% filter(Nitrogen==1)
-one.way.Nadd <- aov(perc.Ndfa ~ Treatment, data = df)
-tukey.result.Nadd <- TukeyHSD(one.way.Nadd)
-print(tukey.result.Nadd) # All difference except LG-LB
-#plot(one.way.Nadd) #homoscedasticity looks fine
 
 
 ###############write functions for predictions###############
@@ -638,6 +411,7 @@ grid.arrange(p1, p2, ncol=1)
 #filter
 df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
 m1<- lm(Root.Biomass~ Treatment, data=df2)
+summary(m1)
 anova(m1)
 
 #LB
@@ -823,243 +597,156 @@ write.csv(df2, "predicted.biomass.csv", row.names = FALSE)
 
 
 
-######predictions weed seed########
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df<-read.csv("weed_seed_decay.csv", row.names = 1)
-head(df)
-df<-df %>% filter(Treatment!="S")
-# group by
-df<- df %>% group_by(Rep, Nitrogen)
-df
 
-# pigdf
-LG<-get.predict(df, "L", "G", "pigweed_prop_nongerm")
-LB<-get.predict(df, "L", "B", "pigweed_prop_nongerm")
-GB<-get.predict(df, "G", "B", "pigweed_prop_nongerm")
-LGB<-get.predict(df, "L", "G", "pigweed_prop_nongerm", "B")
-LG
+#### supplement: percent root biomass of each species ####
 
-predict<-rbind(GB, LB, LG, LGB)
-predict$pigweed_prop_nongerm<-round(as.numeric(predict$pigweed_prop_nongerm), 3)
-predict$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
-predict
-
-
-# foxtail
-LG<-get.predict(df, "L", "G", "foxtail_prop_nongerm")
-LB<-get.predict(df, "L", "B", "foxtail_prop_nongerm")
-GB<-get.predict(df, "G", "B", "foxtail_prop_nongerm")
-LGB<-get.predict(df, "L", "G", "foxtail_prop_nongerm", "B")
-LG
-
-predict1<-rbind(GB, LB, LG, LGB)
-predict1$foxtail_prop_nongerm<-round(as.numeric(predict1$foxtail_prop_nongerm), 3)
-predict1$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
-predict1
-predict<-full_join(predict, predict1)
-
-## add to df
- #df1<-df %>% filter(n_species!="1")
-
-df1<-full_join(df, predict) 
-df1<-df1 %>% ungroup()
-df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB", "GB.predict", "LB", "LB.predict",  "LG", 
-                                                "LG.predict", "LGB", "LGB.predict" ))
-
-#### plot predictions from monocultures for weed seed
-
-mycols <- c( #IBM colors
+# load libraries and cols
+library(readxl)
+library(tidyverse)
+IBM <- c( #IBM colors
   "navy", # dark royal blue L
   "#648FFF", # french blue G
   "#785EF0", # light purple B
   "#DC267F", # magenta pink GB
-  "grey",
   "#FE6100", # bright orange LB
-  "grey",
   "#FFB000", # golden yellow LG
-  "grey",
-  "#865338", # medium mocha brown LGB
-  "grey"
+  "#865338" # medium mocha brown LGB
+)
+mono_cols <- 
+  c( #IBM colors
+    "navy", # dark royal blue L
+    "#648FFF", # french blue G
+    "#785EF0" # light purple B
+  )
+# import data frame 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+df <- read_excel("biomass_species.xlsx")
+
+# tidy data
+head(df)
+
+# make plot
+ggplot(df, aes(fill=Species, y=Root.Biomass.g, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+# make total.root.species.g column
+total<-df %>% group_by(Trt_ID) %>%
+  summarise(
+    Total.no.bulk = sum(Root.Biomass.g))
+
+# add col to df
+df<-left_join(df, total)
+
+# make percent col
+df<-df%>% mutate(
+  percent= (Root.Biomass.g/Total.no.bulk)*100)
+
+# make plot percent
+ggplot(df, aes(fill=Species, y=percent, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+#add unknown bulk to df
+
+bulk<-df %>%
+  dplyr::select(Treatment, N, Rep, Trt_ID,  Bulk.Root.g) %>%
+  group_by(Trt_ID, Treatment, N, Rep) %>%
+  summarise(
+    Root.Biomass.g= sum(Bulk.Root.g)) %>%
+  mutate(
+    Species="bulk",
+    Brassicae= 0,
+    Legume=  0,
+    Grass= 0
+  )
+
+
+df1 <- df %>% dplyr:: select( Treatment, N, Rep, Trt_ID, Species,  Brassicae, Legume, Grass, Root.Biomass.g )
+df1<-full_join(df1,bulk)
+
+#add total+bulk to df 
+
+total<-df %>%
+  dplyr::select(Trt_ID, Total.Root.g) %>%
+  group_by(Trt_ID) %>%
+  summarise(
+    Total.Root.g= sum(Total.Root.g))
+
+df1<-left_join(df1, total)
+
+# calculate percent
+df1<-df1 %>% mutate(
+  percent = Root.Biomass.g/Total.Root.g
 )
 
+df1$Species<- factor(df1$Species, levels= c("bulk", "legume", "grass", "brassica"))
+# make plot percent
+ggplot(df1, aes(fill=Species, y=percent, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 
-# make labels 
-label <- df1$Treatment
-label
-label <- gsub("LGB.predict", "*" ,label )
-label<- gsub("L", "" ,label )
-label<- gsub("G", "" ,label )
-label <- gsub("B", "" ,label )
-label <- gsub(".predict", "" ,label )
-label
+### bulk assigned to crops ####
 
-# plot
-p1<-df1  %>% 
-  ggplot(aes(x=Treatment, y=foxtail_prop_nongerm, fill = Treatment)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, outlier.shape = NA)+
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 12)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
-  labs(title = "C",
-       x="",
-       y="non germinating foxtail (%)")+
-  geom_text(y=.25, label =label , nudge_x = -.8, size=8)
-  
-  
-p1
-
-# make labels 
-label <- df1$Treatment
-label <- gsub("LB.predict", "*" ,label )
-label <- gsub("GB.predict", "*" ,label )
-label<- gsub("L", "" ,label )
-label<- gsub("G", "" ,label )
-label <- gsub("B", "" ,label )
-label <- gsub(".predict", "" ,label )
-label
-
-
-# plot
-p2<-df1  %>% 
-  ggplot(aes(x=Treatment, y=pigweed_prop_nongerm, fill = Treatment)) +
-  geom_jitter(width = .2, size=1 )+
-  geom_boxplot(alpha=.5, outlier.shape = NA)+
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 12)+
-  geom_text(y=.8, label =label , nudge_x = -.8, size=8)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        legend.position="none",)+
-  labs(title = "D",
-       x="",
-       y="non germinating pigweed (%)")
-
-p2
-
-# put the two plots together
-require(gridExtra)
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-#svg("weeddecay.predict.svg", width = 4.5, height = 6)
-grid.arrange(p1, p2, ncol=1)
-#dev.off()
-
-##########stats weed prop non germinated #####
+# import data frame 
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df<-read.csv("weed_seed_decay.csv", row.names = 1)
+df <- read_excel("biomass_species.xlsx")
+
+# tidy data
 head(df)
-df<-df %>% filter(Treatment!="S")
-# group by
-df<- df %>% group_by(Rep, Nitrogen)
-df
 
-# pigweed non germ 
-LG<-get.predict(df, "L", "G", "pigweed_num_nongerm")
-LB<-get.predict(df, "L", "B", "pigweed_num_nongerm")
-GB<-get.predict(df, "G", "B", "pigweed_num_nongerm")
-LGB<-get.predict(df, "L", "G", "pigweed_num_nongerm", "B")
-predict<-rbind(GB, LB, LG, LGB)
-predict$pigweed_num_nongerm<-round(as.numeric(predict$pigweed_num_nongerm), 0)
-predict$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
-predict
+# make plot
+ggplot(df, aes(fill=Species, y=Root.Biomass.g, x=Trt_ID)) + 
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
-# foxtail
-LG<-get.predict(df, "L", "G", "foxtail_num_nongerm")
-LB<-get.predict(df, "L", "B", "foxtail_num_nongerm")
-GB<-get.predict(df, "G", "B", "foxtail_num_nongerm")
-LGB<-get.predict(df, "L", "G", "foxtail_num_nongerm", "B")
-predict1<-rbind(GB, LB, LG, LGB)
-predict1$foxtail_num_nongerm<-round(as.numeric(predict1$foxtail_num_nongerm), 0)
-predict1$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
-predict1
-predict<-full_join(predict, predict1)
+# make total.root.species.g column
+total<-df %>% group_by(Trt_ID) %>%
+  summarise(
+    Total.withbulk = sum(Total.Root.g))
 
+# add col to df
+df<-left_join(df, total)
 
-# pigweed 2
-LG<-get.predict(df, "L", "G", "pigweed_num_germ")
-LB<-get.predict(df, "L", "B", "pigweed_num_germ")
-GB<-get.predict(df, "G", "B", "pigweed_num_germ")
-LGB<-get.predict(df, "L", "G", "pigweed_num_germ", "B")
-predict2<-rbind(GB, LB, LG, LGB)
-head(predict2)
-predict2$pigweed_num_germ<-round(as.numeric(predict2$pigweed_num_germ), 0)
-predict2$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
-predict<-full_join(predict, predict2)
-predict
+# make percent col
+df<-df%>% mutate(
+  percent= (Total.Root.g/Total.withbulk)*100)
+
+df$Species<- factor(df$Species, levels= c("legume", "grass", "brassica"))
+
+# make plot percent
+mono_cols <- 
+  c( #IBM colors
+    "#0a3170", # dark royal blue L
+    "#cdddf7", # french blue G
+    "#785EF0" # light purple B
+  )
+
+# recode name
+df1<-df%>% filter(Treatment!="B" & Treatment!="L" & Treatment!="G") 
+
+df1$label<-gsub("LGB", "" ,df1$Trt_ID)
+df1$label
+df1$label<-gsub("GB", "" ,df1$label)
+df1$label<-gsub("LG", "" ,df1$label)
+df1$label<-gsub("LB", "" ,df1$label)
 
 
-# foxtail
-LG<-get.predict(df, "L", "G", "foxtail_num_germ")
-LB<-get.predict(df, "L", "B", "foxtail_num_germ")
-GB<-get.predict(df, "G", "B", "foxtail_num_germ")
-LGB<-get.predict(df, "L", "G", "foxtail_num_germ", "B")
-predict3<-rbind(GB, LB, LG, LGB)
-predict3$foxtail_num_germ<-round(as.numeric(predict3$foxtail_num_germ), 0)
-predict3$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
-predict3
-predict<-full_join(predict, predict3)
-head(predict)
-
-## add to df
-df1<-df %>% filter(n_species!="1")
-
-df1<-full_join(df1, predict) 
-df1<-df1 %>% ungroup()
-as.factor(df1$Treatment)
-head(df1)
-
-# anova binomial model pigweed
-#GB
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-y<-cbind(df2$pigweed_num_nongerm, df2$pigweed_num_germ)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-y<-cbind(df2$pigweed_num_nongerm, df2$pigweed_num_germ)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-y<-cbind(df2$pigweed_num_nongerm, df2$pigweed_num_germ)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-y<-cbind(df2$pigweed_num_nongerm, df2$pigweed_num_germ)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-# anova binomial model foxtail
-#GB
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-y<-cbind(df2$foxtail_num_nongerm, df2$foxtail_num_germ)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-y<-cbind(df2$foxtail_num_nongerm, df2$foxtail_num_germ)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-y<-cbind(df2$foxtail_num_nongerm, df2$foxtail_num_germ)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-y<-cbind(df2$foxtail_num_nongerm, df2$foxtail_num_germ)
-m1<-glm(data= df2, y~Treatment, family = binomial)
-summary(m1)
 
 
-# there are difference between the predicted verse measured for weed seed decay for some treatments
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement")
+svg("percent.biomass.svg", width = 8, height =4.5 )
+df1%>%
+  ggplot(aes(fill=Species, y=percent, x=label)) + 
+  theme_bw(base_size = 12)+
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+
+  scale_fill_manual(values=mono_cols)+
+  facet_grid(~Treatment, space="free", scales="free")+
+  labs(x= "Sample",
+       y="proportion dry biomass (g)")
+
+dev.off()
+write.csv(df, "percent.biomass.csv")
 

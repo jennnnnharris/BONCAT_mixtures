@@ -1,6 +1,6 @@
 
 
-###### clean data weed seed
+###### clean data weed seed   #######
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 weed <- read_csv("raw_weed_germination.csv")
 head(weed)
@@ -47,7 +47,7 @@ weed<-read.csv("weed_seed_decay.csv", row.names = 1)
 head(weed)
 
 
-# process Nfix
+# process Nfix #############
 # 10 December 2025
 
 
@@ -163,14 +163,18 @@ df.leg<-df.leg%>%
                            "1" = 6,
                            "2" = 3,
                            "3" =2)) %>%
-  mutate(n_fix_per_legume = totalN.g.pot.1/n_legume)
+  mutate(totalN.g.pot.1.n_legume = totalN.g.pot.1/n_legume,
+         n_fix_per_legume = BNF.g.plot.1/n_legume )
 
-
+df.leg
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 write.csv(df.leg, "Nfix.csv")
 
-
-
+head(df.leg)
+df.leg$stem.biomass.g
+df.leg$BNF.g.plot.1
+hist(df.leg$BNF.g.plot.1)
+hist(df.leg$n_fix_per_legume)
 # summarise biomass to pot level
 # Dec 10 2025
 
