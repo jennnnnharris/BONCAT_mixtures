@@ -44,6 +44,13 @@ df$Brassicae<-as.numeric(df$Brassicae)
 df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
 df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 
+# add block info 
+# add block info
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+block <- read_excel("metadata_experiment_planning.xlsx")
+head(block)  
+df<-left_join(df, block)
+head(df)
 
 p1<-df  %>% filter(n_species!="NA") %>%
   ggplot(aes(x=Treatment, y=Root.Biomass.g, fill = Treatment)) +
@@ -81,16 +88,34 @@ require(gridExtra)
 grid.arrange(p1, p2, ncol=2)
 
 
-#root biomass overall model 
-df1<-df %>% filter(n_species==1)
-m1<-aov(Root.Biomass.g ~ Treatment*N, data = df1)
-summary(m1) # difference between treatments and nitrogen interaction
-
+# load stats libraries
 library(multcomp)
 library(emmeans)
+library(lme4)
+library(lmerTest)
+library(car)
+
+#root biomass overall model 
+#df1<-df %>% filter(n_species==1)
+m1<-aov(Root.Biomass.g ~ Treatment*N+block, data = df)
+summary(m1) # difference between treatments and nitrogen interaction block is sig
+
+# # mixed model
+# # Using the built-in sleepstudy dataset
+# m1 <- lmer(Root.Biomass.g ~ Treatment*N + (1 | block), data = df)
+# 
+# # View the results
+# summary(m1)
+# plot(m1)
+# qqnorm(residuals(m1))
+# qqline(residuals(m1))
+# 
+# # aov
+# Anova(m1)
+
 # nitrogen -
-dfN0<- df1 %>% filter(N==0)
-m1<-aov(Root.Biomass.g ~ Treatment, data = dfN0)
+dfN0<- df %>% filter(N==0)
+m1<-aov(Root.Biomass.g ~ Treatment+block, data = dfN0)
 summary(m1) 
 
 emm_object <- emmeans(m1, specs = ~ Treatment)
@@ -105,8 +130,8 @@ cld_result <- cld(emm_object,
 print(cld_result)
 
 #nitrogen +
-dfN1<- df1 %>% filter(N==1)
-m1<-aov(Root.Biomass.g ~ Treatment, data = dfN1)
+dfN1<- df %>% filter(N==1)
+m1<-aov(Root.Biomass.g ~ Treatment+block, data = dfN1)
 summary(m1) 
 # Perform all pairwise comparisons with Tukey adjustment
 emm_object <- emmeans(m1, specs = ~ Treatment)
@@ -121,16 +146,16 @@ print(cld_result)
 
 
 # #############################shoot biomass
-df1<-df %>% filter(n_species==1)
+#df1<-df %>% filter(n_species==1)
 # overall model
-m1<-aov(Stem.Biomass.g ~ Treatment*N, data = df1)
+m1<-aov(Stem.Biomass.g ~ Treatment*N, data = df)
 summary(m1) # difference between treatments and nitrogen interaction
 
 library(multcomp)
 library(emmeans)
 
 # nitrogen -
-dfN0<- df1 %>% filter(N==0)
+dfN0<- df %>% filter(N==0)
 m1<-aov(Stem.Biomass.g  ~ Treatment, data = dfN0)
 summary(m1)
 
@@ -146,8 +171,8 @@ cld_result <- cld(emm_object,
 print(cld_result)
 
 #nitrogen +
-dfN1<- df1 %>% filter(N==1)
-m1<-aov(Stem.Biomass.g  ~ Treatment, data = dfN1)
+df1<- df %>% filter(N==1)
+m1<-aov(Stem.Biomass.g  ~ Treatment, data = df1)
 summary(m1) 
 # Perform all pairwise comparisons with Tukey adjustment
 emm_object <- emmeans(m1, specs = ~ Treatment)
@@ -324,8 +349,8 @@ predict$Nitrogen_label<-rep(rep(c("Nitrogen +", "Nitrogen -"), each=6), 4)
 
 df1<-full_join(df, predict) 
 df1<-df1 %>% ungroup()
-df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB", "GB.predict", "LB", "LB.predict",  "LG", 
-                                 "LG.predict", "LGB", "LGB.predict" ))
+df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB.predict", "GB", "LB.predict",  "LB",   "LG.predict", "LG", 
+                             "LGB.predict"   , "LGB" ))
 
 #### plot predictions from monocultures for biomass
 
@@ -333,14 +358,14 @@ mycols <- c( #IBM colors
   "navy", # dark royal blue L
   "#648FFF", # french blue G
   "#785EF0", # light purple B
-    "#DC267F", # magenta pink GB
-  "grey",
+    "grey",  
+  "#DC267F", # magenta pink GB
+    "grey",
   "#FE6100", # bright orange LB
-  "grey",
+    "grey",
   "#FFB000", # golden yellow LG
-  "grey",
-  "#865338", # medium mocha brown LGB
-  "grey"
+    "grey",
+  "#865338" # medium mocha brown LGB
 )
 
 
@@ -365,7 +390,7 @@ p1<-df1  %>%
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
        )+
   
-  geom_text(y=6, label =label , nudge_x = -.5, size=8)+
+  geom_text(y=6, label =label , nudge_x = .5, size=8)+
   labs(title = "A",
        x="",
        y="Root biomass (g)")+
@@ -398,10 +423,10 @@ p2
 # put the plots together
 
 require(gridExtra)
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-#svg("biomasspredict.svg", height = 6, width = 4.5)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
+svg("biomasspredict.svg", height = 6, width = 4.5)
 grid.arrange(p1, p2, ncol=1)
-#dev.off()
+dev.off()
 
 
 ######### anova#####

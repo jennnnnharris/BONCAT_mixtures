@@ -50,6 +50,7 @@ IBM <- c( #IBM colors
   "#865338" # medium mocha brown
 )
 
+"#8cadff"
 bw <- c( #IBM colors
   "grey", # grey
   "black" # teal
@@ -69,7 +70,8 @@ setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Bur
 
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.csv("metadat.csv", header = T)
+metadat<-read.csv("metadat2.csv", header = T, row.names = 1)
+#note metadat2 had block info
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns
@@ -84,6 +86,8 @@ metadat$Legume   <- factor(metadat$Legume)
 metadat$Brassicae   <- factor(metadat$Brassicae)
 metadat$Grass   <- factor(metadat$Grass)
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes absent", "Legumes present"))
+head(metadat)
+
 
 head(asvs)
 #T_DNA_23_S153 has really few reads so I am omitting it.
@@ -509,7 +513,7 @@ ps
 #1778 asvs
 
 ## plot
-plot(sort(taxa_sums(ps), TRUE), type="h", ylim=c(0, 8000))
+#plot(sort(taxa_sums(ps), TRUE), type="h", ylim=c(0, 8000))
 
 
 ######## 4. CAP -Treatment- ##################
@@ -529,7 +533,7 @@ dist_matrix<-vegdist(otu_table(ps1), method = "bray")
 
 # 2. Run the CAP (db-RDA) analysis
 # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(dist_matrix ~ Treatment*N*Block,
+cap_result <- capscale(dist_matrix ~ Treatment*N+block,
                        data = metadat2,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
@@ -552,21 +556,20 @@ perc
 ### 4. plot 
 #
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal") 
-#svg("cap.total1.svg", width =8 , height = 4)
-#windows(10,6)
-par(mfrow=c(1,2))
-par(cex.lab = 1.2) # make all fonts in graphs little bigger
+svg("cap.total1.svg", width = 3, height = 7)
+#windows(4,7)
+par(mfrow=c(2,1))
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-         main="", cex = 1.2,
+         main="", cex.lab =.8,
          xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
          ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
-  par(adj = 0)
-title(main= "A")
+ # par(adj = 0)
+#title(main= "A")
 par(adj=.5)
 points(sc_si, 
        col= mycols[metadat2$Treatment],
        pch= c(16,17)[as.factor(metadat2$Nitrogen_label)],
-       lwd=1,cex=1,
+       lwd=1,cex=.8,
        bg=mycols[metadat2$Treatment])
 ordiellipse(sc_si, metadat2$Treatment,  
             kind = "ehull", conf=0.95, label=T, 
@@ -574,34 +577,33 @@ ordiellipse(sc_si, metadat2$Treatment,
             border = 0,
             col= IBM,
             alpha = 30,
-            cex=1.2)
+            cex=.8)
 
-legend("bottomleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-       fill= IBM,
-       cex=.8,
-       title = "",
-       bty = "n")
-legend("bottom", legend=c("Nitrogen +", "Nitrogen -"  ),
-      pch=c(16,17 ),
-       cex=.8,
-       title = "",     bty = "n")
+# legend("bottomleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+#        fill= IBM,
+#        cex=.8,
+# #        title = "",
+# #        bty = "n")
+# legend("bottom", legend=c("Nitrogen +", "Nitrogen -"  ),
+#       pch=c(16,17 ),
+#        cex=.8,
+#        title = "",     bty = "n")
+# 
 
 
+###### CAP nitrogen +  and - comparision
 
-###### CAP nitrogen +  -  
-
-par(cex.lab = 1.2) # make all fonts in graphs little bigger
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-         main="", cex = 1.2,
+         cex.lab = .8,
          xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
          ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
-par(adj = 0)
-title(main= "B")
-par(adj=.5)
+#par(adj = 0)
+#title(main= "B")
+#par(adj=.5)
 points(sc_si, 
        col= bw[as.factor(metadat2$Nitrogen_label)],
        pch= c(21,24)[as.factor(metadat2$Nitrogen_label)],
-       lwd=1,cex=1,
+       lwd=1,cex=.8,
        bg=bw[as.factor(metadat2$Nitrogen_label)])
 ordiellipse(sc_si, metadat2$Nitrogen_label,  
             kind = "ehull", conf=0.95, label=T, 
@@ -609,11 +611,11 @@ ordiellipse(sc_si, metadat2$Nitrogen_label,
             border = 0,
             col= bw,
             alpha = 30,
-            cex=1.2)
-legend("bottomleft", legend=c("Nitrogen -", "Nitrogen +"  ),
-       pch=c(16,17 ),
-       cex=1,
-       title = "",     bty = "n")
+            cex=.8)
+# legend("bottomleft", legend=c("Nitrogen -", "Nitrogen +"  ),
+#        pch=c(16,17 ),
+#        cex=.8,
+#        title = "",     bty = "n")
 
 dev.off()
 
@@ -628,13 +630,13 @@ ps1
 # subset metadata
 metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil"  & N=="1")
 metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
+head(metadat2)
 # 1. Calculate the distance matrix (e.g., Bray-Curtis)
 dist_matrix<-vegdist(otu_table(ps1), method = "bray")
 
 # 2. Run the CAP (db-RDA) analysis
 # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(dist_matrix ~ Treatment,
+cap_result <- capscale(dist_matrix ~ Treatment+block,
                        data = metadat2,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
@@ -642,32 +644,63 @@ cap_result <- capscale(dist_matrix ~ Treatment,
 anova_cap <- anova(cap_result, permutations = 999, by = "term")
 anova_cap
 
-#  Perform all Pairwise Comparisons
-# The function will iterate through all pairs of the 'Habitat' factor
+# Perform all Pairwise Comparisons
+#The function will iterate through all pairs of the 'Habitat' factor
+
 pairwise_results <- multiconstrained(
-  formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
+  formula = dist_matrix ~ Treatment+block,  # Same formula as the main CAP model
   data = metadat2,
   constrained = capscale,       # Specify the constrained ordination method
   permutations = 999            # Number of permutations for the test
 )
-## View the raw pairwise results
+# View the raw pairwise results
 print(pairwise_results)
-#Extract the raw p-values from the results
+# Extract the raw p-values from the results
 raw_pvalues <- pairwise_results[, "Pr(>F)"]
-#Apply the Holm (Holm-Bonferroni) Adjustment
-adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
-adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
-#p.adjust
-# Combine the results for final interpretation
-final_table <- data.frame(
-  Pair = rownames(pairwise_results),
+# Apply the Holm (Holm-Bonferroni) Adjustment
+adjusted_pvalues <-p.adjust(raw_pvalues, method = "fdr")
+# make table
+table <- data.frame(
+  Group1 = str_split_i(rownames(pairwise_results), "vs. ", 1),
+  Group2 = str_split_i(rownames(pairwise_results), "vs. ", 2),
   Pseudo_F = pairwise_results[, "F"],
   Raw_P = raw_pvalues,
-  fdr_adj_p = adjusted_pvalues1,
-  bonferroni_Adj_P = adjusted_pvalues
+  p_value = round(adjusted_pvalues,4)
 )
- #Print the final results table
-print(final_table)
+print(table)
+factor(table$Group1)
+table$Group1<-factor(table$Group1,levels= c("L ", "G ",  "B ", "GB " , "LB ", "LG " ) )
+table$Group1
+
+
+factor(table$Group2)
+table$Group2[order(table$Group2)]
+table$Group2
+table$Group2<-factor(table$Group2,levels= c( "G", "B", "GB", "LB", "LG", "LGB") )
+
+
+
+#Combine the results for final interpretation
+# 4) Plot heatmap
+p_recol_covercrop <- ggplot(table, aes(x = Group2, y = Group1, fill = p_value)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = p_value), size = 2) +
+  scale_fill_gradient(
+    low = "#648FFF",
+    high = "white",
+    na.value = "grey90",
+    limits = c(0, 0.1),
+    name = "P-value"
+  ) +
+  theme_minimal() +
+  labs(x = "", y = "", title = "") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+pdf("Pval_withN.pdf",  width=3.5, height=2.5 )
+p_recol_covercrop
+dev.off()
 
 
 
@@ -687,22 +720,20 @@ perc
 
 ###  5. plot 
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-#svg("cap.total2.svg", width = 8 , height = 4)
-
-#windows(6,6)
-par(mfrow=c(1,2))
-par(cex.lab = 1.2) # make all fonts in graphs little bigger
+svg("cap.total2.svg", width = 3, height = 7)
+#windows(4,7)
+par(mfrow=c(2,1))
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-         main="Nitrogen + ", cex = 1.2,
+         main="Nitrogen + ", cex.lab = .8,
          xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
          ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
 par(adj = 0)
-title(main= "C")
+#title(main= "C")
 par(adj=.5)
 points(sc_si, 
        col= mycols[metadat2$Treatment],
        pch= c(21)[as.factor(metadat2$Nitrogen_label)],
-       lwd=1,cex=1,
+       lwd=1,cex=.8,
        bg=mycols[metadat2$Treatment])
 ordiellipse(sc_si, metadat2$Treatment,  
             kind = "ehull", conf=0.95, label=T, 
@@ -710,7 +741,7 @@ ordiellipse(sc_si, metadat2$Treatment,
             border = 0,
             col= IBM,
             alpha = 40,
-            cex=1.2)
+            cex=.8)
 
 
 ####### N- only  
@@ -730,39 +761,14 @@ dist_matrix<-vegdist(otu_table(ps1), method = "bray")
 
 # 2. Run the CAP (db-RDA) analysis
 # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(dist_matrix ~ Treatment,
+cap_result <- capscale(dist_matrix ~ Treatment+block,
                        data = metadat2,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
 # 3. Permutation test for significance of constraints
 anova_cap <- anova(cap_result, permutations = 999, by = "term")
 anova_cap
-# Perform all Pairwise Comparisons
-#The function will iterate through all pairs of the 'Habitat' factor
 
-pairwise_results <- multiconstrained(
-  formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
-  data = metadat2,
-  constrained = capscale,       # Specify the constrained ordination method
-  permutations = 999            # Number of permutations for the test
-)
-# View the raw pairwise results
-print(pairwise_results)
-# Extract the raw p-values from the results
-raw_pvalues <- pairwise_results[, "Pr(>F)"]
-# Apply the Holm (Holm-Bonferroni) Adjustment
-adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
-adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
-#Combine the results for final interpretation
-final_table <- data.frame(
-  Pair = rownames(pairwise_results),
-  Pseudo_F = pairwise_results[, "F"],
-  Raw_P = raw_pvalues,
-  fdr_adj_p = adjusted_pvalues1,
-  bonferroni_Adj_P = adjusted_pvalues
-)
-#Print the final results table
-print(final_table)
 
 ### 4. grab info for the plot
 smry <- summary(cap_result)
@@ -776,18 +782,18 @@ perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
 perc
 
 ### 5. plot 
-par(cex.lab = 1.2) # make all fonts in graphs little bigger
+#par(cex= 1) # make all fonts in graphs little bigger
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-         main="Nitrogen -", cex = 1.2,
+         main="Nitrogen -", cex.lab = .8,
          xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
          ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
 par(adj = 0)
-title(main= "D")
+#title(main= "D")
 par(adj=.5)
 points(sc_si, 
        col= mycols[metadat2$Treatment],
        pch= c(24)[as.factor(metadat2$Nitrogen_label)],
-       lwd=1,cex=1,
+       lwd=1,cex=.8,
        bg=mycols[metadat2$Treatment])
 ordiellipse(sc_si, metadat2$Treatment,  
             kind = "ehull", conf=0.95, label=T, 
@@ -795,9 +801,70 @@ ordiellipse(sc_si, metadat2$Treatment,
             border = 0,
             col= IBM,
             alpha = 50,
-            cex=1.2)
+            cex=.8)
 
 
+dev.off()
+
+#
+# Perform all Pairwise Comparisons
+#The function will iterate through all pairs of the 'Habitat' factor
+
+pairwise_results <- multiconstrained(
+  formula = dist_matrix ~ Treatment+block,  # Same formula as the main CAP model
+  data = metadat2,
+  constrained = capscale,       # Specify the constrained ordination method
+  permutations = 999            # Number of permutations for the test
+)
+# View the raw pairwise results
+print(pairwise_results)
+# Extract the raw p-values from the results
+raw_pvalues <- pairwise_results[, "Pr(>F)"]
+# Apply the Holm (Holm-Bonferroni) Adjustment
+adjusted_pvalues <-p.adjust(raw_pvalues, method = "fdr")
+# make table
+table <- data.frame(
+  Group1 = str_split_i(rownames(pairwise_results), "vs. ", 1),
+  Group2 = str_split_i(rownames(pairwise_results), "vs. ", 2),
+  Pseudo_F = pairwise_results[, "F"],
+  Raw_P = raw_pvalues,
+  p_value = round(adjusted_pvalues,4)
+)
+print(table)
+factor(table$Group1)
+table$Group1<-factor(table$Group1,levels= c("L ", "G ",  "B ", "GB " , "LB ", "LG " ) )
+table$Group1
+
+
+factor(table$Group2)
+table$Group2[order(table$Group2)]
+table$Group2
+table$Group2<-factor(table$Group2,levels= c( "G", "B", "GB", "LB", "LG", "LGB") )
+
+
+
+#Combine the results for final interpretation
+
+
+# 4) Plot heatmap
+p_recol_covercrop <- ggplot(table, aes(x = Group2, y = Group1, fill = p_value)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = p_value), size = 2) +
+  scale_fill_gradient(
+    low = "#648FFF",
+    high = "white",
+    na.value = "grey90",
+    limits = c(0, 0.1),
+    name = "P-value"
+  ) +
+  theme_minimal() +
+  labs(x = "", y = "", title = "") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+pdf("Pval_withoutN.pdf",  width=3.5, height=2.5)
+p_recol_covercrop
 dev.off()
 
 

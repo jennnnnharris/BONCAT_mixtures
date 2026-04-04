@@ -2,11 +2,11 @@
 
 ######## weed seed decay #######
 #load libraries
-library(readxl)
+#library(readxl)
 library(tidyverse)
-library(lubridate)
-library(lme4)
-library(nlme)
+#library(lubridate)
+# library(lme4)
+# library(nlme)
 
 IBM <- c( #IBM colors
   "navy", # dark royal blue L
@@ -27,42 +27,41 @@ head(df)
 df$Treatment   <- factor(df$Treatment, levels= c("S", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 unique(df$Treatment)
 
+# 
+# # add block info 
+# # add block info
+# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+# block <- read_excel("metadata_experiment_planning.xlsx")
+# head(block)  
+# df<-left_join(df, block)
+# head(df)
+
+
 
 # foxtail
 #L G B LB GB LG LGB
 # a a a ab ab ab b
-df1<-df  %>%   filter(Treatment!="S") 
-df1$Treatment   <- factor(df1$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+df<-df  %>%   filter(Treatment!="S") 
+df$Treatment   <- factor(df$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
-lab = as.character(df1$Treatment)
-unique(lab)
-lab<-gsub("LGB", "X", lab)
-lab<-gsub("GB", "AX", lab)
-lab<-gsub("LG", "AX", lab)
-lab<-gsub("LB", "AX", lab)
-lab<-gsub("B", "A", lab)
-lab<-gsub("G", "A", lab)
-lab<-gsub("L", "A", lab)
-
-lab<-gsub("X", "B", lab)
-unique(lab)
-length(lab)
+df<-df %>%
+  mutate(df, foxtail_prop_germ = foxtail_num_germ/foxtail_total_seeds,
+         pigweed_prop_germ= pigweed_num_germ/pigweed_total_seeds)
 
 
-p1<- df1 %>% 
-  ggplot(aes(x=Treatment, y=foxtail_prop_nongerm, fill=Treatment)) + 
+p1<- df %>% 
+  ggplot(aes(x=Treatment, y=foxtail_prop_germ, fill=Treatment)) + 
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(size=.5)+
   theme_classic(base_size = 12) +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position = "none")+
   scale_fill_manual(values = IBM)+
-  geom_text(y=.21, label = lab, size=3)+
+ # geom_text(y=.21, label = lab, size=3)+
   labs(title = "A",
        x="",
-       y="non germinating foxtail (%)")
+       y="germinating foxtail (%)")
 p1
-
 
 
 
@@ -71,66 +70,53 @@ p1
 # L   G   B   GB    LB  LG  LGB
 # bc abc  d   ab    a   abc cd
 
-lab = as.character(df1$Treatment)
-unique(lab)
-lab<-gsub("LGB", "CD", lab)
-lab<-gsub("GB", "AX", lab)
-lab<-gsub("LG", "AXC", lab)
-lab<-gsub("LB", "A", lab)
-lab<-gsub("B", "D", lab)
-lab<-gsub("G", "ABC", lab)
-lab<-gsub("L", "XC", lab)
-lab<-gsub("X", "B", lab)
+# lab = as.character(df1$Treatment)
+# unique(lab)
+# lab<-gsub("LGB", "CD", lab)
+# lab<-gsub("GB", "AX", lab)
+# lab<-gsub("LG", "AXC", lab)
+# lab<-gsub("LB", "A", lab)
+# lab<-gsub("B", "D", lab)
+# lab<-gsub("G", "ABC", lab)
+# lab<-gsub("L", "XC", lab)
+# lab<-gsub("X", "B", lab)
 
-p2<-df1 %>%
-  ggplot(aes(x=Treatment, y=pigweed_prop_nongerm, fill=Treatment)) + 
+p2<-df %>%
+  ggplot(aes(x=Treatment, y=pigweed_prop_germ, fill=Treatment)) + 
   geom_boxplot(alpha=.7, outlier.shape = NA)+
   geom_jitter(size=.5)+
   theme_classic(base_size = 12) +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position = "none")+
   scale_fill_manual(values = IBM)+
-  geom_text(y=.73, label = lab, size=3)+
+  #geom_text(y=.73, label = lab, size=3)+
   labs(title = "B",
        x="",
-       y="non germinating pigweed (%)")
+       y="germinating pigweed (%)")
 p2
 
 
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement")
 svg("weeddecay.svg", width = 5, height = 2.5)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
 
 
-
-
-# model - binomial model with percent data##
-# make vector of successes and failures
-y<-cbind(df$num_nongerm, df$num_germ)
-m1<-glm(data= df, y~(treatment+block+species)^2, family = binomial)
-summary(m1)
-# significant effect of block and species
-
-# model without soil
-df <- df %>% filter(treatment!="S")
-y<-cbind(df$num_nongerm, df$num_germ)
-m1<-glm(data= df, y~(treatment+block+species)^2, family = binomial)
-summary(m1)
-# significant effect of block and species and species treatment interaction
-
-
 # model foxtail
-df1 <- df %>% filter(species=="foxtail")
-y<-cbind(df1$num_nongerm, df1$num_germ)
-m1<-glm(data= df1, y~treatment+block, family = binomial)
+y<-cbind(df$foxtail_num_germ, df$foxtail_num_nongerm)
+m1<-glm(data= df, y~Treatment+Block, family = binomial)
 summary(m1)
+
+# Run Anova on your binom model
+library(car)
+Anova(m1, type = "II")
+
 # significant effect of block and species and species treatment interaction
 # pairwise tests
 library(emmeans)
 # Get the EMMs for your treatment groups
-emm_object <- emmeans(m1, specs = ~ treatment)
+emm_object <- emmeans(m1, specs = ~ Treatment)
 # Perform all pairwise comparisons with Tukey adjustment
 pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
 summary(pairwise_comparison)
@@ -148,16 +134,19 @@ print(cld_result)
 
 
 # model pigweed
-df2 <- df %>% filter(species=="pigweed")
-y<-cbind(df2$num_nongerm, df2$num_germ)
-m1<-glm(data= df2, y~treatment+block, family = binomial)
+# model foxtail
+y<-cbind(df$pigweed_num_germ, df$pigweed_num_nongerm)
+m1<-glm(data= df, y~Treatment+Block, family = binomial)
 summary(m1)
 
+
+library(car)
+Anova(m1, type = "II")
 # significant effect of block and species and species treatment interaction
 # pairwise tests
 library(emmeans)
 # Get the EMMs for your treatment groups
-emm_object <- emmeans(m1, specs = ~ treatment)
+emm_object <- emmeans(m1, specs = ~ Treatment)
 # Perform all pairwise comparisons with Tukey adjustment
 pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
 summary(pairwise_comparison)
@@ -171,43 +160,81 @@ cld_result <- cld(emm_object,
                   Letters = letters) 
 
 print(cld_result)
+factor(df$Treatment)
 
-# L   G   B   GB    LB  LG  LGB
-# bc abc  d   ab    a   abc cd
-
-########predicted
+########predicted ##########
+get.predict<-function(df, sp1, sp2, trait, sp3) {
+  if(missing(sp3)){
+    print(trait)
+    sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
+    print(sp1.df)
+    sp1.predict<-sp1.df/2
+    print(sp1.predict)
+    sp2.df<-filter(df, Treatment==sp2) %>% select(all_of(trait))
+    sp2.predict<-sp2.df /2
+    print(sp2.predict)
+    predict <- sp1.predict + sp2.predict
+    print(predict)
+    #return(predict)
+  }
+  else {
+    print(paste("the 3rd species is",sp3))
+    print(trait)
+    sp1.df<- filter(df, Treatment==sp1) %>% select(all_of(trait))
+    sp1.predict<-sp1.df/3
+    #print(sp1.df)
+    #print(sp1.predict)
+    sp2.df<-filter(df, Treatment==sp2) %>% select(all_of(trait))
+    sp2.predict<-sp2.df/3
+    print(sp2.df)
+    print(sp2.predict)
+    sp3.df<-filter(df, Treatment==sp3) %>% select(all_of(trait))
+    sp3.predict<-sp3.df/3
+    #print(sp3.df)
+    #print(sp3.predict)
+    predict <- sp1.predict + sp2.predict + sp3.predict
+    print(predict)
+    return(predict)
+  }
+  
+}
 
 ######predictions weed seed########
+library(tidyverse)
+
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 df<-read.csv("weed_seed_decay.csv", row.names = 1)
 head(df)
 df<-df %>% filter(Treatment!="S")
+df<-df %>%
+  mutate(df, foxtail_prop_germ = foxtail_num_germ/foxtail_total_seeds,
+         pigweed_prop_germ= pigweed_num_germ/pigweed_total_seeds)
 # group by
 df<- df %>% group_by(Rep, Nitrogen)
-df
+
 
 # pigdf
-LG<-get.predict(df, "L", "G", "pigweed_prop_nongerm")
-LB<-get.predict(df, "L", "B", "pigweed_prop_nongerm")
-GB<-get.predict(df, "G", "B", "pigweed_prop_nongerm")
-LGB<-get.predict(df, "L", "G", "pigweed_prop_nongerm", "B")
+LG<-get.predict(df, "L", "G", "pigweed_prop_germ")
+LB<-get.predict(df, "L", "B", "pigweed_prop_germ")
+GB<-get.predict(df, "G", "B", "pigweed_prop_germ")
+LGB<-get.predict(df, "L", "G", "pigweed_prop_germ", "B")
 LG
 
 predict<-rbind(GB, LB, LG, LGB)
-predict$pigweed_prop_nongerm<-round(as.numeric(predict$pigweed_prop_nongerm), 3)
+predict$pigweed_prop_germ<-round(as.numeric(predict$pigweed_prop_germ), 3)
 predict$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
 predict
 
 
 # foxtail
-LG<-get.predict(df, "L", "G", "foxtail_prop_nongerm")
-LB<-get.predict(df, "L", "B", "foxtail_prop_nongerm")
-GB<-get.predict(df, "G", "B", "foxtail_prop_nongerm")
-LGB<-get.predict(df, "L", "G", "foxtail_prop_nongerm", "B")
+LG<-get.predict(df, "L", "G", "foxtail_prop_germ")
+LB<-get.predict(df, "L", "B", "foxtail_prop_germ")
+GB<-get.predict(df, "G", "B", "foxtail_prop_germ")
+LGB<-get.predict(df, "L", "G", "foxtail_prop_germ", "B")
 LG
 
 predict1<-rbind(GB, LB, LG, LGB)
-predict1$foxtail_prop_nongerm<-round(as.numeric(predict1$foxtail_prop_nongerm), 3)
+predict1$foxtail_prop_germ<-round(as.numeric(predict1$foxtail_prop_germ), 3)
 predict1$Treatment<-c(rep("GB.predict", 6), rep("LB.predict", 6), rep("LG.predict", 6), rep("LGB.predict", 6) )
 predict1
 predict<-full_join(predict, predict1)
@@ -217,23 +244,25 @@ predict<-full_join(predict, predict1)
 
 df1<-full_join(df, predict) 
 df1<-df1 %>% ungroup()
-df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB", "GB.predict", "LB", "LB.predict",  "LG", 
-                                                "LG.predict", "LGB", "LGB.predict" ))
-
-#### plot predictions from monocultures for weed seed
+df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B",  "GB.predict", "GB","LB.predict","LB", "LG.predict",   "LG", 
+                                                "LGB.predict","LGB" ))
+head(df1)
+df1
+  #### plot predictions from monocultures for weed seed
 
 mycols <- c( #IBM colors
   "navy", # dark royal blue L
   "#648FFF", # french blue G
   "#785EF0", # light purple B
+   "grey",
   "#DC267F", # magenta pink GB
-  "grey",
+   "grey",
   "#FE6100", # bright orange LB
-  "grey",
+ "grey",
   "#FFB000", # golden yellow LG
   "grey",
-  "#865338", # medium mocha brown LGB
-  "grey"
+  "#865338" # medium mocha brown LGB
+ 
 )
 
 
@@ -250,17 +279,17 @@ label
 
 # plot
 p1<-df1  %>% 
-  ggplot(aes(x=Treatment, y=foxtail_prop_nongerm, fill = Treatment)) +
+  ggplot(aes(x=Treatment, y=foxtail_prop_germ, fill = Treatment)) +
   geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
-  labs(title = "C",
+  labs(title = "",
        x="",
-       y="non germinating foxtail (%)")+
-  geom_text(y=.25, label =label , nudge_x = -.8, size=8)
+       y="germinating foxtail (%)")+
+  geom_text(y=1, label =label , nudge_x = +.6, size=8)
 
 
 p1
@@ -278,27 +307,28 @@ label
 
 # plot
 p2<-df1  %>% 
-  ggplot(aes(x=Treatment, y=pigweed_prop_nongerm, fill = Treatment)) +
+  ggplot(aes(x=Treatment, y=pigweed_prop_germ, fill = Treatment)) +
   geom_jitter(width = .2, size=1 )+
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
   theme_classic(base_size = 12)+
-  geom_text(y=.8, label =label , nudge_x = -.8, size=8)+
+  geom_text(y=1, label =label , nudge_x = +.6, size=8)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position="none",)+
-  labs(title = "D",
+  labs(title = "",
        x="",
-       y="non germinating pigweed (%)")
+       y="non germinating pigweed (%)")+
+  ylim(c(.2,1))
 
 p2
 
 # put the two plots together
 require(gridExtra)
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-#svg("weeddecay.predict.svg", width = 4.5, height = 6)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement/weed_germination")
+svg("weed.predict.svg", width = 4.5, height = 6)
 grid.arrange(p1, p2, ncol=1)
-#dev.off()
+dev.off()
 
 ##########stats weed prop non germinated #####
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
@@ -367,50 +397,50 @@ head(df1)
 # anova binomial model pigweed
 #GB
 df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-y<-cbind(df2$pigweed_num_nongerm, df2$pigweed_num_germ)
+y<-cbind(df2$pigweed_num_germ, df2$pigweed_num_nongerm)
 m1<-glm(data= df2, y~Treatment, family = binomial)
 summary(m1)
 
 #LB
 df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-y<-cbind(df2$pigweed_num_nongerm, df2$pigweed_num_germ)
+y<-cbind(df2$pigweed_num_germ, df2$pigweed_num_nongerm)
 m1<-glm(data= df2, y~Treatment, family = binomial)
 summary(m1)
 
 #LG
 df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-y<-cbind(df2$pigweed_num_nongerm, df2$pigweed_num_germ)
+y<-cbind(df2$pigweed_num_germ, df2$pigweed_num_nongerm)
 m1<-glm(data= df2, y~Treatment, family = binomial)
 summary(m1)
 
 #LGB
 df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-y<-cbind(df2$pigweed_num_nongerm, df2$pigweed_num_germ)
+y<-cbind(df2$pigweed_num_germ, df2$pigweed_num_nongerm)
 m1<-glm(data= df2, y~Treatment, family = binomial)
 summary(m1)
 
 # anova binomial model foxtail
 #GB
 df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-y<-cbind(df2$foxtail_num_nongerm, df2$foxtail_num_germ)
+y<-cbind(df2$foxtail_num_germ, df2$foxtail_num_nongerm)
 m1<-glm(data= df2, y~Treatment, family = binomial)
 summary(m1)
 
 #LB
 df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-y<-cbind(df2$foxtail_num_nongerm, df2$foxtail_num_germ)
+y<-cbind(df2$foxtail_num_germ, df2$foxtail_num_nongerm)
 m1<-glm(data= df2, y~Treatment, family = binomial)
 summary(m1)
 
 #LG
 df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-y<-cbind(df2$foxtail_num_nongerm, df2$foxtail_num_germ)
+y<-cbind(df2$foxtail_num_germ, df2$foxtail_num_nongerm)
 m1<-glm(data= df2, y~Treatment, family = binomial)
 summary(m1)
 
 #LGB
 df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-y<-cbind(df2$foxtail_num_nongerm, df2$foxtail_num_germ)
+y<-cbind(df2$foxtail_num_germ, df2$foxtail_num_nongerm)
 m1<-glm(data= df2, y~Treatment, family = binomial)
 summary(m1)
 

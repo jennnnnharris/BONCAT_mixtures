@@ -59,7 +59,7 @@ myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.csv("metadat.csv", header = T)
+metadat<-read.csv("metadat2.csv", header = T, row.names = 1)
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns
@@ -192,14 +192,16 @@ p3<-rich%>%  filter(Fraction=="Active") %>% filter(Treatment!="Soil") %>%
   
 p3
 
-require(gridExtra)
-windows(8,3.5)
-grid.arrange(p1, p2, p3, ncol=3)
-dev.off()
+# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement/diversity_active_inact")
+# svg("active_diversity.svg", width=8, height=3.5)
+# #windows(8,3.5)
+# grid.arrange(p1, p2, p3, ncol=3)
+# dev.off()
+
 
 # inactive
 
-p1<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
+p4<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_fill_manual(values = IBM)+
@@ -207,12 +209,12 @@ p1<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  labs(title = "B",
+  labs(title = "D",
        x="",
        y= "Inactive Shannon Diversity")
-p1
+p4
 
-p2<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
+p5<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
   geom_boxplot(alpha=.5, outlier.shape = NA) +
   scale_fill_manual(values=IBM) +
@@ -220,12 +222,12 @@ p2<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  labs(title = "C",
+  labs(title = "E",
        x="",
        y= "Inactive ASV richness")
-p2
+p5
 
-p3<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
+p6<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
   ggplot(aes(x=Treatment, y=evenness,  fill=Treatment))+
   geom_boxplot(alpha=.6, outlier.shape = NA) +
   scale_color_manual(values=IBM) +
@@ -234,16 +236,17 @@ p3<-rich%>%  filter(Fraction=="Inactive") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),legend.position="none")+
-  labs(title = "D",
+  labs(title = "F",
        x="",
        y= "Inactive Pilou's Evenness")
 
 p3
 
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement")
-#svg("inactive_diversity.svg", width=3, height=7)
-grid.arrange(p1, p2, p3, ncol=1)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement/diversity_active_inact")
+svg("inactive_ac_diversity.svg", width=8, height=7)
+#windows(8,3.5)
+grid.arrange(p1, p2, p3,p4, p5, p6, ncol=3)
 dev.off()
 
 
@@ -255,19 +258,19 @@ df <- rich %>% filter(Fraction=="Active") %>% filter(Treatment!="Soil")
 df$Treatment   <- factor(df$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 # Shannon ANOVA 
-anova1<- aov(Shannon~ Treatment, data = df)
+anova1<- aov(Shannon~ Treatment+block, data = df)
 summary(anova1)
 
 #observed ANOVA
-m1<-lm(Observed ~ Treatment,  data = df)
+m1<-lm(Observed ~ Treatment+block,  data = df)
 summary(m1)
 
 #chao1
-m1<-aov(Chao1 ~ Treatment,  data = df)
+m1<-aov(Chao1 ~ Treatment+block,  data = df)
 summary(m1)
 
 # Evenness
-anova1<- aov(evenness ~ Treatment, data = df)
+anova1<- aov(evenness ~ Treatment+block, data = df)
 summary(anova1)
 
 # inactive
@@ -276,19 +279,19 @@ df <- rich %>% filter(Fraction=="Inactive") %>% filter(Treatment!="Soil")
 df$Treatment   <- factor(df$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 # Shannon ANOVA 
-anova1<- aov(Shannon~ Treatment, data = df)
+anova1<- aov(Shannon~ Treatment+block, data = df)
 summary(anova1)
 
 #observed ANOVA
-m1<-lm(Observed ~ Treatment,  data = df)
+m1<-lm(Observed ~ Treatment+block,  data = df)
 summary(m1)
 
 #chao1
-m1<-aov(Chao1 ~ Treatment,  data = df)
+m1<-aov(Chao1 ~ Treatment+block,  data = df)
 summary(m1)
 
 # Evenness
-anova1<- aov(evenness ~ Treatment, data = df)
+anova1<- aov(evenness ~ Treatment+block, data = df)
 summary(anova1)
 
 
@@ -329,7 +332,7 @@ summary(anova1)
   
   # 2. Run the CAP (db-RDA) analysis
   # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~ Treatment*Fraction*Block*Rep,
+  cap_result <- capscale(dist_matrix ~ Treatment*Fraction+block,
                          data = metadat2,
                          add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
   
@@ -406,53 +409,71 @@ summary(anova1)
   commdata = as.data.frame(otu_table(ps1))
   # 2. Run the CAP (db-RDA) analysis
   # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~ Treatment,
+  cap_result <- capscale(dist_matrix ~ Treatment+ Condition(block),
                          data = metadat2,
                          comm = commdata,
                          add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
   
   anova.cca(cap_result, by="terms")
   
-  # additioanl CCA
-  #cap_result <- capscale(dist_matrix ~ Brassicae*Legume*Grass,
-  #                        data = metadat2,
-  #                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
-  # 
-  # anova.cca(cap_result, by="terms")
-  # 
-  # 6. Perform all Pairwise Comparisons
+# . Perform all Pairwise Comparisons
  #  # The function will iterate through all pairs of the 'Habitat' factor
- # library(BiodiversityR)
- #  pairwise_results <- multiconstrained(
- #    formula = dist_matrix ~ Treatment,  # Same formula as the main CAP model
- #    data = metadat2,
- #    constrained = capscale,       # Specify the constrained ordination method
- #    permutations = 999            # Number of permutations for the test
- #  )
- # 
- #  # 7. View the raw pairwise results
- #  print(pairwise_results)
- # 
- #  # 8. Extract the raw p-values from the results
- #  raw_pvalues <- pairwise_results[, "Pr(>F)"]
- # 
- #  # 9. Apply the Holm (Holm-Bonferroni) Adjustment
- #  adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
- #  adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
- # 
- #  #?p.adjust
- #  # 10. Combine the results for final interpretation
- #  final_table <- data.frame(
- #    Pair = rownames(pairwise_results),
- #    Pseudo_F = pairwise_results[, "F"],
- #    Raw_P = raw_pvalues,
- #    fdr_adj_p = adjusted_pvalues1,
- #    bonferroni_Adj_P = adjusted_pvalues
- #  )
- # 
- #  # 11. Print the final results table
- #  print(final_table)
- # 
+ library(BiodiversityR)
+   pairwise_results <- multiconstrained(
+     formula = dist_matrix ~ Treatment+ Condition(block),  # Same formula as the main CAP model
+     data = metadat2,
+     constrained = capscale,       # Specify the constrained ordination method
+     permutations = 999            # Number of permutations for the test
+   )
+
+# view the raw pairwise results
+   print(pairwise_results)
+# Extract the raw p-values from the results
+ raw_pvalues <- pairwise_results[, "Pr(>F)"]
+ adjusted_pvalues <- p.adjust(raw_pvalues, method = "fdr")
+
+ # make table 
+    table <- data.frame(
+     Group1 = str_split_i(rownames(pairwise_results), "vs. ", 1),
+     Group2 = str_split_i(rownames(pairwise_results), "vs. ", 2),
+     Pseudo_F = pairwise_results[, "F"],
+     Raw_P = raw_pvalues,
+     p_value = round(adjusted_pvalues,4)
+   )
+   print(table)
+   
+  # order groups
+   table$Group1<-factor(table$Group1,levels= c("L ", "G ",  "B ", "GB " , "LB ", "LG " ) )
+   table$Group1
+   factor(table$Group2)
+   table$Group2[order(table$Group2)]
+   table$Group2
+   table$Group2<-factor(table$Group2,levels= c( "G", "B", "GB", "LB", "LG", "LGB") )
+  
+   #plot heatmap
+   p_recol_covercrop <- ggplot(table, aes(x = Group2, y = Group1, fill = p_value)) +
+     geom_tile(color = "white") +
+     geom_text(aes(label = p_value), size = 2) +
+     scale_fill_gradient(
+       low = "#648FFF",
+       high = "white",
+       na.value = "grey90",
+       limits = c(0, 0.1),
+       name = "P-value"
+     ) +
+     theme_minimal() +
+     labs(x = "", y = "", title = "") +
+     theme(axis.text.x = element_text(angle = 45, hjust = 1))
+   
+   
+   setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPactive")
+   pdf("Pval_active.pdf",  width=3.5, height=2.5)
+   p_recol_covercrop
+   dev.off() 
+   
+   
+   
+   
   # 1. Create an empty plot frame (type = "n")
   plot(cap_result, type = "n", scaling = 2)
   points(cap_result, display = "sites", pch = 16)
@@ -646,7 +667,7 @@ ps1
   
   # 2. Run the CAP (db-RDA) analysis
   # Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-  cap_result <- capscale(dist_matrix ~ Treatment,
+  cap_result <- capscale(dist_matrix ~ Treatment + Condition(block),
                          data = metadat2,
                          add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
   
@@ -669,8 +690,8 @@ library(BiodiversityR)
   raw_pvalues <- pairwise_results[, "Pr(>F)"]
 
   # 9. Apply the Holm (Holm-Bonferroni) Adjustment
-  adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
-  adjusted_pvalues1 <- p.adjust(raw_pvalues, method = "fdr")
+  #adjusted_pvalues <- p.adjust(raw_pvalues, method = "bonferroni")
+  adjusted_pvalues <- p.adjust(raw_pvalues, method = "fdr")
 
   #?p.adjust
   # 10. Combine the results for final interpretation
@@ -678,8 +699,7 @@ library(BiodiversityR)
     Pair = rownames(pairwise_results),
     Pseudo_F = pairwise_results[, "F"],
     Raw_P = raw_pvalues,
-    fdr_adj_p = adjusted_pvalues1,
-    bonferroni_Adj_P = adjusted_pvalues
+    fdr_adj_p = adjusted_pvalues
   )
 
   # 11. Print the final results table

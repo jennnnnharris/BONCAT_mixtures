@@ -72,15 +72,13 @@ setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Bur
 
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.table("metadat.txt", sep="\t", header=T)
+metadat<-read.csv("metadat2.csv", header = T, row.names = 1)
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns
 asvs<-t(asvs)
 
 
-# order metadata
-head(metadat)
 #metadat<-as.data.frame(metadat[order(metadat$SampleID),])
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 row.names(metadat) <- metadat$SampleID
@@ -111,9 +109,6 @@ min.s<-min(rowSums(asvs))
 ### Rarefy to obtain even numbers of reads by sample ###
 set.seed(336)
 asvs<-rrarefy(asvs, min.s)
-
-# make composition var
-
 
 
 #make taxon matrix row names OTUs
@@ -193,6 +188,12 @@ metadat2<-metadat2 %>% select(Trt_ID,)
 metadat2$PC1 <- pc1_variable
 metadat2$PC2 <- pc2_variable
 metadat2
+df<-df %>%
+  mutate(df, foxtail_prop_germ = foxtail_num_germ/foxtail_total_seeds,
+         pigweed_prop_germ= pigweed_num_germ/pigweed_total_seeds)
+
+
+
 
 df<-left_join(df, metadat2)
 
@@ -202,54 +203,30 @@ df$z_Shoot.Biomass<-as.vector(scale(df$Stem.Biomass.g))
 df$z_active_cel_per_g<-as.vector(scale(log(df$active_cel_per_g)))
 df$z_Root.Biomass<-as.vector(scale(df$Total.Root.g))
 df$z_boncat_freq <- as.vector(scale(df$boncat_freq))
-df$z_pigweed <- as.vector(scale(log(df$pigweed_prop_nongerm)))
+df$z_pigweed <- as.vector(scale(df$pigweed_prop_germ))
+df$z_foxtail <- as.vector(scale(log(df$foxtail_prop_germ)))
 
-hist(df$z_Root.Biomass)
-hist(df$z_Shoot.Biomass)
 hist(df$z_active_cel_per_g)
 hist(df$z_boncat_freq)
 hist(df$z_pigweed)
 hist(df$PC1)
 hist(df$PC2)
-# Weed Seed decay ################
+# Weed Seed decay #
 
-### model selection
-numeric_data<-df %>% select(PC1, PC2, z_active_cel_per_g, z_boncat_freq)
-numeric_data <- numeric_data[sapply(numeric_data, is.numeric)]
-
-# Basic corplots
-cor_matrix <- cor(numeric_data, use = "complete.obs")
-library(corrplot)
-corrplot(cor_matrix, method = "circle")
-# A more professional "mixed" plot
-corrplot.mixed(cor_matrix, 
-               lower = "number", 
-               upper = "circle", 
-               tl.col = "black")
-library(car)
-
+# check
 m1<-lm(data= df, z_pigweed~z_active_cel_per_g)
 summary(m1)
-vif_values <- vif(m1)
-print(vif_values)
 plot(m1)
 
 m1<-lm(data= df, z_pigweed~z_boncat_freq)
 summary(m1)
-vif_values <- vif(m1)
-print(vif_values)
-plot(m1)
-
-m1<-lm(data= df, z_pigweed~PC1*z_boncat_freq)
-summary(m1)
-vif_values <- vif(m1)
-print(vif_values)
 plot(m1)
 
 m1<-lm(data= df, z_pigweed~PC1)
 summary(m1)
-vif_values <- vif(m1)
-print(vif_values)
+
+m1<-lm(data= df, z_pigweed~PC2)
+summary(m1)
 plot(m1)
 
 quad<-lm(data= df, z_pigweed~PC1+ I(PC1^2))
@@ -259,11 +236,9 @@ vif_values <- vif(m1)
 print(vif_values)
 plot(m1)
 
-
 anova(m1, quad)
 
-
-df$pigweed_perc<-df$pigweed_prop_nongerm*100
+df$pigweed_perc<-df$pigweed_prop_germ*100
 
 p1<-df %>% 
   ggplot( aes(y=z_pigweed, x=z_boncat_freq, col=Treatment))+
@@ -276,7 +251,7 @@ p1<-df %>%
 p1
 
 p2<-df %>% 
-  ggplot( aes(y=z_pigweed, x=z_active_cel_per_g, col=Treatment))+
+  ggplot( aes(y=pigweed_prop_germ, x=z_active_cel_per_g, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
   #geom_smooth(method = lm, col="grey")+
@@ -286,7 +261,7 @@ p2<-df %>%
 p2
 
 p2<-df %>% 
-  ggplot( aes(y=z_pigweed, x=PC1, col=Treatment))+
+  ggplot( aes(y=pigweed_prop_germ, x=PC1, col=Treatment))+
   geom_point()+
   scale_color_manual(values=IBM)+
   #geom_smooth(method = lm, col="grey")+
@@ -296,6 +271,25 @@ p2<-df %>%
        x= "Total rhizosphere community PC1 ")
 p2
 
+p2<-df %>% 
+  ggplot( aes(y=pigweed_prop_germ, x=PC1, col=Treatment))+
+  geom_point()+
+  scale_color_manual(values=IBM)+
+  #geom_smooth(method = lm, col="grey")+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2), col="grey") +
+  theme_bw(base_size = 12)+
+  labs(y= "z transformed pigweed seed decay",
+       x= "Total rhizosphere community PC1 ")
+p2
+
+p2<-df %>% 
+  ggplot( aes(y=pigweed_prop_germ, x=PC2, col=Treatment))+
+  geom_point()+
+  scale_color_manual(values=IBM)+
+  #geom_smooth(method = lm, col="grey")+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2), col="grey") +
+  theme_bw(base_size = 12)
+p2
 
 
 

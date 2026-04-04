@@ -39,7 +39,7 @@ IBM <- c( #IBM colors
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.table("metadat.txt", sep="\t", header=T, row.names = 1)
+metadat<-read.csv("metadat2.csv",  row.names = 2)
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns
@@ -53,13 +53,14 @@ metadat
 ####filter for just flow cyto samples #
 asvs<-asvs[which(metadat$Fraction!="Total"),]
 metadat<-metadat[which(metadat$Fraction!="Total"),]
+dim(asvs)
 dim(metadat)
 metadat$Legume   <- factor(metadat$Legume)
 metadat$Brassicae   <- factor(metadat$Brassicae)
 metadat$Grass   <- factor(metadat$Grass)
-
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
+metadat
 
 #make taxon matrix row names OTUs
 #taxon[1:5,1:5]
@@ -244,8 +245,19 @@ df<-df %>% group_by(Phyla, Treatment, Trt_ID, Blast_ID) %>%
   summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
 df
 
-
+df$Treatment
 # IBM colors
+
+IBM <- c( #IBM colors
+  #"grey",
+  "navy", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000", # golden yellow
+  "#865338" # medium mocha brown
+)
 #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
 #svg(filename="active.taxa.svg", height = 4, width = 8)
 df %>%
@@ -394,15 +406,16 @@ IBM <- c( #IBM colors
 )
 # IBM colors
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
-svg(filename="active.taxa.svg", height = 4, width = 9.5)
-df %>%
+svg(filename="active.taxa.else.svg", height = 4, width = 9.5)
+df %>% filter(Blast_ID!="Actinomycetes") %>%
   ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
-  geom_boxplot(outliers=FALSE)+
-  geom_jitter()+
+  geom_boxplot(outliers=FALSE, alpha=.7)+
+  #geom_jitter()+
   scale_fill_manual(values= IBM)+
   theme_bw(base_size = 12) +
-  #facet_grid(~Blast_ID, scales="free", space="free")+
-  facet_wrap(~Blast_ID, scales="free", nrow= 1)+
+  #facet_wrap(~Blast_ID, scales="free", nrow= 1)+
+  facet_wrap(~Blast_ID,  nrow= 1)+
+  
   
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0),
@@ -410,6 +423,27 @@ df %>%
   labs(title = "A       Active",
        x = "", y = "Percent Abundance")
 dev.off()
+
+# # flip cord
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
+svg(filename="active.taxa.tall.svg", height = 9.5, width = 4)
+df %>%filter(Blast_ID!="Actinomycetes") %>%
+  ggplot(aes(y=Treatment, x=percent_abundance, fill = Treatment))+
+  geom_boxplot(outliers=FALSE, alpha=.7)+
+  #geom_jitter()+
+  scale_fill_manual(values= IBM)+
+  theme_bw(base_size = 12) +
+  #facet_grid(~Blast_ID, scales="free", space="free")+
+  #facet_wrap(~Blast_ID, scales="free", ncol= 1)+
+  facet_wrap(~Blast_ID,  ncol= 1)+
+
+  theme(axis.text.x = element_text(angle=0, hjust=1),
+        plot.title = element_text(hjust = 0),
+        legend.position = "none")+
+  labs(title = "A       Active",
+       x = "", y = "Percent Abundance")
+dev.off()
+
 
 ##### stats #####
   library(phyloseq)
@@ -622,7 +656,7 @@ IBM <- c( #IBM colors
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.table("metadat.txt", sep="\t", header=T, row.names = 1)
+metadat<-read.csv("metadat2.csv", row.names = 2)
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns
@@ -969,24 +1003,61 @@ mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
   )
   
   
+  ### order by abundance
+  # 1. Calculate column sums
+  df 
+  total_abundance <- colSums(df1)
+  
+  # 2. Sort names based on those sums (decreasing = TRUE for most to least)
+  ordered_names <- names(sort(percent_abundance, decreasing = TRUE))
+  
+  # 3. Reorder the columns of your data frame
+  df_ordered <- df[, ordered_names]
+  library(forcats)
+  
+  # Reorder Blast_ID based on the SUM of percent_abundance across all samples
+  df <- df %>%
+    mutate(Blast_ID = fct_reorder(Blast_ID, percent_abundance, .fun = sum, .desc = TRUE))
+  df$Blast_ID
   # remove outlier for easier plotting
   # IBM colors
   setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
   svg(filename="total.taxa.svg", height = 4, width = 11.5)
   df %>% filter(percent_abundance<10) %>%
     ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
-    geom_boxplot(outliers=FALSE)+
-    geom_jitter()+
+    geom_boxplot(outliers=FALSE, alpha=0.7)+
+    #geom_jitter()+
     scale_fill_manual(values= IBM)+
     theme_bw(base_size = 11) +
    # facet_grid(~Blast_ID)+
-    facet_wrap(~Blast_ID, scales="free", nrow= 1)+
+    #facet_wrap(~Blast_ID, scales="free", nrow= 1)+
+    facet_wrap(~Blast_ID,  nrow= 1)+
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0),
           legend.position = "none")+
     labs(title = "B       Total",
          x = "", y = "Percent Abundance")
   
+    dev.off()
+    
+    # cord flip
+    setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
+    svg(filename="total.taxa.tall.svg", height = 11, width = 4)
+    df %>% filter(percent_abundance<10) %>%
+      ggplot(aes(x=percent_abundance, y=Treatment, fill = Treatment))+
+      geom_boxplot(outliers=FALSE, alpha=0.7)+
+      #geom_jitter()+
+      scale_fill_manual(values= IBM)+
+      theme_bw(base_size = 11) +
+      # facet_grid(~Blast_ID)+
+      #facet_wrap(~Blast_ID, scales="free", nrow= 1)+
+      facet_wrap(~Blast_ID,  ncol= 1)+
+      theme(axis.text.x = element_text(angle=60, hjust=1),
+            plot.title = element_text(hjust = 0),
+            legend.position = "none")+
+      labs(title = "B       Total",
+           x = "", y = "Percent Abundance")
+    
     dev.off()
   
 # stats ########

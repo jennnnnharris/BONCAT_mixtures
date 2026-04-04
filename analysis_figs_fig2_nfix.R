@@ -1,7 +1,7 @@
 # N fix and biomass weed seed
 # clear workspace and restart R
 rm(list=ls())
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(readxl)
@@ -73,7 +73,7 @@ p1
 library(multcomp)
 library(emmeans)
 # overall model 
-m1<- lm(perc.Ndfa ~ treatment*nitrogen.added, data = df.leg)
+m1<- lm(perc.Ndfa ~ treatment*nitrogen.added+block, data = df.leg)
 summary(m1)
 anov = aov(m1)
 summary(anov)
@@ -133,28 +133,27 @@ library(multcomp)
 library(emmeans)
 # Analysis of variance 
 #overall 
-m1<- lm(n_fix_per_legume ~ treatment*nitrogen.added, data = df.leg)
+m1<- lm(n_fix_per_legume ~ treatment*nitrogen.added+block, data = df.leg)
 summary(m1)
 anov = aov(m1)
 summary(anov)
 
 # nitrogen -
 df<-df.leg %>% filter(nitrogen.added=="N")
-m1 <- aov(n_fix_per_legume ~ treatment, data = df)
+m1 <- aov(n_fix_per_legume ~ treatment+block, data = df)
 summary(m1) # difference between treatments
-tukey <- TukeyHSD(m1)
-print(tukey) # 
 
 emm_object <- emmeans(m1, specs = ~ treatment)
 # Perform all pairwise comparisons with Tukey adjustment
 pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
 summary(pairwise_comparison)
+cld_result <- cld(emm_object, 
+                  adjust = "tukey", 
+                  alpha = 0.05,
+                  Letters = letters) 
+print(cld_result)
 
 
-#plot(one.way.Nadd) #homoscedasticity looks fine
-library(multcompView)
-cld <- multcompLetters4(m1, tukey)
-print(cld)
 
 
 
@@ -162,19 +161,20 @@ print(cld)
 
 # with nitrogen +
 df<-df.leg %>% filter(nitrogen.added=="Y")
-m1 <- aov(n_fix_per_legume ~ treatment, data = df)
+m1 <- aov(n_fix_per_legume ~ treatment+block, data = df)
 summary(m1) # difference between treatments
-tukey <- TukeyHSD(m1)
+
 emm_object <- emmeans(m1, specs = ~ treatment)
 # Perform all pairwise comparisons with Tukey adjustment
 pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
 summary(pairwise_comparison)
 
 
-#plot(one.way.Nadd) #homoscedasticity looks fine
-library(multcompView)
-cld <- multcompLetters4(m1, tukey)
-print(cld)
+cld_result <- cld(emm_object, 
+                  adjust = "tukey", 
+                  alpha = 0.05,
+                  Letters = letters) 
+print(cld_result)
 
 
 
