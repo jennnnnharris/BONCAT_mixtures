@@ -485,7 +485,17 @@ anova(m1)
 ######### example calculation  #####
 
 
-mycols7<-c("#466F9DFF", "#91B3D7FF",  "white", "white", "white", "#D7B5A6FF", "#3896C4FF" )
+IBM <- c( #IBM colors
+  "navy", # dark royal blue L
+  "#648FFF", # french blue G
+  "#785EF0", # light purple B
+  "#DC267F", # magenta pink GB
+  "#FE6100", # bright orange LB
+  "#FFB000", # golden yellow LG
+  "#865338" # medium mocha brown LGB
+)
+
+mycols7<-c("navy",   "#648FFF",  "white", "white", "white",  "#FFB000")
 
 p1<-df  %>% filter(n_species!="NA") %>%
   filter(Treatment!= "LGB") %>%
@@ -538,7 +548,7 @@ df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "half_G", "LG.
 as.factor(df1$Treatment)
 
 ### plot###
-mycols7<-c( "#715b8a", "#4D8F8BFF", "grey", "grey", "grey", "#AD5A6BFF") 
+mycols7<-c("navy",   "#648FFF",  "white", "white", "white",  "#FFB000")
 
 mycols <- c( #IBM colors
   "navy", # dark royal blue L
@@ -558,7 +568,8 @@ p1<-df1  %>%
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
         plot.title = element_text(hjust = 0, size=14))+
-  xlab("") 
+  xlab("") +
+  ylab("Root Biomass (g)")
 p1
 
 

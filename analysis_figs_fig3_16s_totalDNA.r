@@ -50,7 +50,7 @@ IBM <- c( #IBM colors
   "#865338" # medium mocha brown
 )
 
-"#8cadff"
+#"#8cadff"
 bw <- c( #IBM colors
   "grey", # grey
   "black" # teal
@@ -697,11 +697,11 @@ p_recol_covercrop <- ggplot(table, aes(x = Group2, y = Group1, fill = p_value)) 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-pdf("Pval_withN.pdf",  width=3.5, height=2.5 )
-p_recol_covercrop
-dev.off()
-
+# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
+# pdf("Pval_withN.pdf",  width=3.5, height=2.5 )
+# p_recol_covercrop
+# dev.off()
+# 
 
 
 ### 4. grab info for the plot
@@ -720,9 +720,9 @@ perc
 
 ###  5. plot 
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-svg("cap.total2.svg", width = 3, height = 7)
+svg("cap.total2.svg", width = 7, height = 4)
 #windows(4,7)
-par(mfrow=c(2,1))
+par(mfrow=c(1,2))
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
          main="Nitrogen + ", cex.lab = .8,
          xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
@@ -736,11 +736,11 @@ points(sc_si,
        lwd=1,cex=.8,
        bg=mycols[metadat2$Treatment])
 ordiellipse(sc_si, metadat2$Treatment,  
-            kind = "ehull", conf=0.95, label=T, 
+            kind = "ehull", conf=0.95, label=F, 
             draw = "polygon",
             border = 0,
             col= IBM,
-            alpha = 40,
+            alpha = 50,
             cex=.8)
 
 
@@ -796,7 +796,7 @@ points(sc_si,
        lwd=1,cex=.8,
        bg=mycols[metadat2$Treatment])
 ordiellipse(sc_si, metadat2$Treatment,  
-            kind = "ehull", conf=0.95, label=T, 
+            kind = "ehull", conf=0.95, label=F, 
             draw = "polygon",
             border = 0,
             col= IBM,
