@@ -501,11 +501,11 @@ perc
 
 ### 4. plot 
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/")
+svg("cap.total.predicted.svg", width = 6 , height = 6)
 
 #windows(6,6)
-par(cex.lab = 1.1) # make all fonts in graphs little bigger
+par(cex.lab = 1.8) # make all fonts in graphs little bigger
 ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-         main="", cex = 1.2,
          xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
          ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
 par(adj = 0)
@@ -522,15 +522,145 @@ ordiellipse(sc_si, metadat2$Treatment,
             border = 0,
             col= IBM,
             alpha = 40,
-            cex=1)
+            cex=2)
+ # legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+ #        fill= IBM,
+ #        cex=1,
+ #        bty = "n")
+legend("topright", legend=c("measured", "predicted"  ),
+       pch=c(16,8 ),
+       cex=1.8,
+      bty = "o")
+
+dev.off()
+
+### extra plot ####
+ps1 <-subset_samples(ps, Fraction=="Total" & Treatment!="Soil" & Measurement!="predicted")
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil" & Measurement!="predicted" )
+
+#factor
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+
+# Perform PCoA analysis of BC distances #
+otus.pcoa <- cmdscale(otus.bray, k=(15-1), eig=TRUE)
+
+# Store coordinates for first two axes in new variable #
+otus.p <- otus.pcoa$points[,1:2]
+
+colnames(otus.p) <- c("PC1", "PC2")
+
+# Calculate % variance explained by each axis #
+otus.eig<-otus.pcoa$eig
+perc.exp<-otus.eig/(sum(otus.eig))*100
+pe1<-round(perc.exp[1],2)
+pe2<-round(perc.exp[2],2)
+pe2
+
+#calculate total variance explained by each principal component
+perc.exp<-otus.eig/(sum(otus.eig))*100
+#scree plot 
+plot(otus.pcoa$eig)
+
+# load colors
+
+IBM <- c( #IBM colors
+  "navy", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000", # golden yellow
+  "#865338" # medium mocha brown
+)
+
+# PCoA 
+par(adj=.5)
+ordiplot(otus.pcoa,choices=c(1,2), type="none", main="",
+         xlab=paste("PCoA1 (",pe1,"% var. explained)"),
+         ylab=paste("PCoA2 (",pe2,"% var. explained)"))
+par(adj = 0)
+#title(main= "E")
+par(adj=.5)
+points(otus.p, 
+       col= IBM[as.factor(metadat2$Treatment)],
+       pch= c(16,8)[as.factor(metadat2$Measurement)],
+       
+       lwd=2,cex=1.2,
+       bg=IBM[as.factor(metadat2$Treatment)],)
+
+legend("bottomright", legend=c("measured", "predicted"  ),
+       pch=c(16,8 ),
+       cex=1,
+       title = "",     bty = "o")
+
+
+# permanova
+adonis2(otus.bray ~ Treatment, data = metadat2)
+
+
+#### CAP  
+
+#  Run the CAP (db-RDA) analysis
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(otus.bray ~ Treatment,
+                       data = metadat2,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+anova.cca(cap_result, by="terms")
+
+smry <- summary(cap_result)
+smry
+sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+sc_si[,2]<-sc_si[,2]*-1 # flip y axis 
+
+# Extract the model's adjusted R2
+RsquareAdj(cap_result)$adj.r.squared
+
+# percent varience of total varience on RDA 1 and RDA 2
+perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+perc
+
+### 4. plot 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/")
+svg("cap.total.svg", width = 6 , height = 6)
+
+#windows(6,6)
+par(cex.lab = 1.8) # make all fonts in graphs little bigger
+ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
+         xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
+         ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"),
+         ylim = c(-.3, .3))
+par(adj = 0)
+#title(main= "E")
+par(adj=.5)
+points(sc_si, 
+       col= IBM[metadat2$Treatment],
+       pch= c(16,8)[as.factor(metadat2$Measurement)],
+       lwd=1,cex=2,
+       bg=IBM[metadat2$Treatment])
+ordiellipse(sc_si, metadat2$Treatment,
+            kind = "ehull", conf=0.95, label=F,
+            draw = "polygon",
+            border = 0,
+            col= IBM,
+            alpha = 40,
+            cex=2)
  legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
         fill= IBM,
         cex=1,
         bty = "n")
-legend("bottomleft", legend=c("measured", "predicted"  ),
-       pch=c(16,8 ),
-       cex=1,
-       title = "",     bty = "o")
+# legend("topright", legend=c("measured", "predicted"  ),
+#        pch=c(16,8 ),
+#        cex=1.8,
+#        bty = "o")
 
 dev.off()
 
@@ -559,9 +689,8 @@ adonis2(otus.bray ~ Measurement, data = metadat2)
 ps1 <-subset_samples(ps, Treatment=="LB")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
-# 1745 taxa
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LB")
+metadat2<-filter(metadat, Treatment=="LB")
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps1), method = "bray")
 # Perform PCoA analysis of BC distances #
@@ -571,39 +700,98 @@ adonis2(otus.bray ~ Measurement, data = metadat2)
 
 
 
+
 #LG
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="LG")
+ps1 <-subset_samples(ps, Treatment=="LG")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
-# 1745 taxa
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LG")
+metadat2<-filter(metadat, Treatment=="LG")
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps1), method = "bray")
 # Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(5-1), eig=TRUE)
+otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
 # permanova
-adonis2(otus.bray ~ Measurement, data = metadat2) # marginal
-
+adonis2(otus.bray ~ Measurement, data = metadat2)
 
 
 #LGB
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="LGB")
+ps1 <-subset_samples(ps, Treatment=="LGB")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
-# 1745 taxa
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LGB")
+metadat2<-filter(metadat, Treatment=="LGB")
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps1), method = "bray")
 # Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(5-1), eig=TRUE)
+otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
 # permanova
-adonis2(otus.bray ~ Measurement, data = metadat2) # significantly different
+adonis2(otus.bray ~ Measurement, data = metadat2)
 
 
 
 
 
 
+
+# compare pairwise distance ##############
+ps1 <-subset_samples(ps, Fraction=="Total" & Treatment!="Soil" & n_species!="1" &Rep!="2" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil", n_species!="1", Rep!="2"  ) %>%
+  select(Treatment, Measurement)
+
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+dist_mat<-as.matrix(otus.bray) 
+dist_mat
+key <-cbind(metadat2, mat)
+
+
+
+# Define the Mapping
+# We create a lookup table that links the Measured Sample ID to its Prediction ID
+# Note: Ensure the order in 'measured_ids' matches the N1, N3, N4... order
+mapping <- data.frame(
+  Treatment = c(rep("GB", 5), rep("LB", 5), rep("LG", 5), rep("LGB", 5)),
+  Prediction_ID = c(
+    paste0("predict_GB_N", c(1,3,4,5,6)),
+    paste0("predict_LB_N", c(1,3,4,5,6)),
+    paste0("predict_LG_N", c(1,3,4,5,6)),
+    paste0("predict_LGB_N", c(1,3,4,5,6))
+  ),
+  Measured_ID = c(
+    "T_DNA_13_S130", "T_DNA_41_S90", "T_DNA_56_S168", "T_DNA_71_S159", "T_DNA_85_S139", # GB
+    "T_DNA_12_S119", "T_DNA_42_S101", "T_DNA_57_S92", "T_DNA_72_S170", "T_DNA_86_S150", # LB
+    "T_DNA_11_S108", "T_DNA_43_S112", "T_DNA_58_S103", "T_DNA_73_S94", "T_DNA_87_S161", # LG
+    "T_DNA_14_S141",  "T_DNA_44_S123", "T_DNA_59_S114", "T_DNA_74_S105", "T_DNA_88_S172"  # LGB
+  )
+)
+
+mapping
+dist_mat
+# Extract the Distances
+# We loop through the mapping and pull the specific intersection from the matrix
+mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m], 
+                              mapping$Prediction_ID, 
+                              mapping$Measured_ID)
+
+
+# Statistical Comparison
+# Test if the prediction error (distance) differs by treatment
+fit <- aov(BC_Distance ~ Treatment, data = mapping)
+summary(fit)
+
+kruskal.test(BC_Distance ~ Treatment, data = mapping)
+
+# 5. Visualization
+ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
+  geom_boxplot(alpha = 0.7) +
+  geom_point(position = position_jitter(width = 0.1)) +
+  labs(title = "Within-Pair Prediction Accuracy",
+       y = "Bray-Curtis Distance (Measured vs. Predicted)",
+       x = "Treatment") +
+  theme_bw()
 

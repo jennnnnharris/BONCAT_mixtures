@@ -44,6 +44,9 @@ IBM <- c( #IBM colors
   "#FFB000", # golden yellow
   "#865338" # medium mocha brown
 )
+library(scales)
+pal <- rgb(ddf$r, ddf$g, ddf$b)
+show_col(IBM)
 
 bw <- c( #IBM colors
   "grey", # grey
