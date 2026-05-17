@@ -17,7 +17,7 @@ library(phyloseq)
 #library(BiodiversityR)
 
 
-#import data#
+#import data# ###############
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
@@ -369,7 +369,7 @@ write.csv(tax_table, "total.taxonomy.csv")
 
 
 ##### import predicted #####
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
 taxon <- read.csv("total.taxonomy.csv", row.names = 1)
 asvs <- read.csv("total.feature.table.csv", row.names = 1)
 metadat<-read.csv("total.metadata_predicted16S.csv", header = T)
@@ -734,6 +734,8 @@ adonis2(otus.bray ~ Measurement, data = metadat2)
 
 
 
+
+
 # compare pairwise distance ##############
 ps1 <-subset_samples(ps, Fraction=="Total" & Treatment!="Soil" & n_species!="1" &Rep!="2" )
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
@@ -749,6 +751,68 @@ dist_mat<-as.matrix(otus.bray)
 dist_mat
 key <-cbind(metadat2, mat)
 
+
+
+# Define the Mapping
+# We create a lookup table that links the Measured Sample ID to its Prediction ID
+# Note: Ensure the order in 'measured_ids' matches the N1, N3, N4... order
+mapping <- data.frame(
+  Treatment = c(rep("GB", 5), rep("LB", 5), rep("LG", 5), rep("LGB", 5)),
+  Prediction_ID = c(
+    paste0("predict_GB_N", c(1,3,4,5,6)),
+    paste0("predict_LB_N", c(1,3,4,5,6)),
+    paste0("predict_LG_N", c(1,3,4,5,6)),
+    paste0("predict_LGB_N", c(1,3,4,5,6))
+  ),
+  Measured_ID = c(
+    "T_DNA_13_S130", "T_DNA_41_S90", "T_DNA_56_S168", "T_DNA_71_S159", "T_DNA_85_S139", # GB
+    "T_DNA_12_S119", "T_DNA_42_S101", "T_DNA_57_S92", "T_DNA_72_S170", "T_DNA_86_S150", # LB
+    "T_DNA_11_S108", "T_DNA_43_S112", "T_DNA_58_S103", "T_DNA_73_S94", "T_DNA_87_S161", # LG
+    "T_DNA_14_S141",  "T_DNA_44_S123", "T_DNA_59_S114", "T_DNA_74_S105", "T_DNA_88_S172"  # LGB
+  )
+)
+
+mapping
+dist_mat
+# Extract the Distances
+# We loop through the mapping and pull the specific intersection from the matrix
+mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m], 
+                              mapping$Prediction_ID, 
+                              mapping$Measured_ID)
+
+
+# Statistical Comparison
+# Test if the prediction error (distance) differs by treatment
+fit <- aov(BC_Distance ~ Treatment, data = mapping)
+summary(fit)
+
+kruskal.test(BC_Distance ~ Treatment, data = mapping)
+
+# 5. Visualization
+ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
+  geom_boxplot(alpha = 0.7) +
+  geom_point(position = position_jitter(width = 0.1)) +
+  labs(title = "Within-Pair Prediction Accuracy",
+       y = "Bray-Curtis Distance (Measured vs. Predicted)",
+       x = "Treatment") +
+  theme_bw()
+
+
+######### compare pairwise distance -1 to 1 ##############
+ps1 <-subset_samples(ps, Fraction=="Total" & Treatment!="Soil" &Rep!="2" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil",  Rep!="2"  ) %>%
+  select(Treatment, Measurement)
+
+# Calculate Bray-Curtis distance between samples
+otus.bray<-vegdist(otu_table(ps1), method = "bray")
+dist_mat<-as.matrix(otus.bray) 
+dist_mat
+key <-cbind(metadat2, dist_mat)
+key
 
 
 # Define the Mapping
