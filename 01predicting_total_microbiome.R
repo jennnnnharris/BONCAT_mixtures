@@ -13,6 +13,10 @@ library(tidyverse)
 library(vegan)
 library(readxl)
 library(phyloseq)
+# Install and load
+#install.packages("compositions")
+library(compositions)
+#BiocManager::install
 #library(multcompView)
 #library(BiodiversityR)
 
@@ -749,7 +753,7 @@ metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil", n_species!="1",
 otus.bray<-vegdist(otu_table(ps1), method = "bray")
 dist_mat<-as.matrix(otus.bray) 
 dist_mat
-key <-cbind(metadat2, mat)
+key <-cbind(metadat2, dist_mat)
 
 
 
@@ -780,7 +784,7 @@ mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m],
                               mapping$Prediction_ID, 
                               mapping$Measured_ID)
 
-
+head(mapping)
 # Statistical Comparison
 # Test if the prediction error (distance) differs by treatment
 fit <- aov(BC_Distance ~ Treatment, data = mapping)
@@ -799,13 +803,14 @@ ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
 
 
 ######### compare pairwise distance -1 to 1 ##############
-ps1 <-subset_samples(ps, Fraction=="Total" & Treatment!="Soil" &Rep!="2" )
+# GB example
+ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
 
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil",  Rep!="2"  ) %>%
-  select(Treatment, Measurement)
+metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(Treatment=="GB"| Treatment=="G" | Treatment=="B"   ) %>%
+  select(Treatment, Measurement, Rep)
 
 # Calculate Bray-Curtis distance between samples
 otus.bray<-vegdist(otu_table(ps1), method = "bray")
@@ -818,19 +823,23 @@ key
 # Define the Mapping
 # We create a lookup table that links the Measured Sample ID to its Prediction ID
 # Note: Ensure the order in 'measured_ids' matches the N1, N3, N4... order
+
+# set vars
+GB<-key %>% filter(Treatment=="GB" & Measurement=="measured") %>% row.names()
+GB.predict<-key %>% filter(Treatment=="GB" & Measurement=="predicted") %>% row.names()
+G<-key %>% filter(Treatment=="G" & Measurement=="measured") %>% row.names()
+B<-key %>% filter(Treatment=="B" & Measurement=="measured") %>% row.names()
+
 mapping <- data.frame(
-  Treatment = c(rep("GB", 5), rep("LB", 5), rep("LG", 5), rep("LGB", 5)),
-  Prediction_ID = c(
-    paste0("predict_GB_N", c(1,3,4,5,6)),
-    paste0("predict_LB_N", c(1,3,4,5,6)),
-    paste0("predict_LG_N", c(1,3,4,5,6)),
-    paste0("predict_LGB_N", c(1,3,4,5,6))
+  Treatment = c(rep("GBvG", 5), rep("GBvB", 5), rep("GBpredictvG", 5), rep("GBpredictvB", 5)),
+  mix_ID = c(
+    GB, 
+    GB,
+    GB.predict,
+    GB.predict
   ),
-  Measured_ID = c(
-    "T_DNA_13_S130", "T_DNA_41_S90", "T_DNA_56_S168", "T_DNA_71_S159", "T_DNA_85_S139", # GB
-    "T_DNA_12_S119", "T_DNA_42_S101", "T_DNA_57_S92", "T_DNA_72_S170", "T_DNA_86_S150", # LB
-    "T_DNA_11_S108", "T_DNA_43_S112", "T_DNA_58_S103", "T_DNA_73_S94", "T_DNA_87_S161", # LG
-    "T_DNA_14_S141",  "T_DNA_44_S123", "T_DNA_59_S114", "T_DNA_74_S105", "T_DNA_88_S172"  # LGB
+  mono_ID = c(
+   G, B, G, B
   )
 )
 
@@ -839,23 +848,219 @@ dist_mat
 # Extract the Distances
 # We loop through the mapping and pull the specific intersection from the matrix
 mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m], 
-                              mapping$Prediction_ID, 
-                              mapping$Measured_ID)
+                              mapping$mix_ID, 
+                              mapping$mono_ID)
 
 
 # Statistical Comparison
 # Test if the prediction error (distance) differs by treatment
 fit <- aov(BC_Distance ~ Treatment, data = mapping)
 summary(fit)
-
 kruskal.test(BC_Distance ~ Treatment, data = mapping)
 
+head(mapping)
 # 5. Visualization
 ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
+  theme_bw()+
   geom_boxplot(alpha = 0.7) +
   geom_point(position = position_jitter(width = 0.1)) +
-  labs(title = "Within-Pair Prediction Accuracy",
-       y = "Bray-Curtis Distance (Measured vs. Predicted)",
-       x = "Treatment") +
-  theme_bw()
+  labs(title = "pairwise distances",
+       y = "Bray-Curtis Distance ",
+       x = "Treatment")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+
+########## Aitchison distance  #####
+# GB example
+ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(Treatment=="GB"| Treatment=="G" | Treatment=="B"   ) %>%
+  select(Treatment, Measurement, Rep)
+
+# CLR transform
+clr_data <- clr(otu_table(ps1)+1)
+clr_data<-as.matrix(clr_data)
+clr_data[1:5, 1:5]
+
+# caculate distance matrix
+dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
+dist_mat<-as.matrix(dist_mat) 
+dist_mat
+
+# add metadata
+key <-cbind(metadat2, dist_mat)
+key
+
+# PCA and plot
+pca1<- prcomp(clr_data)
+
+sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
+
+# Calculate percentage of variance explained for axis labels
+var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
+perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
+perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
+
+par(adj=.5)
+ordiplot(pca1, choices=c(1,2), scaling =1, type="none",
+         main="",
+         cex.lab = 1,
+         xlab=perc1,
+         ylab=perc2)
+
+points(sc_si, 
+       col= IBM[as.factor(metadat2$Treatment)],
+       pch= c(16,8)[as.factor(metadat2$Measurement)],
+       lwd=2,cex=1.2,
+       bg=IBM[as.factor(metadat2$Treatment)],)
+
+
+
+
+# Define the Mapping
+# We create a lookup table that links the Measured Sample ID to its Prediction ID
+# Note: Ensure the order in 'measured_ids' matches the N1, N3, N4... order
+
+# set vars
+GB<-key %>% filter(Treatment=="GB" & Measurement=="measured") %>% row.names()
+GB.predict<-key %>% filter(Treatment=="GB" & Measurement=="predicted") %>% row.names()
+G<-key %>% filter(Treatment=="G" & Measurement=="measured") %>% row.names()
+B<-key %>% filter(Treatment=="B" & Measurement=="measured") %>% row.names()
+
+mapping <- data.frame(
+  Treatment = c(rep("GB vs. G", 5), rep("GB vs. B", 5), rep("GBpredict vs. G", 5), rep("GBpredict vs. B", 5)),
+  mix_ID = c(
+    GB, 
+    GB,
+    GB.predict,
+    GB.predict
+  ),
+  mono_ID = c(
+    G, B, G, B
+  )
+)
+
+mapping
+dist_mat
+# Extract the Distances
+# We loop through the mapping and pull the specific intersection from the matrix
+mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m], 
+                              mapping$mix_ID, 
+                              mapping$mono_ID)
+
+
+head(mapping)
+# 5. Visualization
+ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
+  theme_bw()+
+  geom_boxplot(alpha = 0.7) +
+  geom_point(position = position_jitter(width = 0.1)) +
+  labs(title = "pairwise distances",
+       y = "Euclidian Distance ",
+       x = "Treatment")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+########## Aitchison distance PLOT  #####
+ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment!="Soil"  )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
+  select(Treatment, Measurement, Rep)
+
+# CLR transform
+clr_data <- clr(otu_table(ps1)+1)
+clr_data<-as.matrix(clr_data)
+clr_data[1:5, 1:5]
+
+# caculate distance matrix
+dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
+dist_mat<-as.matrix(dist_mat) 
+dist_mat
+
+# add metadata
+key <-cbind(metadat2, dist_mat)
+key
+
+# PCA and plot
+pca1<- prcomp(clr_data)
+
+sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
+
+# Calculate percentage of variance explained for axis labels
+var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
+perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
+perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
+
+par(adj=.5)
+ordiplot(pca1, choices=c(1,2), scaling =1, type="none",
+         main="",
+         cex.lab = 1,
+         xlab=perc1,
+         ylab=perc2)
+
+points(sc_si, 
+       col= IBM[as.factor(metadat2$Treatment)],
+       pch= c(16,8)[as.factor(metadat2$Measurement)],
+       lwd=2,cex=1.2,
+       bg=IBM[as.factor(metadat2$Treatment)],)
+legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+       fill= IBM,
+       cex=.5,
+       bty = "n")
+ legend("bottomright", legend=c("measured", "predicted"  ),
+        pch=c(16,8 ),
+        cex=.5,
+        bty = "o")
+
+
+
+
+# Define the Mapping
+# We create a lookup table that links the Measured Sample ID to its Prediction ID
+# Note: Ensure the order in 'measured_ids' matches the N1, N3, N4... order
+
+# set vars
+GB<-key %>% filter(Treatment=="GB" & Measurement=="measured") %>% row.names()
+GB.predict<-key %>% filter(Treatment=="GB" & Measurement=="predicted") %>% row.names()
+G<-key %>% filter(Treatment=="G" & Measurement=="measured") %>% row.names()
+B<-key %>% filter(Treatment=="B" & Measurement=="measured") %>% row.names()
+
+mapping <- data.frame(
+  Treatment = c(rep("GB vs. G", 5), rep("GB vs. B", 5), rep("GBpredict vs. G", 5), rep("GBpredict vs. B", 5)),
+  mix_ID = c(
+    GB, 
+    GB,
+    GB.predict,
+    GB.predict
+  ),
+  mono_ID = c(
+    G, B, G, B
+  )
+)
+
+mapping
+dist_mat
+# Extract the Distances
+# We loop through the mapping and pull the specific intersection from the matrix
+mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m], 
+                              mapping$mix_ID, 
+                              mapping$mono_ID)
+
+
+head(mapping)
+# 5. Visualization
+ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
+  theme_bw()+
+  geom_boxplot(alpha = 0.7) +
+  geom_point(position = position_jitter(width = 0.1)) +
+  labs(title = "pairwise distances",
+       y = "Euclidian Distance ",
+       x = "Treatment")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
 
