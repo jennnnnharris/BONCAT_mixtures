@@ -397,6 +397,10 @@ row.names(metadat) <- metadat$SampleID
 metadat
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 head(metadat)
+# make col
+metadat$Trt_measure <- paste0(metadat$Treatment, metadat$Measurement)
+metadat$Trt_measure<-gsub("measured", "", metadat$Trt_measure)
+
 
 # import it phyloseq
 Workshop_OTU <- otu_table(as.matrix(asvs), taxa_are_rows = FALSE)
@@ -875,7 +879,7 @@ legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
 
 ###
  
- # simple ordination ##########
+ # simple ordination #
  
  # GB example
  ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
@@ -1228,7 +1232,6 @@ svg("GB_total.svg",  width=4, height=1.5)
  # Calculate the prediction baseline profile
  P <- mean(mix_data$index[which(mix_data$Measurement == "predicted")])
  
- 
  # Shift the scale linearly
  mix_data$center_pred <- (mix_data$index - P)
  
@@ -1251,7 +1254,81 @@ svg("GB_total.svg",  width=4, height=1.5)
  dev.off()  
  
  
- ###### simple ordination three species ####
+ ######simple ordination three species ####
+ 
+ # LGB, LG, LB, LG example
+ ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Trt_measure=="LGB" | Trt_mea )
+ ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ ps1
+ 
+ # subset metadata
+ metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(n_species!=1 & Treatment!="Soil") %>%
+   select(Treatment, Measurement, Rep)
+ metadat2
+ metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "GB", "LB", "LG", "LGB"))
+ metadat2$Trt_measure <- paste0(metadat2$Treatment, metadat2$Measurement)
+ metadat2$Trt_measure<-gsub("measured", "", metadat2$Trt_measure)
+ 
+ 
+ 
+ # CLR transform
+ clr_data <- clr(otu_table(ps1)+1)
+ clr_data<-as.matrix(clr_data)
+ clr_data[1:5, 1:5]
+ 
+ # caculate distance matrix
+ dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
+ dist_mat<-as.matrix(dist_mat) 
+ dist_mat
+ 
+ # add metadata
+ key <-cbind(metadat2, dist_mat)
+ key
+ 
+ # PCA and plot
+ pca1<- prcomp(clr_data)
+ 
+ sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
+ 
+ #load col
+ IBM <- c( #IBM colors
+   "navy", # dark royal blue
+   "#648FFF", # french blue
+   "#785EF0", # light purple
+   "#DC267F", # magenta pink 
+   "#FE6100", # bright orange
+   "#FFB000", # golden yellow
+   "#865338" # medium mocha brown
+ )
+ 
+ # Calculate percentage of variance explained for axis labels
+ var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
+ perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
+ perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
+ 
+ par(adj=.5)
+ ordiplot(pca1, choices=c(1,2),
+          type="none",
+          cex.lab = 1,
+          xlab=perc1,
+          ylab=perc2)
+ 
+ points(sc_si, 
+        col= IBM[as.factor(metadat2$Treatment)],
+        pch= c(16,8)[as.factor(metadat2$Measurement)],
+        lwd=2,cex=1.2,
+        bg=IBM[as.factor(metadat2$Treatment)],)
+ legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+        fill= IBM,
+        cex=1,
+        bty = "n")
+ legend("bottomright", legend=c("measured", "predicted"  ),
+        pch=c(16,8 ),
+        cex=1,
+        bty = "o")
+ 
+ 
+ 
  
  
  
