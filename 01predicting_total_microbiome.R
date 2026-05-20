@@ -1479,16 +1479,20 @@ mix_data
  # will find the x, y, and z coordinate data (T1A, T1B, and T1C)
  # Then you tell ggtern what kind of geometry to use to display the data, in this case "geom_point"
 
- ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measurement, shape = factor(Rep))) +
-   geom_point(size=2.5)+
+
+ p4<-ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measurement, shape = factor(Rep))) +
+   geom_point(size=2)+
    theme_minimal()+
    scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expectation"))+
    scale_shape_manual(values=c(8, 15, 17, 19, 9), name="Rep")+
    xlab("L")  +                  
    ylab("G") +
    zlab("B")   
-  
- 
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+svg("LGB_total.svg", width=4, height=4) 
+ p4  
+ dev.off()
  
  
  
