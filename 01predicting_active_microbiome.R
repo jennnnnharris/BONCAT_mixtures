@@ -348,8 +348,8 @@ write.csv(tax_table, "taxonomy.csv")
 
 ##### import predicted #####
 ## Set the working directory ###
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
+#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
 taxon <- read.csv("taxonomy.csv", row.names = 1)
 asvs <- read.csv("feature.table.csv", row.names = 1)
 metadat<-read.csv("metadata_predicted16S.csv", header = T)
@@ -449,7 +449,7 @@ legend("bottomright", legend=c("measured", "predicted"  ),
        cex=.5,
        title = "",     bty = "o")
 
-dev.off()
+#dev.off()
 # permanova
 adonis2(otus.bray ~ Treatment, data = metadat2)
 adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
@@ -793,7 +793,7 @@ P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
 mix_data$diff_predict <- mix_data$GB_index-P 
 
 # plot
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
 svg("GB_active.svg",  width=4, height=1.5)
 mix_data %>% filter(Measurement=="measured") %>%
   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
@@ -885,7 +885,7 @@ mix_data$diff_predict <- mix_data$LB_index-P
 mix_data
 
 # plot
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
 svg("LB_active.svg",  width=4, height=1.5)
 mix_data %>% filter(Measurement=="measured") %>%
   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
@@ -964,7 +964,7 @@ mix_data
 
 
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
-svg("LG_total.svg", width=4, height=1.5)
+svg("LG_active.svg", width=4, height=1.5)
 mix_data %>% filter(Measurement=="measured") %>%
   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
@@ -1123,38 +1123,9 @@ mix_data<-cbind(meta3, mix_data)
 mix_data<-mix_data %>% select(LG_index, GB_index, BL_index, Treatment, Rep, Measurement)
 mix_data
 
-#### plot with predicted as zero ###
-# # subtract each rep #
-# P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
-# mix_data$adj_GBindex <- mix_data$GB_index-P 
-# mix_data
-# P<-rep(mix_data$LG_index[which(mix_data$Measurement == "predicted")],2)
-# mix_data$adj_LGindex <- mix_data$LG_index-P 
-# mix_data
-# P<-rep(mix_data$BL_index[which(mix_data$Measurement == "predicted")],2)
-# mix_data$adj_BLindex <- mix_data$BL_index-P 
-# mix_data
-# 
-# 
 
 
-
-# tidyverse
-#install.packages("tidyverse")
-#library(tidyverse)
-packageVersion("tidyverse")
-
-# ggplot
-packageVersion("ggplot2")
-#install.packages("ggplot2")
-
-
-#Or the development version from GitHub:
-  install.packages("pak")
-  pak::pak("tidyverse/ggplot2")
-
-
-#library(ggtern)
+library(ggtern)
 #library(ggplot2)
 
 
@@ -1169,13 +1140,17 @@ p4<-ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measu
   geom_point(size=2)+
   theme_minimal()+
   scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expectation"))+
-  scale_shape_manual(values=c(8, 15, 17, 19, 9), name="Rep")+
+  scale_shape_manual(values=c(8, 15, 17, 19, 9, 18), name="Rep")+
   xlab("L")  +                  
   ylab("G") +
   zlab("B")   
 
+
+p4
+
+
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
-svg("LGB_total.svg", width=4, height=4) 
+svg("LGB_active.svg", width=4, height=4) 
 p4  
 dev.off()
 
