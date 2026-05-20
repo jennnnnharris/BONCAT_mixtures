@@ -1203,11 +1203,11 @@ dev.off()
  ps1
  
  # subset metadata
- metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(n_species!=1 & Treatment!="Soil") %>%
+ metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(Treatment=="L" | Treatment=="G" | Treatment=="B" | Treatment=="LGB") %>%
    select(Treatment, Measurement, Rep)
  metadat2
- metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "GB", "LB", "LG", "LGB"))
- metadat2$Trt_measure <- paste0(metadat2$Treatment, metadat2$Measurement)
+ metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "L", "G", "B", "LGB"))
+ #metadat2$Trt_measure <- paste0(metadat2$Treatment, metadat2$Measurement)
  
  
  
@@ -1235,9 +1235,9 @@ dev.off()
    "navy", # dark royal blue
    "#648FFF", # french blue
    "#785EF0", # light purple
-   "#DC267F", # magenta pink 
-   "#FE6100", # bright orange
-   "#FFB000", # golden yellow
+   #"#DC267F", # magenta pink 
+   #"#FE6100", # bright orange
+  # "#FFB000", # golden yellow
    "#865338" # medium mocha brown
  )
  
@@ -1258,7 +1258,7 @@ dev.off()
         pch= c(16,8)[as.factor(metadat2$Measurement)],
         lwd=2,cex=1.2,
         bg=IBM[as.factor(metadat2$Treatment)],)
- legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+ legend("topright", legend=c("L", "G", "B", "LGB"),
         fill= IBM,
         cex=1,
         bty = "n")
@@ -1266,8 +1266,228 @@ dev.off()
         pch=c(16,8 ),
         cex=1,
         bty = "o")
+
+ 
+ ##### scalar projection LGB ########
+ 
+
+clr_data
+ 
+ # 1. Calculate the centroids (mean vector) for your baseline monocultures
+ # (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
+ centroid_L <- colMeans(clr_data[ which(metadat2$Treatment=="L"), ])
+ centroid_G <- colMeans(clr_data[which(metadat2$Treatment=="G"), ])
+ centroid_B <- colMeans(clr_data[which(metadat2$Treatment=="B"), ])
+ 
+
+  # 2. Define the axis vector from L to G
+ # v1 <- end - start
+ # L to G
+ v1 <- centroid_G - centroid_L
+ # G to B
+ v2 <- centroid_B - centroid_G
+ # B to L
+ v3 <- centroid_L - centroid_B
+ 
+ v1_length_sq <- sum(v1^2)
+ v2_length_sq <- sum(v2^2)
+ v3_length_sq <- sum(v3^2)
+ 
+ # 4. Apply this to your target samples (LGB observed and LGB predicted)
+ # Let's say you target a data frame of your mixtures
+ mix_data <- clr_data[which(metadat2$Treatment=="LGB"), ]
+ mix_data[1:5, 1:5]
+ dim(mix_data)
+  
+ # Calculate the index for each row
+ 
+ # row, start, v, length
+ LG_index <- apply(mix_data, 1, function(row) {
+   project_to_axis(row, centroid_L, v1, v1_length_sq)
+ })
+ 
+ GB_index <- apply(mix_data, 1, function(row) {
+   project_to_axis(row, centroid_G, v2, v2_length_sq)
+ })
+ 
+  BL_index <- apply(mix_data, 1, function(row) {
+   project_to_axis(row, centroid_B, v3, v3_length_sq)
+ })
+ 
+ # add metadata
+ mix_data<-cbind(LG_index, mix_data)
+ mix_data<-cbind(GB_index, mix_data)
+ mix_data<-cbind(BL_index, mix_data)
+  meta3<-metadat2 %>% filter(Treatment=="LGB") 
+ mix_data<-cbind(meta3, mix_data)
  
  
+ #### plot with predicted as zero ###
+ # subtract each rep #
+ mix_data<-mix_data %>% select(LG_index, GB_index, BL_index, Treatment, Measurement)
+ P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
+ mix_data$adj_GBindex <- mix_data$GB_index-P 
+ mix_data
+ P<-rep(mix_data$LG_index[which(mix_data$Measurement == "predicted")],2)
+ mix_data$adj_LGindex <- mix_data$LG_index-P 
+ mix_data
+ P<-rep(mix_data$BL_index[which(mix_data$Measurement == "predicted")],2)
+ mix_data$adj_BLindex <- mix_data$BL_index-P 
+ mix_data
+ 
+ 
+ 
+ setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+ svg("LG_total.svg", width=4, height=1.5)
+ mix_data %>% filter(Measurement=="measured") %>%
+   ggplot(aes(x = Treatment, y = adj_LGindex, fill = Measurement)) +
+   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+   geom_jitter(width = 0.1, size = 2) +
+   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+   annotate("text", x = 0.7, y = -1, label = "L", hjust = 0) +
+   annotate("text", x = 0.7, y = 1, label = "G", hjust = 0) +
+   labs(title = "",
+        y = "Projection Index (L → G)",
+        x = "Mixture") +
+   scale_fill_manual(values = c("#FFB000", "grey70"))+
+   coord_flip()+
+   theme_minimal()+
+   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+ 
+ dev.off()  
+ 
+ mix_data %>% filter(Measurement=="measured") %>%
+   ggplot(aes(x = Treatment, y = adj_BLindex, fill = Measurement)) +
+   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+   geom_jitter(width = 0.1, size = 2) +
+   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+   annotate("text", x = 0.7, y = -1, label = "B", hjust = 0) +
+   annotate("text", x = 0.7, y = 1, label = "L", hjust = 0) +
+   labs(title = "",
+        y = "Projection Index (L → G)",
+        x = "Mixture") +
+   scale_fill_manual(values = c("#FFB000", "grey70"))+
+   coord_flip()+
+   theme_minimal()+
+   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+ 
+ mix_data %>% filter(Measurement=="measured") %>%
+   ggplot(aes(x = Treatment, y = adj_GBindex, fill = Measurement)) +
+   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+   geom_jitter(width = 0.1, size = 2) +
+   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+   annotate("text", x = 0.7, y = -1, label = "G", hjust = 0) +
+   annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
+   labs(title = "",
+        y = "Projection Index (L → G)",
+        x = "Mixture") +
+   scale_fill_manual(values = c("#FFB000", "grey70"))+
+   coord_flip()+
+   theme_minimal()+
+   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+
+ 
+ 
+ ### triplot ######
+ 
+ 
+ clr_data
+ 
+ # 1. Calculate the centroids (mean vector) for your baseline monocultures
+ # (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
+ centroid_L <- colMeans(clr_data[ which(metadat2$Treatment=="L"), ])
+ centroid_G <- colMeans(clr_data[which(metadat2$Treatment=="G"), ])
+ centroid_B <- colMeans(clr_data[which(metadat2$Treatment=="B"), ])
+ 
+ 
+ # 2. Define the axis vector from L to G
+ # v1 <- end - start
+ # L to G
+ v1 <- centroid_G - centroid_L
+ # G to B
+ v2 <- centroid_B - centroid_G
+ # B to L
+ v3 <- centroid_L - centroid_B
+ 
+ v1_length_sq <- sum(v1^2)
+ v2_length_sq <- sum(v2^2)
+ v3_length_sq <- sum(v3^2)
+ 
+ # Apply this to your target samples (LGB observed and LGB predicted)
+ # Let's say you target a data frame of your mixtures
+ mix_data <- clr_data[which(metadat2$Treatment=="LGB"), ]
+ mix_data[1:5, 1:5]
+ dim(mix_data)
+ 
+ 
+ # Create a function to project a sample vector onto the G->B axis  symmetric [-1, +1] axis
+ project_to_axis <- function(sample_vector, start_centroid, axis_vector, axis_len_sq) {
+   sample_adj <- sample_vector - start_centroid
+   dot_product <- sum(sample_adj * axis_vector)
+   
+   # Calculate 0 to 1 index
+   original_index <- dot_product / axis_len_sq
+   
+   # Rescale to -1 to +1
+   #symmetric_index <- (2 * original_index) - 1
+   return(original_index)
+ }
+ 
+ # row, start, v, length
+ LG_index <- apply(mix_data, 1, function(row) {
+   project_to_axis(row, centroid_L, v1, v1_length_sq)
+ })
+ 
+ GB_index <- apply(mix_data, 1, function(row) {
+   project_to_axis(row, centroid_G, v2, v2_length_sq)
+ })
+ 
+ BL_index <- apply(mix_data, 1, function(row) {
+   project_to_axis(row, centroid_B, v3, v3_length_sq)
+ })
+ 
+ # add metadata
+ mix_data<-cbind(LG_index, mix_data)
+ mix_data<-cbind(GB_index, mix_data)
+ mix_data<-cbind(BL_index, mix_data)
+ meta3<-metadat2 %>% filter(Treatment=="LGB") 
+ mix_data<-cbind(meta3, mix_data)
+  mix_data<-mix_data %>% select(LG_index, GB_index, BL_index, Treatment, Rep, Measurement)
+mix_data
+ 
+ #### plot with predicted as zero ###
+ # # subtract each rep #
+ # P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
+ # mix_data$adj_GBindex <- mix_data$GB_index-P 
+ # mix_data
+ # P<-rep(mix_data$LG_index[which(mix_data$Measurement == "predicted")],2)
+ # mix_data$adj_LGindex <- mix_data$LG_index-P 
+ # mix_data
+ # P<-rep(mix_data$BL_index[which(mix_data$Measurement == "predicted")],2)
+ # mix_data$adj_BLindex <- mix_data$BL_index-P 
+ # mix_data
+ # 
+ # 
+ 
+ 
+ library(ggplot2)
+ library(ggtern)
+ 
+ # View one of the triads
+ # Use ggtern which is a specialized package using ggplot2 tools.
+ # You will define the data source (demodata1) and then provide the three column names where ggtern
+ # will find the x, y, and z coordinate data (T1A, T1B, and T1C)
+ # Then you tell ggtern what kind of geometry to use to display the data, in this case "geom_point"
+
+ ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measurement, shape = factor(Rep))) +
+   geom_point(size=2.5)+
+   theme_minimal()+
+   scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expectation"))+
+   scale_shape_manual(values=c(8, 15, 17, 19, 9), name="Rep")+
+   xlab("L")  +                  
+   ylab("G") +
+   zlab("B")   
+  
  
  
  
