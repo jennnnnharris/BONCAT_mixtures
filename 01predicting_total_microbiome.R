@@ -396,11 +396,10 @@ metadat<-as.data.frame(metadat[order(metadat$SampleID),])
 row.names(metadat) <- metadat$SampleID
 metadat
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-head(metadat)
 # make col
 metadat$Trt_measure <- paste0(metadat$Treatment, metadat$Measurement)
 metadat$Trt_measure<-gsub("measured", "", metadat$Trt_measure)
-
+head(metadat)
 
 # import it phyloseq
 Workshop_OTU <- otu_table(as.matrix(asvs), taxa_are_rows = FALSE)
@@ -412,20 +411,20 @@ ps
 # 1604 taxa when rarefied 
 
 
-##### predicted plot #####
-ps1 <-subset_samples(ps, Fraction=="Total" & Treatment!="Soil" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
+##### remove soil
+ps <-subset_samples(ps, Fraction=="Total" & Treatment!="Soil" )
+ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+ps
 
 # subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil" )
+metadat<-filter(metadat, Fraction=="Total" & Treatment!="Soil" )
 
 #factor
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat$Treatment   <- factor(metadat$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
 
 
 # Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
+otus.bray<-vegdist(otu_table(ps), method = "bray")
 
 
 ###PCOA ##########
@@ -483,8 +482,8 @@ legend("bottomright", legend=c("measured", "predicted"  ),
 
 
 # permanova
-adonis2(otus.bray ~ Treatment, data = metadat2)
-adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
+#adonis2(otus.bray ~ Treatment, data = metadat2)
+#adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
 
 
 #### CAP ##### 
@@ -606,12 +605,6 @@ otus.bray<-vegdist(otu_table(ps1), method = "bray")
 otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
 # permanova
 adonis2(otus.bray ~ Measurement, data = metadat2)
-
-
-
-
-
-
 
 
 
@@ -879,75 +872,75 @@ legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
 
 ###
  
- # simple ordination #
- 
- # GB example
- ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
- ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
- ps1
- 
- # subset metadata
- metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(Treatment=="GB"| Treatment=="G" | Treatment=="B"   ) %>%
-   select(Treatment, Measurement, Rep)
- metadat2$Treatment <- factor(metadat2$Treatment)
- 
- # CLR transform
- clr_data <- clr(otu_table(ps1)+1)
- clr_data<-as.matrix(clr_data)
- clr_data[1:5, 1:5]
- 
- # caculate distance matrix
- dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
- dist_mat<-as.matrix(dist_mat) 
- dist_mat
- 
- # add metadata
- key <-cbind(metadat2, dist_mat)
- key
- 
- # PCA and plot
- pca1<- prcomp(clr_data)
- 
- sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
- 
- #load col
- IBM <- c( #IBM colors
-   
-   "#648FFF", # french blue
-   "#785EF0", # light purple
-   "#DC267F" # magenta pink 
-   
- )
- 
- # Calculate percentage of variance explained for axis labels
- var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
- perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
- perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
- 
- par(adj=.5)
- ordiplot(pca1, choices=c(1,2),
-          main="",
-          type = "none",
-          cex.lab = 1,
-          xlab=perc1,
-          ylab=perc2)
- 
- points(sc_si, 
-        col= IBM[as.factor(metadat2$Treatment)],
-        pch= c(16,8)[as.factor(metadat2$Measurement)],
-        lwd=2,cex=1.2,
-        bg=IBM[as.factor(metadat2$Treatment)],)
- legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-        fill= IBM,
-        cex=.5,
-        bty = "n")
- legend("bottomright", legend=c("measured", "predicted"  ),
-        pch=c(16,8 ),
-        cex=.5,
-        bty = "o")
- 
- 
- ###scalar projection #####
+ # # simple ordination #
+ # 
+ # # GB example
+ # ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
+ # ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ # ps1
+ # 
+ # # subset metadata
+ # metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(Treatment=="GB"| Treatment=="G" | Treatment=="B"   ) %>%
+ #   select(Treatment, Measurement, Rep)
+ # metadat2$Treatment <- factor(metadat2$Treatment)
+ # 
+ # # CLR transform
+ # clr_data <- clr(otu_table(ps1)+1)
+ # clr_data<-as.matrix(clr_data)
+ # clr_data[1:5, 1:5]
+ # 
+ # # caculate distance matrix
+ # dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
+ # dist_mat<-as.matrix(dist_mat) 
+ # dist_mat
+ # 
+ # # add metadata
+ # key <-cbind(metadat2, dist_mat)
+ # key
+ # 
+ # # PCA and plot
+ # pca1<- prcomp(clr_data)
+ # 
+ # sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
+ # 
+ # #load col
+ # IBM <- c( #IBM colors
+ #   
+ #   "#648FFF", # french blue
+ #   "#785EF0", # light purple
+ #   "#DC267F" # magenta pink 
+ #   
+ # )
+ # 
+ # # Calculate percentage of variance explained for axis labels
+ # var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
+ # perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
+ # perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
+ # 
+ # par(adj=.5)
+ # ordiplot(pca1, choices=c(1,2),
+ #          main="",
+ #          type = "none",
+ #          cex.lab = 1,
+ #          xlab=perc1,
+ #          ylab=perc2)
+ # 
+ # points(sc_si, 
+ #        col= IBM[as.factor(metadat2$Treatment)],
+ #        pch= c(16,8)[as.factor(metadat2$Measurement)],
+ #        lwd=2,cex=1.2,
+ #        bg=IBM[as.factor(metadat2$Treatment)],)
+ # legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+ #        fill= IBM,
+ #        cex=.5,
+ #        bty = "n")
+ # legend("bottomright", legend=c("measured", "predicted"  ),
+ #        pch=c(16,8 ),
+ #        cex=.5,
+ #        bty = "o")
+ # 
+ # 
+ ###scalar projection GB #####
  
  # clr matrix
  ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
@@ -964,14 +957,9 @@ legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
  clr_data<-as.matrix(clr_data)
  clr_data[1:5, 1:5]
  
- # calculate distance matrix
- #dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
- #dist_mat<-as.matrix(dist_mat) 
- #dist_mat
- 
- # add metadata
- key <-cbind(metadat2, clr_data)
- key[1:5, 1:5]
+ # # add metadata
+ # key <-cbind(metadat2, clr_data)
+ # key[1:5, 1:5]
  
  
  # 1. Calculate the centroids (mean vector) for your baseline monocultures
@@ -1011,77 +999,68 @@ legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
 
 GB_index  
 mix_data<-cbind(GB_index, mix_data)
-metadat2<-metadat2 %>% filter(Treatment=="GB") 
-mix_data<-cbind(metadat2, mix_data)
- 
- library(ggplot2)
-IBM <- c( #IBM colors
-  "navy", # dark royal blue
-  "#648FFF", # french blue
-  "#785EF0", # light purple
-  "#DC267F", # magenta pink 
-  "#FE6100", # bright orange
-  "#FFB000", # golden yellow
-  "#865338" # medium mocha brown
-)
- # ggplot(mix_data, aes(x = Measurement, y = GB_index, fill = Measurement)) +
- #   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
- #   scale_fill_manual(values = c("#DC267F", "grey70"))+
- #   geom_jitter(width = 0.1, size = 2) +
- #   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
- #   annotate("text", x = 0.5, y = -1, label = "Pure G", hjust = 0) +
- #   annotate("text", x = 0.5, y = 1, label = "Pure B", hjust = 0) +
- #   labs(title = "Mixture Composition Along G-to-B Axis",
- #        y = "Projection Index (G → B)",
- #        x = "Treatment") +
- #   theme_minimal()+
- #   coord_flip()
- #### plot with predicted as zero ###
- 
- library(dplyr)
- 
- # Calculate the prediction baseline profile
- P <- mean(mix_data$GB_index[which(mix_data$Measurement == "predicted")])
+metadat3<-metadat2 %>% filter(Treatment=="GB") 
+mix_data<-cbind(metadat3, mix_data)
  
 
- # Shift the scale linearly
- mix_data$GB_center_pred <- (mix_data$GB_index - P)
-
+# # plot raw -1 to 1
+#  ggplot(mix_data, aes(x = Measurement, y = GB_index, fill = Measurement)) +
+#    geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+#    scale_fill_manual(values = c("#DC267F", "grey70"))+
+#    geom_jitter(width = 0.1, size = 2) +
+#    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+#    annotate("text", x = 0.5, y = -1, label = "Pure G", hjust = 0) +
+#    annotate("text", x = 0.5, y = 1, label = "Pure B", hjust = 0) +
+#    labs(title = "Mixture Composition Along G-to-B Axis",
+#         y = "Projection Index (G → B)",
+#         x = "Treatment") +
+#    theme_minimal()+
+#    coord_flip()
+### plot with predicted as zero ###
+ # subtract each rep 
+ mix_data<-mix_data %>% select(GB_index, Treatment, Measurement)
+ P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
+ mix_data$diff_predict <- mix_data$GB_index-P 
+ 
+# plot
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
 svg("GB_total.svg",  width=4, height=1.5)
- ggplot(mix_data, aes(x = Measurement, y = GB_center_pred, fill = Measurement)) +
-   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-   geom_jitter(width = 0.1, size = 2) +
-   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-   annotate("text", x = 0.7, y = -1, label = "G", hjust = 0) +
-   annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
-   labs(title = "Mixture Composition GB ",
-        y = "Projection Index (G → B)",
-        x = "Treatment") +
-   
-   scale_fill_manual(values = c("#DC267F", "grey70"))+
-   coord_flip()+
-   theme_minimal()+
-   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
- dev.off()  
+mix_data %>% filter(Measurement=="measured") %>%
+ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
+  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+  geom_jitter(width = 0.1, size = 2) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  annotate("text", x = 0.7, y = -1, label = "G", hjust = 0) +
+  annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
+  labs(title = " ",
+       y = "Projection Index (G → B)",
+       x = "Mixture") +
+  scale_fill_manual(values = c("#DC267F", "grey70"))+
+  coord_flip()+
+  theme_minimal()+
+  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+dev.off()  
+
+ 
+ 
  
  
  ###scalar projection LB #####
  
- # clr matrix
- ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
- ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
- ps1
- 
- # subset metadata
- metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
-   select(Treatment, Measurement, Rep)
- metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
- 
- # CLR transform
- clr_data <- clr(otu_table(ps1)+1)
- clr_data<-as.matrix(clr_data)
- clr_data[1:5, 1:5]
+ # # clr matrix
+ # ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
+ # ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ # ps1
+ # 
+ # # subset metadata
+ # metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
+ #   select(Treatment, Measurement, Rep)
+ # metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+ # 
+ # # CLR transform
+ # clr_data <- clr(otu_table(ps1)+1)
+ # clr_data<-as.matrix(clr_data)
+ # clr_data[1:5, 1:5]
 
  # 1. Calculate the centroids (mean vector) for your baseline monocultures
  # (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
@@ -1108,80 +1087,55 @@ svg("GB_total.svg",  width=4, height=1.5)
  
  LB_index  
  mix_data<-cbind(LB_index, mix_data)
- metadat2<-metadat2 %>% filter(Treatment=="LB") 
- mix_data<-cbind(metadat2, mix_data)
+ metadat3<-metadat2 %>% filter(Treatment=="LB") 
+ mix_data<-cbind(metadat3, mix_data)
  
- library(ggplot2)
- IBM <- c( #IBM colors
-   "navy", # dark royal blue
-   "#648FFF", # french blue
-   "#785EF0", # light purple
-   "#DC267F", # magenta pink 
-   "#FE6100", # bright orange
-   "#FFB000", # golden yellow
-   "#865338" # medium mocha brown
- )
- # ggplot(mix_data, aes(x = Measurement, y = LB_index, fill = Measurement)) +
- #   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
- #   geom_jitter(width = 0.1, size = 2) +
- #   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
- #   annotate("text", x = 0.5, y = -1, label = "L", hjust = 0) +
- #   annotate("text", x = 0.5, y = 1, label = "B", hjust = 0) +
- #   labs(title = "Mixture Composition LB ",
- #        y = "Projection Index (L → B)",
- #        x = "Treatment") +
- #   scale_fill_manual(values = c("#FE6100", "grey70"))+
- #   coord_flip()+
- #   theme_minimal()+
- #   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
- #   
    
  #### plot with predicted as zero ###
+  # subtract each rep #
+ mix_data<-mix_data %>% select(LB_index, Treatment, Measurement)
+ P<-rep(mix_data$LB_index[which(mix_data$Measurement == "predicted")],2)
+ mix_data$diff_predict <- mix_data$LB_index-P 
+ mix_data
  
- library(dplyr)
- 
- # Calculate the prediction baseline profile
- P <- mean(mix_data$LB_index[which(mix_data$Measurement == "predicted")])
- 
- 
- # Shift the scale linearly
- mix_data$LB_center_pred <- (mix_data$LB_index - P)
- 
+ # plot
  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
- svg("LB_total.svg", width=4, height=1.5)
- ggplot(mix_data, aes(x = Measurement, y = LB_center_pred, fill = Measurement)) +
+ svg("LB_total.svg",  width=4, height=1.5)
+ mix_data %>% filter(Measurement=="measured") %>%
+   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
    geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-   geom_jitter(width = 0.1, size = 2) +
-   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-   annotate("text", x = 0.7, y = -1, label = "L", hjust = 0) +
-   annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
-   labs(title = "Mixture Composition LB ",
-        y = "Projection Index (L → B)",
-        x = "Treatment") +
-   scale_fill_manual(values = c("#FE6100", "grey70"))+
-   coord_flip()+
-   theme_minimal()+
-   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
- dev.off()  
- 
+     geom_jitter(width = 0.1, size = 2) +
+     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+     annotate("text", x = 0.7, y = -1, label = "L", hjust = 0) +
+     annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
+     labs(title = "",
+          y = "Projection Index (L → B)",
+          x = "Mixture") +
+     scale_fill_manual(values = c("#FE6100", "grey70"))+
+     coord_flip()+
+     theme_minimal()+
+     theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+   dev.off()  
+   
+   
  
  
  ###scalar projection LG #####
  
- # clr matrix
- ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
- ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
- ps1
- 
- # subset metadata
- metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
-   select(Treatment, Measurement, Rep)
- metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
- 
- # CLR transform
- clr_data <- clr(otu_table(ps1)+1)
- clr_data<-as.matrix(clr_data)
- clr_data[1:5, 1:5]
+ # # clr matrix
+ # ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
+ # ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ # ps1
+ # 
+ # # subset metadata
+ # metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
+ #   select(Treatment, Measurement, Rep)
+ # metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+ # 
+ # # CLR transform
+ # clr_data <- clr(otu_table(ps1)+1)
+ # clr_data<-as.matrix(clr_data)
+ # clr_data[1:5, 1:5]
  
  # 1. Calculate the centroids (mean vector) for your baseline monocultures
  # (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
@@ -1211,41 +1165,28 @@ svg("GB_total.svg",  width=4, height=1.5)
  meta3<-metadat2 %>% filter(Treatment=="LG") 
  mix_data<-cbind(meta3, mix_data)
  
-  # ggplot(mix_data, aes(x = Measurement, y = index, fill = Measurement)) +
-  #  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-  #  geom_jitter(width = 0.1, size = 2) +
-  #  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-  #  annotate("text", x = 0.5, y = -1, label = "L", hjust = 0) +
-  #  annotate("text", x = 0.5, y = 1, label = "B", hjust = 0) +
-  #  labs(title = "Mixture Composition LB ",
-  #       y = "Projection Index (L → B)",
-  #       x = "Treatment") +
-  #  scale_fill_manual(values = c("#FFB000", "grey70"))+
-  #  coord_flip()+
-  #  theme_minimal()+
-  #  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
-  # 
  
  #### plot with predicted as zero ###
+ # subtract each rep #
+ mix_data<-mix_data %>% select(index, Treatment, Measurement)
+ P<-rep(mix_data$index[which(mix_data$Measurement == "predicted")],2)
+ mix_data$diff_predict <- mix_data$index-P 
+ mix_data
  
- 
- # Calculate the prediction baseline profile
- P <- mean(mix_data$index[which(mix_data$Measurement == "predicted")])
- 
- # Shift the scale linearly
- mix_data$center_pred <- (mix_data$index - P)
+
  
  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
  svg("LG_total.svg", width=4, height=1.5)
- ggplot(mix_data, aes(x = Measurement, y = center_pred, fill = Measurement)) +
+ mix_data %>% filter(Measurement=="measured") %>%
+   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
    geom_boxplot(alpha = 0.6, outlier.shape = NA) +
    geom_jitter(width = 0.1, size = 2) +
    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
    annotate("text", x = 0.7, y = -1, label = "L", hjust = 0) +
    annotate("text", x = 0.7, y = 1, label = "G", hjust = 0) +
-   labs(title = "Mixture Composition LG ",
+   labs(title = "",
         y = "Projection Index (L → G)",
-        x = "Treatment") +
+        x = "Mixture") +
    scale_fill_manual(values = c("#FFB000", "grey70"))+
    coord_flip()+
    theme_minimal()+
@@ -1256,8 +1197,8 @@ svg("GB_total.svg",  width=4, height=1.5)
  
  ######simple ordination three species ####
  
- # LGB, LG, LB, LG example
- ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Trt_measure=="LGB" | Trt_mea )
+ # LGB, G, B, G example
+ ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="L" | Treatment=="G" | Treatment=="B" | Treatment=="LGB")    
  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
  ps1
  
@@ -1267,7 +1208,6 @@ svg("GB_total.svg",  width=4, height=1.5)
  metadat2
  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c( "GB", "LB", "LG", "LGB"))
  metadat2$Trt_measure <- paste0(metadat2$Treatment, metadat2$Measurement)
- metadat2$Trt_measure<-gsub("measured", "", metadat2$Trt_measure)
  
  
  
