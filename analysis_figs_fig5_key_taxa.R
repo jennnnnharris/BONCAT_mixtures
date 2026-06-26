@@ -1,6 +1,6 @@
 # extract key taxa Figure 5
 
-# R version 4.2.3 (2023-03-15 ucrt) -- "Shortstop Beagle"
+
 
 # clear workspace
 rm(list=ls())
@@ -10,11 +10,11 @@ rm(list=ls())
 library(tidyverse)
 library(vegan)
 library(phyloseq)
-library(multcompView)
-library(BiodiversityR)
+#library(multcompView)
+#library(BiodiversityR)
 #ANCOM
 #BiocManager::install("ANCOMBC")
-library(ANCOMBC)
+#library(ANCOMBC)
 #BiocManager::install("microbiome")
 #install.packages("microbiome")
 library(microbiome)
@@ -35,8 +35,8 @@ IBM <- c( #IBM colors
 
 #####Import data active #####
 ## Set the working directory ###
-#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
 metadat<-read.csv("metadat2.csv",  row.names = 2)
@@ -417,8 +417,8 @@ IBM <- c( #IBM colors
   "#865338" # medium mocha brown
 )
 # IBM colors
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
-svg(filename="active.taxa.else.svg", height = 4, width = 9.5)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
+#svg(filename="active.taxa.else.svg", height = 4, width = 9.5)
 df %>% filter(Blast_ID!="Actinomycetes") %>%
   ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
   geom_boxplot(outliers=FALSE, alpha=.7)+
@@ -435,6 +435,27 @@ df %>% filter(Blast_ID!="Actinomycetes") %>%
   labs(title = "A       Active",
        x = "", y = "Percent Abundance")
 dev.off()
+
+# rhizobium
+unique(df$Blast_ID)
+df %>% filter(Blast_ID=="Rhizobium sp.") %>%
+  ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
+  geom_boxplot(outliers=FALSE, alpha=.7)+
+  #geom_jitter()+
+  scale_fill_manual(values= IBM)+
+  theme_bw(base_size = 12) +
+  #facet_wrap(~Blast_ID, scales="free", nrow= 1)+
+  facet_wrap(~Blast_ID,  nrow= 1)+
+  
+  
+  theme(axis.text.x = element_text(angle=60, hjust=1),
+        plot.title = element_text(hjust = 0),
+        legend.position = "none")+
+  labs(title = " Active",
+       x = "", y = "Percent Abundance")
+
+
+
 
 # # flip cord
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
@@ -664,8 +685,8 @@ IBM <- c( #IBM colors
 
 #import data#
 # Set the working directory 
-#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
+setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
 metadat<-read.csv("metadat2.csv", row.names = 2)
@@ -791,6 +812,13 @@ species_scores <- as.data.frame(scores(
 head(species_scores)
 species_scores$asv<-row.names(species_scores)
 
+# get site scores
+# Extract site scores (WA scores are typically used)
+site_scores <- as.data.frame(scores(cap_result, display = "sites"))
+
+# Add your metadata to the scores for mapping (e.g., Treatment groups)
+site_scores$Group <- metadat2$Treatment 
+
 # Calculate vector length (distance from origin)
 species_scores <- species_scores %>%
   mutate(dist = sqrt(CAP1^2 + CAP2^2)) %>%
@@ -799,6 +827,60 @@ species_scores <- species_scores %>%
 # Select the top 10 species
 top_spp <- head(species_scores, 20)
 top_spp
+
+# 
+### 3. grab info for the plot
+smry <- summary(cap_result)
+smry
+sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
+sc_si
+
+# Extract the model's adjusted R2
+RsquareAdj(cap_result)$adj.r.squared
+
+# percent varience of total varience on RDA 1 and RDA 2
+perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
+perc
+
+
+# plot with sites 
+plot(cap_result, display = c("sites", "species"))
+  
+# plot with sites and colors
+ordiplot(cap_result, display= "sites", scaling =1,
+         main="", cex.lab =.8)
+# par(adj = 0)
+#title(main= "A")
+par(adj=.5)
+points(sc_si, 
+       col= IBM[metadat2$Treatment],
+       pch= c(16,17)[as.factor(metadat2$Nitrogen_label)],
+       lwd=1,cex=.8,
+       bg=IBM[metadat2$Treatment])
+
+# arrows
+#arrows(0, 0, top_spp[,1], top_spp[,2], length = 0.05, col = "black")
+
+ordiellipse(sc_si, metadat2$Treatment,
+            kind = "ehull", conf=0.95, 
+            draw = "polygon",
+            border = 0,
+            col= IBM,
+            alpha = 30,
+            cex=.8)
+
+# legend("bottomleft", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+#        fill= IBM,
+#        cex=.8,
+# #        title = "",
+# #        bty = "n")
+
+# 
+
+
+
+
+### plots with arrows
 
 ggplot() +
   # Draw a circle/origin cross for reference
@@ -818,6 +900,8 @@ ggplot() +
   theme_bw() +
   labs(title = "Top 10 Species Contributing to CAP Variation",
        x = "CAP1", y = "CAP2")
+
+
 
 
 # get data
@@ -1021,7 +1105,7 @@ mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
   total_abundance <- colSums(df1)
   
   # 2. Sort names based on those sums (decreasing = TRUE for most to least)
-  ordered_names <- names(sort(percent_abundance, decreasing = TRUE))
+  ordered_names <- names(sort(total_abundance, decreasing = TRUE))
   
   # 3. Reorder the columns of your data frame
   df_ordered <- df[, ordered_names]
@@ -1051,6 +1135,37 @@ mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
          x = "", y = "Percent Abundance")
   
     dev.off()
+    
+    # just rhizobium 
+    df %>% filter(percent_abundance<10) %>%
+      filter(Blast_ID=="Rhizobium sp.") %>%
+      ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
+      geom_boxplot(outliers=FALSE, alpha=0.7)+
+      #geom_jitter()+
+      scale_fill_manual(values= IBM)+
+      theme_bw(base_size = 11) +
+      facet_wrap(~Blast_ID,  nrow= 1)+
+      theme(axis.text.x = element_text(angle=60, hjust=1),
+            plot.title = element_text(hjust = 0),
+            legend.position = "none")+
+      labs(title = "       Total",
+           x = "", y = "Percent Abundance")
+    
+    # just nitrocosmicus
+    df %>% filter(percent_abundance<10) %>%
+      filter(Blast_ID=="Polaromonas sp.") %>%
+      ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
+      geom_boxplot(outliers=FALSE, alpha=0.7)+
+      #geom_jitter()+
+      scale_fill_manual(values= IBM)+
+      theme_bw(base_size = 11) +
+      facet_wrap(~Blast_ID,  nrow= 1)+
+      theme(axis.text.x = element_text(angle=60, hjust=1),
+            plot.title = element_text(hjust = 0),
+            legend.position = "none")+
+      labs(title = "       Total",
+           x = "", y = "Percent Abundance")
+    
     
     # cord flip
     setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
