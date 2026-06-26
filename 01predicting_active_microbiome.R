@@ -11,7 +11,6 @@ library(vegan)
 library(phyloseq)
 library(multcompView)
 library(compositions)
-library(ANCOMBC)
 library(microbiome)
 
 # set colors
@@ -620,6 +619,11 @@ var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
 perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
 perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
 
+
+# save 
+# plot
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predicted_active")
+svg("active_PCA.svg",  width=6, height=6)
 par(adj=.5)
 ordiplot(pca1, choices=c(1,2),
          type="none",
@@ -635,80 +639,15 @@ points(sc_si,
 legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
        fill= IBM,
        cex=1,
-       bty = "n")
-legend("bottomright", legend=c("measured", "predicted"  ),
+       bty = "o")
+legend("bottomright", legend=c("measured", "expected"  ),
        pch=c(16,8 ),
        cex=1,
        bty = "o")
 
-#### # simple ordination #
-# 
-# GB example
-ps1 <-subset_samples(ps) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
+dev.off()
 
-# subset metadata
-metadat2<-filter(metadat) %>% filter(Treatment=="GB"| Treatment=="G" | Treatment=="B"   ) %>%
-  select(Treatment, Measurement, Rep)
-metadat2$Treatment <- factor(metadat2$Treatment)
 
-# CLR transform
-clr_data <- clr(otu_table(ps1)+1)
-clr_data<-as.matrix(clr_data)
-clr_data[1:5, 1:5]
-
-# caculate distance matrix
-dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
-dist_mat<-as.matrix(dist_mat)
-dist_mat
-
-# add metadata
-key <-cbind(metadat2, dist_mat)
-key
-
-# PCA and plot
-pca1<- prcomp(clr_data)
-
-sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
-
-#load col
-IBM <- c( #IBM colors
-
-  "#648FFF", # french blue
-  "#785EF0", # light purple
-  "#DC267F" # magenta pink
-
-)
-
-# Calculate percentage of variance explained for axis labels
-var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
-perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
-perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
-
-par(adj=.5)
-ordiplot(pca1, choices=c(1,2),
-         main="",
-         type = "none",
-         cex.lab = 1,
-         xlab=perc1,
-         ylab=perc2)
-
-points(sc_si,
-       col= IBM[as.factor(metadat2$Treatment)],
-       pch= c(16,8)[as.factor(metadat2$Measurement)],
-       lwd=2,cex=1.2,
-       bg=IBM[as.factor(metadat2$Treatment)],)
-legend("topright", legend=c( "G", "B", "GB"),
-       fill= IBM,
-       cex=.5,
-       bty = "n")
-legend("bottomright", legend=c("measured", "predicted"  ),
-       pch=c(16,8 ),
-       cex=.5,
-       bty = "o")
-
-# 
 ###scalar projection GB #####
 
 # clr matrix
@@ -811,7 +750,15 @@ mix_data %>% filter(Measurement=="measured") %>%
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
 dev.off()  
 
+# stats #############
 
+mix_data
+
+# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+
+# Print results
+print(t_test_result)
 
 
 
@@ -885,8 +832,8 @@ mix_data$diff_predict <- mix_data$LB_index-P
 mix_data
 
 # plot
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
-svg("LB_active.svg",  width=4, height=1.5)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+#svg("LB_active.svg",  width=4, height=1.5)
 mix_data %>% filter(Measurement=="measured") %>%
   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
@@ -901,8 +848,16 @@ mix_data %>% filter(Measurement=="measured") %>%
   coord_flip()+
   theme_minimal()+
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
-dev.off()  
+#dev.off()  
 
+
+mix_data
+
+# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+
+# Print results
+print(t_test_result)
 
 
 
@@ -963,8 +918,8 @@ mix_data
 
 
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
-svg("LG_active.svg", width=4, height=1.5)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+#svg("LG_active.svg", width=4, height=1.5)
 mix_data %>% filter(Measurement=="measured") %>%
   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
@@ -980,7 +935,14 @@ mix_data %>% filter(Measurement=="measured") %>%
   theme_minimal()+
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
 
-dev.off()  
+#dev.off()  
+
+
+# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+t_test_result <- t.test(index ~ Measurement, data = mix_data, alternative = "two.sided")
+
+# Print results
+print(t_test_result)
 
 
 ######simple ordination three species ####

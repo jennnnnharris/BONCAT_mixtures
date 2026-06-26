@@ -21,7 +21,7 @@ library(compositions)
 #library(BiodiversityR)
 
 
-#import data# ###############
+#import data ###############
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
@@ -115,7 +115,7 @@ biomass<-biomass %>% filter(N==1) %>% select(-Total.Root.g, -Total.withbulk, -St
 
 
 
-# predict for LG #################
+# predict for LG 
 
 # 1. filter for L community and save as a data frame
 ps1<-subset_samples(ps , Treatment=="L")
@@ -205,7 +205,7 @@ LG<-data_frame_multiplied1 + data_frame_multiplied2
 row.names(LG)<-c("predict_LG_N1", "predict_LG_N3", "predict_LG_N4", "predict_LG_N5", "predict_LG_N6")
 LG[1:5, 1:5]
 
-# predict for GB ###################
+# predict for GB 
 
 # 1. filter for G community and save as a data frame
 ps1<-subset_samples(ps , Treatment=="G")
@@ -247,7 +247,7 @@ GB<-data_frame_multiplied1 + data_frame_multiplied2
 row.names(GB)<-c("predict_GB_N1","predict_GB_N2", "predict_GB_N3", "predict_GB_N4", "predict_GB_N5", "predict_GB_N6")
 
 
-# predict for LB ##########
+# predict for LB 
 # 1. filter for L community and save as a data frame
 ps1<-subset_samples(ps , Treatment=="L")
 df<-as.data.frame(otu_table(ps1))
@@ -291,7 +291,7 @@ row.names(LB)<-c("predict_LB_N1", "predict_LB_N3", "predict_LB_N4", "predict_LB_
 
 
 
-# predict for LBG ########## 
+# predict for LBG
 # 1. filter for L community and save as a data frame
 ps1<-subset_samples(ps , Treatment=="L")
 df<-as.data.frame(otu_table(ps1))
@@ -448,8 +448,7 @@ perc.exp<-otus.eig/(sum(otus.eig))*100
 #scree plot 
 plot(otus.pcoa$eig)
 
-# load colors #########
-
+# load colors 
 IBM <- c( #IBM colors
   "navy", # dark royal blue
   "#648FFF", # french blue
@@ -469,11 +468,11 @@ par(adj = 0)
 #title(main= "E")
 par(adj=.5)
 points(otus.p, 
-       col= IBM[as.factor(metadat2$Treatment)],
-       pch= c(16,8)[as.factor(metadat2$Measurement)],
+       col= IBM[as.factor(metadat$Treatment)],
+       pch= c(16,8)[as.factor(metadat$Measurement)],
        
        lwd=2,cex=1.2,
-       bg=IBM[as.factor(metadat2$Treatment)],)
+       bg=IBM[as.factor(metadat$Treatment)],)
 
 legend("bottomright", legend=c("measured", "predicted"  ),
        pch=c(16,8 ),
@@ -546,7 +545,84 @@ dev.off()
 
 
 
-######pairwise adonis test###########
+########## Aitchison distance PLOT  #####
+ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
+  select(Treatment, Measurement, Rep)
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+# CLR transform
+clr_data <- clr(otu_table(ps1)+1)
+clr_data<-as.matrix(clr_data)
+clr_data[1:5, 1:5]
+
+# caculate distance matrix
+dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
+dist_mat<-as.matrix(dist_mat) 
+dist_mat
+
+# add metadata
+key <-cbind(metadat2, dist_mat)
+key
+
+# PCA and plot
+pca1<- prcomp(clr_data)
+
+sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
+
+#load col
+IBM <- c( #IBM colors
+  "navy", # dark royal blue
+  "#648FFF", # french blue
+  "#785EF0", # light purple
+  "#DC267F", # magenta pink 
+  "#FE6100", # bright orange
+  "#FFB000", # golden yellow
+  "#865338" # medium mocha brown
+)
+
+# Calculate percentage of variance explained for axis labels
+var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
+perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
+perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
+
+# save
+# plot
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predicted_total")
+#svg("total_PCA.svg",  width=6, height=6)
+
+par(adj=.5)
+ordiplot(pca1, choices=c(1,2),
+         type="none",
+         cex.lab = 1,
+         xlab=perc1,
+         ylab=perc2)
+
+points(sc_si, 
+       col= IBM[as.factor(metadat2$Treatment)],
+       pch= c(16,8)[as.factor(metadat2$Measurement)],
+       lwd=2,cex=1.2,
+       bg=IBM[as.factor(metadat2$Treatment)],)
+legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+       fill= IBM,
+       cex=1,
+       bty = "o")
+ legend("bottomright", legend=c("measured", "expected"  ),
+        pch=c(16,8 ),
+        cex=1,
+        bty = "o")
+ 
+dev.off() 
+ 
+
+
+
+
+######pairwise adonis test
 # seperatated out by treatment
 #GB
 ps1 <-subset_samples(ps,  Treatment=="GB")
@@ -669,277 +745,6 @@ ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
   theme_bw()
 
 
-######### pairwise distance from mono culture to mixture bray ##############
-# GB example
-ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(Treatment=="GB"| Treatment=="G" | Treatment=="B"   ) %>%
-  select(Treatment, Measurement, Rep)
-
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-dist_mat<-as.matrix(otus.bray) 
-dist_mat
-key <-cbind(metadat2, dist_mat)
-key
-
-
-# Define the Mapping
-# We create a lookup table that links the Measured Sample ID to its Prediction ID
-# Note: Ensure the order in 'measured_ids' matches the N1, N3, N4... order
-
-# set vars
-GB<-key %>% filter(Treatment=="GB" & Measurement=="measured") %>% row.names()
-GB.predict<-key %>% filter(Treatment=="GB" & Measurement=="predicted") %>% row.names()
-G<-key %>% filter(Treatment=="G" & Measurement=="measured") %>% row.names()
-B<-key %>% filter(Treatment=="B" & Measurement=="measured") %>% row.names()
-
-mapping <- data.frame(
-  Treatment = c(rep("GBvG", 5), rep("GBvB", 5), rep("GBpredictvG", 5), rep("GBpredictvB", 5)),
-  mix_ID = c(
-    GB, 
-    GB,
-    GB.predict,
-    GB.predict
-  ),
-  mono_ID = c(
-   G, B, G, B
-  )
-)
-
-mapping
-dist_mat
-# Extract the Distances
-# We loop through the mapping and pull the specific intersection from the matrix
-mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m], 
-                              mapping$mix_ID, 
-                              mapping$mono_ID)
-
-
-# Statistical Comparison
-# Test if the prediction error (distance) differs by treatment
-fit <- aov(BC_Distance ~ Treatment, data = mapping)
-summary(fit)
-kruskal.test(BC_Distance ~ Treatment, data = mapping)
-
-head(mapping)
-# 5. Visualization
-ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
-  theme_bw()+
-  geom_boxplot(alpha = 0.7) +
-  geom_point(position = position_jitter(width = 0.1)) +
-  labs(title = "pairwise distances",
-       y = "Bray-Curtis Distance ",
-       x = "Treatment")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-
-
-########## Aitchison distance  #####
-# GB example
-ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(Treatment=="GB"| Treatment=="G" | Treatment=="B"   ) %>%
-  select(Treatment, Measurement, Rep)
-
-# CLR transform
-clr_data <- clr(otu_table(ps1)+1)
-clr_data<-as.matrix(clr_data)
-clr_data[1:5, 1:5]
-
-# caculate distance matrix
-dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
-dist_mat<-as.matrix(dist_mat) 
-dist_mat
-
-# add metadata
-key <-cbind(metadat2, dist_mat)
-key
-
-# Define the Mapping
-# We create a lookup table that links the Measured Sample ID to its Prediction ID
-# Note: Ensure the order in 'measured_ids' matches the N1, N3, N4... order
-
-# set vars
-GB<-key %>% filter(Treatment=="GB" & Measurement=="measured") %>% row.names()
-GB.predict<-key %>% filter(Treatment=="GB" & Measurement=="predicted") %>% row.names()
-G<-key %>% filter(Treatment=="G" & Measurement=="measured") %>% row.names()
-B<-key %>% filter(Treatment=="B" & Measurement=="measured") %>% row.names()
-
-mapping <- data.frame(
-  Treatment = c(rep("GB vs. G", 5), rep("GB vs. B", 5), rep("GBpredict vs. G", 5), rep("GBpredict vs. B", 5)),
-  mix_ID = c(
-    GB, 
-    GB,
-    GB.predict,
-    GB.predict
-  ),
-  mono_ID = c(
-    G, B, G, B
-  )
-)
-
-mapping
-dist_mat
-# Extract the Distances
-# We loop through the mapping and pull the specific intersection from the matrix
-mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m], 
-                              mapping$mix_ID, 
-                              mapping$mono_ID)
-
-
-head(mapping)
-# 5. Visualization
-ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
-  theme_bw()+
-  geom_boxplot(alpha = 0.7) +
-  geom_point(position = position_jitter(width = 0.1)) +
-  labs(title = "pairwise distances",
-       y = "Euclidian Distance ",
-       x = "Treatment")+
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-
-########## Aitchison distance PLOT  #####
-ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
-  select(Treatment, Measurement, Rep)
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-# CLR transform
-clr_data <- clr(otu_table(ps1)+1)
-clr_data<-as.matrix(clr_data)
-clr_data[1:5, 1:5]
-
-# caculate distance matrix
-dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
-dist_mat<-as.matrix(dist_mat) 
-dist_mat
-
-# add metadata
-key <-cbind(metadat2, dist_mat)
-key
-
-# PCA and plot
-pca1<- prcomp(clr_data)
-
-sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
-
-#load col
-IBM <- c( #IBM colors
-  "navy", # dark royal blue
-  "#648FFF", # french blue
-  "#785EF0", # light purple
-  "#DC267F", # magenta pink 
-  "#FE6100", # bright orange
-  "#FFB000", # golden yellow
-  "#865338" # medium mocha brown
-)
-
-# Calculate percentage of variance explained for axis labels
-var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
-perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
-perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
-
-par(adj=.5)
-ordiplot(pca1, choices=c(1,2),
-         type="none",
-         cex.lab = 1,
-         xlab=perc1,
-         ylab=perc2)
-
-points(sc_si, 
-       col= IBM[as.factor(metadat2$Treatment)],
-       pch= c(16,8)[as.factor(metadat2$Measurement)],
-       lwd=2,cex=1.2,
-       bg=IBM[as.factor(metadat2$Treatment)],)
-legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-       fill= IBM,
-       cex=1,
-       bty = "n")
- legend("bottomright", legend=c("measured", "predicted"  ),
-        pch=c(16,8 ),
-        cex=1,
-        bty = "o")
-
-###
- 
- # # simple ordination #
- # 
- # # GB example
- # ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2) %>% subset_samples(Treatment=="GB"| Treatment=="G" | Treatment=="B"  )
- # ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
- # ps1
- # 
- # # subset metadata
- # metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2) %>% filter(Treatment=="GB"| Treatment=="G" | Treatment=="B"   ) %>%
- #   select(Treatment, Measurement, Rep)
- # metadat2$Treatment <- factor(metadat2$Treatment)
- # 
- # # CLR transform
- # clr_data <- clr(otu_table(ps1)+1)
- # clr_data<-as.matrix(clr_data)
- # clr_data[1:5, 1:5]
- # 
- # # caculate distance matrix
- # dist_mat <- vegan::vegdist(clr_data, method = "euclidean")
- # dist_mat<-as.matrix(dist_mat) 
- # dist_mat
- # 
- # # add metadata
- # key <-cbind(metadat2, dist_mat)
- # key
- # 
- # # PCA and plot
- # pca1<- prcomp(clr_data)
- # 
- # sc_si <-scores(pca1, display="sites", choices=c(1,2), scaling=1)
- # 
- # #load col
- # IBM <- c( #IBM colors
- #   
- #   "#648FFF", # french blue
- #   "#785EF0", # light purple
- #   "#DC267F" # magenta pink 
- #   
- # )
- # 
- # # Calculate percentage of variance explained for axis labels
- # var_explained <- (pca1$sdev^2) / sum(pca1$sdev^2) * 100
- # perc1 <- paste0("PC1 (", round(var_explained[1], 2), "%)")
- # perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
- # 
- # par(adj=.5)
- # ordiplot(pca1, choices=c(1,2),
- #          main="",
- #          type = "none",
- #          cex.lab = 1,
- #          xlab=perc1,
- #          ylab=perc2)
- # 
- # points(sc_si, 
- #        col= IBM[as.factor(metadat2$Treatment)],
- #        pch= c(16,8)[as.factor(metadat2$Measurement)],
- #        lwd=2,cex=1.2,
- #        bg=IBM[as.factor(metadat2$Treatment)],)
- # legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
- #        fill= IBM,
- #        cex=.5,
- #        bty = "n")
- # legend("bottomright", legend=c("measured", "predicted"  ),
- #        pch=c(16,8 ),
- #        cex=.5,
- #        bty = "o")
- # 
- # 
  ###scalar projection GB #####
  
  # clr matrix
@@ -1023,8 +828,8 @@ mix_data<-cbind(metadat3, mix_data)
  mix_data$diff_predict <- mix_data$GB_index-P 
  
 # plot
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
-svg("GB_total.svg",  width=4, height=1.5)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+#svg("GB_total.svg",  width=4, height=1.5)
 mix_data %>% filter(Measurement=="measured") %>%
 ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
@@ -1039,28 +844,36 @@ ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
   coord_flip()+
   theme_minimal()+
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
-dev.off()  
+#dev.off()  
 
  
- 
+#stats #############
+
+mix_data
+
+# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+
+# Print results
+print(t_test_result)
  
  
  ###scalar projection LB #####
  
- # # clr matrix
- # ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
- # ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
- # ps1
- # 
- # # subset metadata
- # metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
- #   select(Treatment, Measurement, Rep)
- # metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
- # 
- # # CLR transform
- # clr_data <- clr(otu_table(ps1)+1)
- # clr_data<-as.matrix(clr_data)
- # clr_data[1:5, 1:5]
+ # clr matrix
+ ps1 <-subset_samples(ps, Fraction=="Total" &  Rep!=2 & Treatment!="Soil"  )
+ ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ ps1
+
+ # subset metadata
+ metadat2<-filter(metadat, Fraction=="Total" &  Rep!=2 & Treatment!="Soil") %>%
+   select(Treatment, Measurement, Rep)
+ metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+
+ # CLR transform
+ clr_data <- clr(otu_table(ps1)+1)
+ clr_data<-as.matrix(clr_data)
+ clr_data[1:5, 1:5]
 
  # 1. Calculate the centroids (mean vector) for your baseline monocultures
  # (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
@@ -1095,11 +908,12 @@ dev.off()
   # subtract each rep #
  mix_data<-mix_data %>% select(LB_index, Treatment, Measurement)
  P<-rep(mix_data$LB_index[which(mix_data$Measurement == "predicted")],2)
+ P
  mix_data$diff_predict <- mix_data$LB_index-P 
  mix_data
  
  # plot
- setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+ setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predicted_total")
  svg("LB_total.svg",  width=4, height=1.5)
  mix_data %>% filter(Measurement=="measured") %>%
    ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
@@ -1118,7 +932,16 @@ dev.off()
    dev.off()  
    
    
- 
+   # stats #############
+   
+   mix_data
+   
+   # Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+   t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+   
+   # Print results
+   print(t_test_result)
+   
  
  ###scalar projection LG #####
  
@@ -1175,8 +998,8 @@ dev.off()
  
 
  
- setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
- svg("LG_total.svg", width=4, height=1.5)
+ #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_pt")
+ #svg("LG_total.svg", width=4, height=1.5)
  mix_data %>% filter(Measurement=="measured") %>%
    ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
    geom_boxplot(alpha = 0.6, outlier.shape = NA) +
@@ -1193,6 +1016,17 @@ dev.off()
    theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
  
  dev.off()  
+ 
+ 
+ stats #############
+ 
+ mix_data
+ 
+ # Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+ t_test_result <- t.test(index ~ Measurement, data = mix_data, alternative = "two.sided")
+ 
+ # Print results
+ print(t_test_result)
  
  
  ######simple ordination three species ####
@@ -1336,9 +1170,6 @@ clr_data
  mix_data
  
  
- 
- setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
- svg("LG_total.svg", width=4, height=1.5)
  mix_data %>% filter(Measurement=="measured") %>%
    ggplot(aes(x = Treatment, y = adj_LGindex, fill = Measurement)) +
    geom_boxplot(alpha = 0.6, outlier.shape = NA) +
@@ -1354,7 +1185,7 @@ clr_data
    theme_minimal()+
    theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
  
- dev.off()  
+ 
  
  mix_data %>% filter(Measurement=="measured") %>%
    ggplot(aes(x = Treatment, y = adj_BLindex, fill = Measurement)) +
@@ -1465,9 +1296,21 @@ mix_data
  # mix_data
  # P<-rep(mix_data$BL_index[which(mix_data$Measurement == "predicted")],2)
  # mix_data$adj_BLindex <- mix_data$BL_index-P 
- # mix_data
- # 
- # 
+ mix_data
+  
+ #stats #
+ 
+ mix_data
+ 
+ # Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+ t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+  print(t_test_result)
+ 
+  t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+  print(t_test_result)
+ 
+ t_test_result <- t.test(LG_index ~ Measurement, data = mix_data, alternative = "two.sided")
+ print(t_test_result)
  
  
  library(ggplot2)
@@ -1489,7 +1332,7 @@ mix_data
    ylab("G") +
    zlab("B")   
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
 svg("LGB_total.svg", width=4, height=4) 
  p4  
  dev.off()

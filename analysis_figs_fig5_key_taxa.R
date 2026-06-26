@@ -186,8 +186,20 @@ df<-as.data.frame((otu_table(ps1)))
 df<-df/rowSums(df)*100
 df<- as.data.frame(t(df))
 df$asv<-row.names(df)
+# list of taxa
+head(df)
+# check
+tax$asv
+active<-df$asv[df$asv %in% tax$asv]
+tax[tax$asv %in% active,]
+
+
+# filter
 df <- df[df$asv %in% asvkp, ]
 df$asv <-NULL
+
+# list of taxa 
+head(df)
 
 # add treatment info
 df<-as.data.frame(t(df))
