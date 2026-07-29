@@ -140,7 +140,7 @@ ps<-subset_taxa(ps, Class!=" c__Chloroplast" )
 ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
-# 314K taxa and 84 samples when mitochondria removed. 
+# 220K taxa and 86 samples when mitochondria removed. 
 
 #total
 ps<-subset_samples(ps, Fraction=="Total")
@@ -497,7 +497,7 @@ print(cld)
 # remove true singletons 
 ps<-prune_taxa(taxa_sums(ps) > 1, ps)
 ps
-# 183095 
+# 187k 
 
 #remove asvs with a mean of less than 5
 mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
@@ -512,8 +512,6 @@ ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
 #1778 asvs
 
-## plot
-#plot(sort(taxa_sums(ps), TRUE), type="h", ylim=c(0, 8000))
 
 
 ######## 4. CAP -Treatment- ##################
@@ -612,7 +610,7 @@ ordiellipse(sc_si, metadat2$Nitrogen_label,
 
 dev.off()
 
-####### 5.  N+ only and N - only  #####
+####### 5.  N+ only and N - only CAP plots #####
 # Constrained ordination
 # Perform vegdist analysis of BC distances #
 
@@ -633,82 +631,11 @@ cap_result <- capscale(dist_matrix ~ Treatment+block,
                        data = metadat2,
                        add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
 
+
 # # 3. Permutation test for significance of constraints
 anova_cap <- anova(cap_result, permutations = 999, by = "term")
 anova_cap
 
-# Perform all Pairwise Comparisons
-#The function will iterate through all pairs of the 'Habitat' factor
-# 
-# pairwise_results <- multiconstrained(
-#   formula = dist_matrix ~ Treatment+block,  # Same formula as the main CAP model
-#   data = metadat2,
-#   constrained = capscale,       # Specify the constrained ordination method
-#   permutations = 999            # Number of permutations for the test
-# )
-# # View the raw pairwise results
-# print(pairwise_results)
-# # Extract the raw p-values from the results
-# raw_pvalues <- pairwise_results[, "Pr(>F)"]
-# # Apply the Holm (Holm-Bonferroni) Adjustment
-# adjusted_pvalues <-p.adjust(raw_pvalues, method = "fdr")
-# # make table
-# table <- data.frame(
-#   Group1 = str_split_i(rownames(pairwise_results), "vs. ", 1),
-#   Group2 = str_split_i(rownames(pairwise_results), "vs. ", 2),
-#   Pseudo_F = pairwise_results[, "F"],
-#   Raw_P = raw_pvalues,
-#   p_value = round(adjusted_pvalues,4)
-# )
-# print(table)
-# factor(table$Group1)
-# table$Group1<-factor(table$Group1,levels= c("L ", "G ",  "B ", "GB " , "LB ", "LG " ) )
-# table$Group1
-# 
-# 
-# factor(table$Group2)
-# table$Group2[order(table$Group2)]
-# table$Group2
-# table$Group2<-factor(table$Group2,levels= c( "G", "B", "GB", "LB", "LG", "LGB") )
-# 
-# 
-# 
-# #Combine the results for final interpretation
-# # 4) Plot heatmap
-# p_recol_covercrop <- ggplot(table, aes(x = Group2, y = Group1, fill = p_value)) +
-#   geom_tile(color = "white") +
-#   geom_text(aes(label = p_value), size = 2) +
-#   scale_fill_gradient(
-#     low = "#648FFF",
-#     high = "white",
-#     na.value = "grey90",
-#     limits = c(0, 0.1),
-#     name = "P-value"
-#   ) +
-#   theme_minimal() +
-#   labs(x = "", y = "", title = "") +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# 
-
-# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-# pdf("Pval_withN.pdf",  width=3.5, height=2.5 )
-# p_recol_covercrop
-# dev.off()
-# 
-
-
-### 4. grab info for the plot
-smry <- summary(cap_result)
-smry
-sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
-sc_si
-
-# Extract the model's adjusted R2
-RsquareAdj(cap_result)$adj.r.squared
-
-# percent varience of total varience on RDA 1 and RDA 2
-perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
-perc
 
 
 ###  5. plot 
@@ -1044,46 +971,6 @@ final_table <- data.frame(
 
 # 11. Print the final results table
 print(final_table)
-
-
-
-###### pairwise adonsis ##########
-
-# A. Install the necessary package (if you haven't already)
-# install.packages("devtools") # If you don't have devtools
-#devtools::install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
-
-
-# B. Load the package and run the pairwise test
-library(pairwiseAdonis)
-
-# Assuming:
-# - 'comm_data' is your community matrix (samples as rows, species as columns)
-# - 'env_data' is your environmental/metadata data frame
-# - 'Treatment' is the column with your 7 group levels in 'env_data'
-
-  
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil")
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-# Calculate the Bray-Curtis distance matrix
-# Perform vegdist analysis of BC distances #
-ps1 <-subset_samples(ps, Treatment !="Soil" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-bray_dist <- vegdist(otu_table(ps1), method = "bray")
-# Run the pairwise PERMANOVA
-pairwise_results <- pairwise.adonis2(bray_dist ~ Treatment, # Use the distance matrix directly
-  data = metadat2,
-  permutations = 999,
-  method = "bray",
-  p.adjust.m = "bonferroni")
-
-pairwise_results
-pairwise_results$LG_vs_LB
-
-
 
 
 

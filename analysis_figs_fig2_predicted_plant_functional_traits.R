@@ -95,101 +95,91 @@ library(lme4)
 library(lmerTest)
 library(car)
 
-#root biomass overall model 
-#df1<-df %>% filter(n_species==1)
+####### shoot biomass overall model
+# 1. Fit your ANOVA model
+# Note: Since 'block' is an additive block factor, don't include it in emmeans specs
+m1 <- aov(Stem.Biomass.g ~ Treatment * N + block, data = df)
+summary(m1) # difference between treatments and nitrogen interaction
+
+# 2. Get estimated marginal means grouped by Nitrogen level
+emm_object <- emmeans(m1, ~ Treatment | N)
+
+# 3. Perform pairwise comparisons within each Nitrogen level
+pairwise_comparison <- pairs(emm_object, adjust = "tukey")
+summary(pairwise_comparison)
+
+# Requires multcomp / multcompView packages
+cld_results <- cld(emm_object, Letters = letters, adjust = "tukey")
+print(cld_results)
+
+
+
+######root biomass overall model 
 m1<-aov(Root.Biomass.g ~ Treatment*N+block, data = df)
 summary(m1) # difference between treatments and nitrogen interaction block is sig
 
-# # mixed model
-# # Using the built-in sleepstudy dataset
-# m1 <- lmer(Root.Biomass.g ~ Treatment*N + (1 | block), data = df)
+
+# 2. Get estimated marginal means grouped by Nitrogen level
+emm_object <- emmeans(m1, ~ Treatment | N)
+
+# 3. Perform pairwise comparisons within each Nitrogen level
+pairwise_comparison <- pairs(emm_object, adjust = "tukey")
+summary(pairwise_comparison)
+
+# Requires multcomp / multcompView packages
+cld_results <- cld(emm_object, Letters = letters, adjust = "tukey")
+print(cld_results)
+
+
+
+
+
 # 
-# # View the results
-# summary(m1)
-# plot(m1)
-# qqnorm(residuals(m1))
-# qqline(residuals(m1))
 # 
-# # aov
-# Anova(m1)
+# 
+# 
+# ###maybe cut this below>
+# # nitrogen -
+# dfN0<- df %>% filter(N==0)
+# m1<-aov(Root.Biomass.g ~ Treatment+block, data = dfN0)
+# summary(m1) 
+# 
+# emm_object <- emmeans(m1, specs = ~ Treatment)
+# # Perform all pairwise comparisons with Tukey adjustment
+# pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+# 
+# summary(pairwise_comparison)
+# cld_result <- cld(emm_object, 
+#                   adjust = "tukey", 
+#                   alpha = 0.05,
+#                   Letters = letters) 
+# print(cld_result)
+# 
+# #nitrogen +
+# dfN1<- df %>% filter(N==1)
+# m1<-aov(Root.Biomass.g ~ Treatment+block, data = dfN1)
+# summary(m1) 
+# # Perform all pairwise comparisons with Tukey adjustment
+# emm_object <- emmeans(m1, specs = ~ Treatment)
+# pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+# summary(pairwise_comparison)
+# 
+# cld_result <- cld(emm_object, 
+#                   adjust = "tukey", 
+#                   alpha = 0.05,
+#                   Letters = letters) 
+# print(cld_result)
+# 
 
-# nitrogen -
-dfN0<- df %>% filter(N==0)
-m1<-aov(Root.Biomass.g ~ Treatment+block, data = dfN0)
-summary(m1) 
+#########################prediction#############################
+# clear workspace and restart R
+rm(list=ls())
+rstudioapi::restartSession(clean = TRUE)
 
-emm_object <- emmeans(m1, specs = ~ Treatment)
-# Perform all pairwise comparisons with Tukey adjustment
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-
-summary(pairwise_comparison)
-cld_result <- cld(emm_object, 
-                  adjust = "tukey", 
-                  alpha = 0.05,
-                  Letters = letters) 
-print(cld_result)
-
-#nitrogen +
-dfN1<- df %>% filter(N==1)
-m1<-aov(Root.Biomass.g ~ Treatment+block, data = dfN1)
-summary(m1) 
-# Perform all pairwise comparisons with Tukey adjustment
-emm_object <- emmeans(m1, specs = ~ Treatment)
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-summary(pairwise_comparison)
-
-cld_result <- cld(emm_object, 
-                  adjust = "tukey", 
-                  alpha = 0.05,
-                  Letters = letters) 
-print(cld_result)
-
-
-# #############################shoot biomass
-#df1<-df %>% filter(n_species==1)
-# overall model
-m1<-aov(Stem.Biomass.g ~ Treatment*N, data = df)
-summary(m1) # difference between treatments and nitrogen interaction
-
-library(multcomp)
-library(emmeans)
-
-# nitrogen -
-dfN0<- df %>% filter(N==0)
-m1<-aov(Stem.Biomass.g  ~ Treatment, data = dfN0)
-summary(m1)
-
-# Perform all pairwise comparisons with Tukey adjustment
-emm_object <- emmeans(m1, specs = ~ Treatment)
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-summary(pairwise_comparison)
-
-cld_result <- cld(emm_object, 
-                  adjust = "tukey", 
-                  alpha = 0.05,
-                  Letters = letters) 
-print(cld_result)
-
-#nitrogen +
-df1<- df %>% filter(N==1)
-m1<-aov(Stem.Biomass.g  ~ Treatment, data = df1)
-summary(m1) 
-# Perform all pairwise comparisons with Tukey adjustment
-emm_object <- emmeans(m1, specs = ~ Treatment)
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-summary(pairwise_comparison)
-#library(multcomp)
-cld_result <- cld(emm_object, 
-                  adjust = "tukey", 
-                  alpha = 0.05,
-                  Letters = letters) 
-print(cld_result)
-
-
-
-
-
-
+#load libraries
+library(readxl)
+library(tidyverse)
+library(lubridate)
 
 ###############write functions for predictions###############
 get.predict<-function(df, sp1, sp2, trait, sp3) {
@@ -368,16 +358,16 @@ mycols <- c( #IBM colors
   "#865338" # medium mocha brown LGB
 )
 
-
-label <- df1$Treatment
-label <- gsub("LGB.predict", "*" ,label )
-label <- gsub("LB.predict", "*" ,label )
-label <- gsub("LG.predict", "*" ,label )
-label<- gsub("L", "" ,label )
-label<- gsub("G", "" ,label )
-label <- gsub("B", "" ,label )
-label <- gsub(".predict", "" ,label )
-label
+# 
+# label <- df1$Treatment
+# label <- gsub("LGB.predict", "*" ,label )
+# label <- gsub("LB.predict", "*" ,label )
+# label <- gsub("LG.predict", "*" ,label )
+# label<- gsub("L", "" ,label )
+# label<- gsub("G", "" ,label )
+# label <- gsub("B", "" ,label )
+# label <- gsub(".predict", "" ,label )
+# label
 
 p1<-df1  %>% 
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
@@ -390,7 +380,7 @@ p1<-df1  %>%
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none",
        )+
   
-  geom_text(y=6, label =label , nudge_x = .5, size=8)+
+  #geom_text(y=6, label =label , nudge_x = .5, size=8)+
   labs(title = "A",
        x="",
        y="Root biomass (g)")+
@@ -423,213 +413,61 @@ p2
 # put the plots together
 
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-svg("biomasspredict.svg", height = 6, width = 4.5)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
+#svg("biomasspredict.svg", height = 6, width = 4.5)
 grid.arrange(p1, p2, ncol=1)
-dev.off()
+#dev.off()
 
 
 ######### anova#####
-
-# root biomass
+# shoots
 #GB
 #filter
 df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
+df2
+m1<- lm(Shoot.Biomass~ Treatment*Nitrogen_label, data=df2)
+anova(m1)
+
+#LB
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+m1<- lm(Shoot.Biomass~ Treatment*Nitrogen_label, data=df2)
+anova(m1)
+
+#LG
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+m1<- lm(Shoot.Biomass~ Treatment*Nitrogen_label, data=df2)
+anova(m1)
+
+#LGB
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+m1<- lm(Shoot.Biomass~ Treatment*Nitrogen_label, data=df2)
+anova(m1)
+
+############ root biomass ###
+#GB
+#filter
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+m1<- lm(Root.Biomass~ Treatment*Nitrogen_label, data=df2)
 summary(m1)
 anova(m1)
 
 #LB
 df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
+m1<- lm(Root.Biomass~ Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 #LG
 df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
+m1<- lm(Root.Biomass~ Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 #LGB
 df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Root.Biomass~ Treatment, data=df2)
-anova(m1)
-
-# shoots
-#GB
-#filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
-anova(m1)
-
-#LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Shoot.Biomass~ Treatment, data=df2)
+m1<- lm(Root.Biomass~ Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 
 
-
-
-
-
-######### example calculation  #####
-
-
-IBM <- c( #IBM colors
-  "navy", # dark royal blue L
-  "#648FFF", # french blue G
-  "#785EF0", # light purple B
-  "#DC267F", # magenta pink GB
-  "#FE6100", # bright orange LB
-  "#FFB000", # golden yellow LG
-  "#865338" # medium mocha brown LGB
-)
-
-mycols7<-c("navy",   "#648FFF",  "white", "white", "white",  "#FFB000")
-
-p1<-df  %>% filter(n_species!="NA") %>%
-  filter(Treatment!= "LGB") %>%
-  ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=.5 )+
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols7) +
-  scale_fill_manual(values = mycols7)+
-  theme_classic(base_size = 12)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
-        plot.title = element_text(hjust = 0, size=14))+
-    xlab("") 
-p1
-
-
-# caculated half for L
-sp1.df<- filter(df, Treatment=="L") %>% select(Root.Biomass)
-sp1.predict<-sp1.df$Root.Biomass/2
-Root.Biomass<-sp1.predict
-Treatment <- rep("half_L", length(Root.Biomass))
-halfl<-data.frame(Treatment, Root.Biomass)
-df1<-full_join(df, halfl)
-df1<-df1 %>% filter(Treatment!="LGB" & Treatment!="LB" & Treatment!="B")
-df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "GB", "LG"))
-
-
-# caculated half for G
-sp1.df<- filter(df, Treatment=="G") %>% select(Root.Biomass)
-sp1.predict<-sp1.df$Root.Biomass/2
-Root.Biomass<-sp1.predict
-Treatment <- rep("half_G", length(Root.Biomass))
-halfg<-data.frame(Treatment, Root.Biomass)
-df1<-full_join(df1, halfg)
-df1<-df1 %>% filter(Treatment!="GB")
-df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "half_G", "LG"))
-as.factor(df1$Treatment)
-
-
-
-# caculated LG 
-sp1<- filter(df1, Treatment=="half_L") %>% select(Root.Biomass)
-sp2<- filter(df1, Treatment=="half_G") %>% select(Root.Biomass)
-
-LG.predict <- sp1$Root.Biomass + sp2$Root.Biomass
-Root.Biomass<-LG.predict
-Treatment <- rep("LG.predict", length(Root.Biomass))
-predict<-data.frame(Treatment, Root.Biomass)
-df1<-full_join(df1, predict)
-df1$Treatment<-factor(df1$Treatment, levels=c("L", "G", "half_L", "half_G", "LG.predict", "LG"))
-as.factor(df1$Treatment)
-
-### plot###
-mycols7<-c("navy",   "#648FFF",  "white", "white", "white",  "#FFB000")
-
-mycols <- c( #IBM colors
-  "navy", # dark royal blue L
-  "#648FFF", # french blue G
-  "grey", # light purple B
-  "grey", # magenta pink GB
-  "grey", # bright orange LB
-  "#FFB000" # golden yellow LG
-)
-
-p1<-df1  %>% 
-  ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
-  geom_jitter(width = .2, size=.5 )+
-  geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 12)+
-  theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
-        plot.title = element_text(hjust = 0, size=14))+
-  xlab("") +
-  ylab("Root Biomass (g)")
-p1
-
-
-
-
-######### make df of difference between predicted and not predicted #######
-#get shoot predictions
-df<-df %>% group_by(Rep, N)
-df
-
-GB<-get.shoot.predict(df, "G", "B") 
-LB<-get.shoot.predict(df, "L", "B") 
-LG<-get.shoot.predict(df, "L", "G") 
-LGB<-get.shoot.predict(df, "L", "G", "B")  
-predict.Shoot.Biomass<- round(as.numeric(c(GB, LB, LG, LGB)), 2)
-Treatment<-c(rep("GB", n_groups(df)), rep("LB", n_groups(df)), rep("LG", n_groups(df)), rep("LGB", n_groups(df)) )
-
-predict <- as.data.frame(cbind(Treatment, predict.Shoot.Biomass))
-predict$predict.Shoot.Biomass<-as.numeric(predict$predict.Shoot.Biomass)
-predict
-
-#get root predictions
-
-GB<-get.root.predict(df, "G", "B") 
-LB<-get.root.predict(df, "L", "B") 
-LG<-get.root.predict(df, "L", "G") 
-LGB<-get.root.predict(df, "L", "G", "B")  
-predict.Root.Biomass<- round(as.numeric(c(GB, LB, LG, LGB)), 2)
-
-predict<- cbind(predict, predict.Root.Biomass)
-predict$predict.Root.Biomass<-as.numeric(predict$predict.Root.Biomass)
-predict
-
-N<-rep(c(rep(1, 6), rep(0,6)), 4)
-Rep<-rep(1:6, 8)
-
-predict$Rep <- Rep
-predict$N <- N
-
-## add to df
-df1<-df %>% filter(n_species!="1")
-
-dim(df1)
-dim(predict)
-predict
-df2<-full_join(df1, predict) 
-df2<-df2 %>% ungroup()
-
-
-# make df of difference between predicted and not predicted
-# actual - predicted 
-
-
-df2<-df2 %>%
-mutate( root.difference=  Root.Biomass-predict.Root.Biomass,
-        shoot.difference = Shoot.Biomass-predict.Shoot.Biomass,
-        Nitrogen=N)
-
-
-write.csv(df2, "predicted.biomass.csv", row.names = FALSE)
 
 
 

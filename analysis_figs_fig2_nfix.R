@@ -1,27 +1,15 @@
-# N fix and biomass weed seed
+# N fix 
 # clear workspace and restart R
 rm(list=ls())
-#rstudioapi::restartSession(clean = TRUE)
+rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(readxl)
 library(tidyverse)
 library(lubridate)
-library(lme4)
-library(nlme)
-
-#old cols:
 
 
-IBM <- c( #IBM colors
-  "navy", # dark royal blue L
-  "#648FFF", # french blue G
-  "#785EF0", # light purple B
-  "#DC267F", # magenta pink GB
-  "#FE6100", # bright orange LB
-  "#FFB000", # golden yellow LG
-  "#865338" # medium mocha brown LGB
-)
+# load colors
 legume_cols <- c( #IBM colors
   "navy", # dark royal blue L
   "#FE6100", # bright orange LB
@@ -31,8 +19,9 @@ legume_cols <- c( #IBM colors
 
 
 
-############## N fix figures ####################
+############## percent nitrogen from BNF ######
 
+#load data
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
 df.leg<- read.csv("Nfix.csv")
 head(df.leg) 
@@ -47,8 +36,8 @@ head(df.leg)
   
 
 # add block info
-  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
- block <- read_excel("metadata_experiment_planning.xlsx")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+block <- read_excel("metadata_experiment_planning.xlsx")
 head(block)  
 df.leg<-left_join(df.leg, block)
   
@@ -64,56 +53,34 @@ p1<- ggplot(df.leg, aes(x=treatment, y=perc.Ndfa, fill=treatment)) +
        y= "Nitrogen from Fixation (%)") +
   scale_shape_manual(values = c(17, 16)) +
   facet_grid(~Nitrogen_label)
-
-  
 p1
 
 
-# Analysis of variance percent N from BNF
+####### stats percent N from BNF ############
+
+# load libraries 
+library(lme4)
+library(nlme)
 library(multcomp)
 library(emmeans)
-# overall model 
-m1<- lm(perc.Ndfa ~ treatment*nitrogen.added+block, data = df.leg)
+
+# overall model perc ndfa
+m1<- aov(perc.Ndfa ~ treatment*nitrogen.added+block, data = df.leg)
 summary(m1)
-anov = aov(m1)
-summary(anov)
 
-# Nitrogen -
-df<-df.leg %>% filter(nitrogen.added=="N")
-m1 <- aov(perc.Ndfa ~ treatment, data = df)
-summary(m1) # difference between treatments
-tukey <- TukeyHSD(m1)
-print(tukey) # All difference except LG-LB
-#plot(one.way.Nadd) #homoscedasticity looks fine
-# emmeans 
-emm_object <- emmeans(m1, specs = ~ treatment)
-# Perform all pairwise comparisons with Tukey adjustment
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+# 2. Get estimated marginal means grouped by Nitrogen level
+emm_object <- emmeans(m1, ~ treatment | nitrogen.added)
+
+# 3. Perform pairwise comparisons within each Nitrogen level
+pairwise_comparison <- pairs(emm_object, adjust = "tukey")
 summary(pairwise_comparison)
 
-library(multcompView)
-cld <- multcompLetters4(m1, tukey)
-print(cld)
-#LGB  LG  LB   L 
-#"a" "a" "a" "b"
+# Requires multcomp / multcompView packages
+cld_results <- cld(emm_object, Letters = letters, adjust = "tukey")
+print(cld_results)
 
-df<-df.leg %>% filter(nitrogen.added=="Y")
-m1 <- aov(perc.Ndfa ~ treatment, data = df)
-summary(m1) # difference between treatments
-tukey <- TukeyHSD(m1)
-print(tukey) # All difference except LG-LB
-#plot(one.way.Nadd) #homoscedasticity looks fine
-# emmeans 
-emm_object <- emmeans(m1, specs = ~ treatment)
-# Perform all pairwise comparisons with Tukey adjustment
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-summary(pairwise_comparison)
 
-library(multcompView)
-cld <- multcompLetters4(m1, tukey)
-print(cld)
-
-########################################n fix per legume #
+########################n fix per legume #######
 
 p2<- ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) + 
    geom_boxplot(alpha=.7, outlier.shape = NA)+
@@ -129,57 +96,26 @@ p2<- ggplot(df.leg, aes(x=treatment, y=n_fix_per_legume, fill=treatment)) +
 
 p2
  
-library(multcomp)
-library(emmeans)
 # Analysis of variance 
-#overall 
-m1<- lm(n_fix_per_legume ~ treatment*nitrogen.added+block, data = df.leg)
+# overall model 
+m1<- aov(n_fix_per_legume ~ treatment*nitrogen.added+block, data = df.leg)
 summary(m1)
-anov = aov(m1)
-summary(anov)
 
-# nitrogen -
-df<-df.leg %>% filter(nitrogen.added=="N")
-m1 <- aov(n_fix_per_legume ~ treatment+block, data = df)
-summary(m1) # difference between treatments
+# 2. Get estimated marginal means grouped by Nitrogen level
+emm_object <- emmeans(m1, ~ treatment | nitrogen.added)
 
-emm_object <- emmeans(m1, specs = ~ treatment)
-# Perform all pairwise comparisons with Tukey adjustment
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-summary(pairwise_comparison)
-cld_result <- cld(emm_object, 
-                  adjust = "tukey", 
-                  alpha = 0.05,
-                  Letters = letters) 
-print(cld_result)
-
-
-
-
-
-
-
-# with nitrogen +
-df<-df.leg %>% filter(nitrogen.added=="Y")
-m1 <- aov(n_fix_per_legume ~ treatment+block, data = df)
-summary(m1) # difference between treatments
-
-emm_object <- emmeans(m1, specs = ~ treatment)
-# Perform all pairwise comparisons with Tukey adjustment
-pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
+# 3. Perform pairwise comparisons within each Nitrogen level
+pairwise_comparison <- pairs(emm_object, adjust = "tukey")
 summary(pairwise_comparison)
 
-
-cld_result <- cld(emm_object, 
-                  adjust = "tukey", 
-                  alpha = 0.05,
-                  Letters = letters) 
-print(cld_result)
+# Requires multcomp / multcompView packages
+cld_results <- cld(emm_object, Letters = letters, adjust = "tukey")
+print(cld_results)
 
 
 
 
-
+###plot ###
  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
  svg("nfix.svg", height = 4.5, width = 3.5)
   require(gridExtra)

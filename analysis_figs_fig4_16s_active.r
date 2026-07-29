@@ -21,16 +21,12 @@ rm(list=ls())
 
 library(tidyverse)
 library(vegan)
-#library(readxl)
-#library(lubridate)
 library(phyloseq)
 library(multcompView)
 library(BiodiversityR)
 #ANCOM
 #BiocManager::install("ANCOMBC")
-library(ANCOMBC)
-#BiocManager::install("microbiome")
-#install.packages("microbiome")
+#library(ANCOMBC)
 library(microbiome)
 
 # set colors
@@ -44,8 +40,6 @@ IBM <- c( #IBM colors
   "#FFB000", # golden yellow
   "#865338" # medium mocha brown
 )
-library(scales)
-pal <- rgb(ddf$r, ddf$g, ddf$b)
 show_col(IBM)
 
 bw <- c( #IBM colors
