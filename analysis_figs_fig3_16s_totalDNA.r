@@ -513,6 +513,30 @@ ps
 #1778 asvs
 
 
+#### CAP L * G *B #######
+
+# subset data
+# nitrogen + only
+ps1 <-subset_samples(ps, Treatment !="Soil" & N=="1" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil"  & N=="1")
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+head(metadat2)
+# 1. Calculate the distance matrix (e.g., Bray-Curtis)
+dist_matrix<-vegdist(otu_table(ps1), method = "bray")
+
+# 2. Run the CAP (db-RDA) analysis
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ Legume*Grass*Brassicae+block,
+                       data = metadat2,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+anova.cca(cap_result, by="terms")
+
+
+
 
 ######## 4. CAP -Treatment- ##################
 # Constrained ordination

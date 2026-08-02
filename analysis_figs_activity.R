@@ -3,7 +3,7 @@
 # last edited: July 2026
 # author: Jennifer Harris
 
-#rstudioapi::restartSession(clean = TRUE)
+rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
 
 #load libraries 
@@ -143,6 +143,8 @@ print(cld_result)
 model_binom<-glm(data= prop, y~Legume +block, family = binomial)
 summary(model_binom)
 library(car)
+Anova(model_binom, type = "II")
+
 
 
 
@@ -263,7 +265,7 @@ p1
 ###################predicting microbial activity with biomass ##############
 
 # restart R for package conflicts
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
 
 #load libraries
@@ -345,7 +347,7 @@ print(data_frame_multiplied2)
 # add together
 LG<-data_frame_multiplied1 + data_frame_multiplied2
 LG$Trt_ID<-c("predict_LG+N1", "predict_LG+N2", "predict_LG+N3", "predict_LG+N4", "predict_LG+N5", "predict_LG+N6" )
-LG$Treatment<-c("LG.predict", "LG.predict", "LG.predict", "LG.predict", "LG.predict", "LG.predict" )
+LG$Treatment<-c("LG_expectation", "LG_expectation", "LG_expectation", "LG_expectation", "LG_expectation", "LG_expectation" )
 LG$Rep <- c(1, 2, 3, 4, 5, 6 )
 LG
 
@@ -394,7 +396,7 @@ print(data_frame_multiplied2)
 # add together
 LB<-data_frame_multiplied1 + data_frame_multiplied2
 LB$Trt_ID<-c("predict_LB+N1", "predict_LB+N2", "predict_LB+N3", "predict_LB+N4" )
-LB$Treatment<-c("LB.predict", "LB.predict", "LB.predict", "LB.predict")
+LB$Treatment<-c("LB_expectation", "LB_expectation", "LB_expectation", "LB_expectation")
 LB$Rep <- c(1, 2, 3, 4 )
 LB
 
@@ -443,7 +445,7 @@ print(data_frame_multiplied2)
 # add together
 GB<-data_frame_multiplied1 + data_frame_multiplied2
 GB$Trt_ID<-c("predict_GB+N1", "predict_GB+N2", "predict_GB+N3", "predict_GB+N5" )
-GB$Treatment<-c("GB.predict", "GB.predict", "GB.predict", "GB.predict" )
+GB$Treatment<-c("GB_expectation", "GB_expectation", "GB_expectation", "GB_expectation" )
 GB$Rep <- c(1, 2, 3, 5)
 GB
 
@@ -515,7 +517,7 @@ print(data_frame_multiplied2)
 # add together
 LGB<-data_frame_multiplied0 + data_frame_multiplied1 + data_frame_multiplied2
 LGB$Trt_ID<-c("predict_LGB+N1", "predict_LGB+N2", "predict_LGB+N3", "predict_LGB+N4")
-LGB$Treatment<-c("LGB.predict", "LGB.predict", "LGB.predict", "LGB.predict")
+LGB$Treatment<-c("LGB_expectation", "LGB_expectation", "LGB_expectation", "LGB_expectation")
 LGB$Rep <- c(1, 2, 3, 4)
 LGB
 
@@ -530,14 +532,14 @@ mycols <- c( #IBM colors
   "navy", # dark royal blue L
  "#648FFF", # french blue G
   "#785EF0", # light purple B
-  "#DC267F", # magenta pink GB
-  "grey",
-  "#FE6100", # bright orange LB
-  "grey",
-  "#FFB000", # golden yellow LG
-  "grey",
-  "#865338", # medium mocha brown LGB
-  "grey"
+    "grey",
+"#DC267F", # magenta pink GB
+    "grey",
+"#FE6100", # bright orange LB
+    "grey",
+"#FFB000", # golden yellow LG
+    "grey",
+"#865338"# medium mocha brown LGB
 )
 
 
@@ -546,8 +548,8 @@ df<-df %>% filter(Treatment!="Soil")
 
 unique(df$Treatment)
 
-df$Treatment<-factor(df$Treatment, levels = c("L", "G", "B", "GB", "GB.predict", "LB", "LB.predict",  "LG", 
-                                                "LG.predict", "LGB", "LGB.predict" ))
+df$Treatment<-factor(df$Treatment, levels = c("L", "G", "B", "GB_expectation", "GB","LB_expectation", "LB",  "LG_expectation",  "LG", 
+                                              "LGB_expectation" , "LGB"  ))
 
 df
 # plot
@@ -557,7 +559,7 @@ p1<-df  %>%
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 12)+
+  theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
   labs(title = "A",
        x="",
@@ -573,7 +575,7 @@ p2<-df  %>%
   geom_boxplot(alpha=.5, outlier.shape = NA)+
   scale_color_manual(values=mycols) +
   scale_fill_manual(values = mycols)+
-  theme_classic(base_size = 12)+
+  theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
 labs(title = "B",
      x="",
@@ -582,8 +584,8 @@ labs(title = "B",
 
 p2
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
-svg("activity.predict.svg", width=10, height=3.5)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
+svg("activity.predict.svg", width=10, height=5)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
 

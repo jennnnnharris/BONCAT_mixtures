@@ -9,11 +9,7 @@ rm(list=ls())
 library(readxl)
 library(tidyverse)
 library(lubridate)
-#library(lme4)
-#library(nlme)
-#library(emmeans)
-#library(multcomp)
-#library(dplyr)
+
 
 
 IBM <- c( #IBM colors
@@ -313,7 +309,7 @@ LG<-get.shoot.predict(df, "L", "G")
 LGB<-get.shoot.predict(df, "L", "G", "B")  
 Shoot.Biomass<- round(as.numeric(c(GB, LB, LG, LGB)), 2)
 Shoot.Biomass
-Treatment<-c(rep("GB.predict", n_groups(df)), rep("LB.predict", n_groups(df)), rep("LG.predict", n_groups(df)), rep("LGB.predict", n_groups(df)) )
+Treatment<-c(rep("GB_expectation", n_groups(df)), rep("LB_expectation", n_groups(df)), rep("LG_expectation", n_groups(df)), rep("LGB_expectation", n_groups(df)) )
 Treatment
 predict <- as.data.frame(cbind(Treatment, Shoot.Biomass))
 predict$Shoot.Biomass<-as.numeric(predict$Shoot.Biomass)
@@ -339,8 +335,8 @@ predict$Nitrogen_label<-rep(rep(c("Nitrogen +", "Nitrogen -"), each=6), 4)
 
 df1<-full_join(df, predict) 
 df1<-df1 %>% ungroup()
-df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB.predict", "GB", "LB.predict",  "LB",   "LG.predict", "LG", 
-                             "LGB.predict"   , "LGB" ))
+df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB_expectation", "GB", "LB_expectation",  "LB",   "LG_expectation", "LG", 
+                             "LGB_expectation"   , "LGB" ))
 
 #### plot predictions from monocultures for biomass
 
@@ -359,15 +355,7 @@ mycols <- c( #IBM colors
 )
 
 # 
-# label <- df1$Treatment
-# label <- gsub("LGB.predict", "*" ,label )
-# label <- gsub("LB.predict", "*" ,label )
-# label <- gsub("LG.predict", "*" ,label )
-# label<- gsub("L", "" ,label )
-# label<- gsub("G", "" ,label )
-# label <- gsub("B", "" ,label )
-# label <- gsub(".predict", "" ,label )
-# label
+
 
 p1<-df1  %>% 
   ggplot(aes(x=Treatment, y=Root.Biomass, fill = Treatment)) +
@@ -405,7 +393,7 @@ p2<-df1  %>%
         )+
   labs(title = "B",
        x="",
-       y="shoot biomass (g)")+
+       y="Shoot biomass (g)")+
   scale_shape_manual(values = c(17, 16)) #
 
 p2
@@ -413,10 +401,10 @@ p2
 # put the plots together
 
 require(gridExtra)
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_plant_physio")
-#svg("biomasspredict.svg", height = 6, width = 4.5)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/")
+svg("biomasspredict.svg", height = 7, width = 4.5)
 grid.arrange(p1, p2, ncol=1)
-#dev.off()
+dev.off()
 
 
 ######### anova#####
