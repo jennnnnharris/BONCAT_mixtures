@@ -424,46 +424,41 @@ summary(anova1)
   sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=2)
   sc_si
   
-  # Extract the model's adjusted R2
-  RsquareAdj(cap_result)$adj.r.squared
-  
-  # percent varience of total varience on RDA 1 and RDA 2
+    # percent varience of total varience on RDA 1 and RDA 2
   perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
   perc
   
   ### 4. plot 
   
-  #setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
-  #svg("cap.active.svg", width = 6 , height = 6)
+  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/")
+  svg("cap.active.svg", width = 6 , height = 6)
   #windows(6,6)
-  par(cex.lab = 1.1) # make all fonts in graphs little bigger
+  par(cex.lab = 1.2) # make all fonts in graphs little bigger
   ordiplot(cap_result, choices=c(1,2), scaling =2, type="none",
            main="", cex = 1.2,
            xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
            ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
   par(adj = 0)
-  title(main= "D")
-  par(adj=.5)
+    par(adj=.5)
   points(sc_si, 
          col= IBM[metadat2$Treatment],
          pch= 21,
-         lwd=1,cex=1,
+         lwd=1,cex=1.3,
          bg=IBM[metadat2$Treatment])
   ordiellipse(sc_si, metadat2$Treatment,  
-              kind = "ehull", conf=0.95, label=T, 
+              kind = "ehull", conf=0.95, label=F, 
               draw = "polygon",
               border = 0,
               col= IBM,
               alpha = 40,
               cex=1)
-  legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-         fill= IBM,
-         cex=1,
-         bty = "n")
+  # legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
+  #        fill= IBM,
+  #        cex=1,
+  #        bty = "n")
   
   
-  
-  # dev.off()
+   dev.off()
   
   
   
