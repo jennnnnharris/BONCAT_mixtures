@@ -478,7 +478,7 @@ df %>%filter(Blast_ID!="Actinomycetes") %>%
 dev.off()
 
 
-##### stats #####
+##### stats DESEQ#####
   library(phyloseq)
   library(DESeq2)
   library(ggplot2)

@@ -15,22 +15,13 @@ IBM <- c( #IBM colors
 )
 
 # load data 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df <- read.csv("weed_seed_decay.csv", row.names = 1 )
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/seedgermination")
+df <- read.csv("weedseedgermination.csv", row.names = 1 )
 head(df)
 
 # set factor
 df$Treatment   <- factor(df$Treatment, levels= c("S", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 unique(df$Treatment)
-
-# 
-# # add block info 
-# # add block info
-# setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-# block <- read_excel("metadata_experiment_planning.xlsx")
-# head(block)  
-# df<-left_join(df, block)
-# head(df)
 
 
 df<-df  %>%   filter(Treatment!="S") 
@@ -48,7 +39,7 @@ p1<- df %>%
   theme_classic(base_size = 12) +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position = "none")+
-  scale_fill_manual(values = IBM)+
+  scale_fill_manual(values = mycols)+
   labs(title = "A",
        x="",
        y="germinating foxtail (%)")
@@ -63,7 +54,7 @@ p2<-df %>%
   theme_classic(base_size = 12) +
   theme(axis.text.x = element_text(angle=60, hjust=1),
         legend.position = "none")+
-  scale_fill_manual(values = IBM)+
+  scale_fill_manual(values = mycols)+
   labs(title = "B",
        x="",
        y="germinating pigweed (%)")

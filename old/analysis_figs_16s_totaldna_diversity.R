@@ -13,7 +13,6 @@
 ########Initial Setup ##################
 
 ### Clear workspace ###
-#rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
 
 # install phyloseq
@@ -42,7 +41,7 @@ mycols <- c(
   "#FFB000", # golden yellow
   "#865338" # medium mocha brown
 )
-IBM <- c( #IBM colors
+mycols <- c( #IBM colors
   "navy", # dark royal blue
   "#648FFF", # french blue
   "#785EF0", # light purple
@@ -53,7 +52,7 @@ IBM <- c( #IBM colors
 )
 
 
-bw <- c( #IBM colors
+bw <- c( #
   "grey", # grey
   "black" # teal
 )
@@ -61,13 +60,12 @@ bw <- c( #IBM colors
 
 #import data#
 # Set the working directory 
-#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
 metadat<-read.csv("metadat2.csv", header = T, row.names = 1)
-#note metadat2 had block info
+#note metadat2 has block info
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns

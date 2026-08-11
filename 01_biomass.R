@@ -1,18 +1,17 @@
-# Figure 3 prediction
-
+# Jennifer Harris
+# biomass 
+# Aug 10 2026
 
 # clear workspace and restart R
 rm(list=ls())
-#rstudioapi::restartSession(clean = TRUE)
+rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(readxl)
 library(tidyverse)
 library(lubridate)
 
-
-
-IBM <- c( #IBM colors
+mycols <- c( #IBM colors
   "navy", # dark royal blue L
   "#648FFF", # french blue G
   "#785EF0", # light purple B
@@ -28,22 +27,40 @@ legume_cols <- c( #IBM colors
   "#865338" # medium mocha brown LGB
 )
 
-#plant functional traits without prediction 
-#biomass####
+#biomass without prediction ####
+
+#### import biomass data and process #####
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df <- read.csv("biomass_potlevel.csv") # biomass data
+df <- read_excel("biomass_species.xlsx") # biomass data
+
+df<-df %>% group_by(Trt_ID, Treatment, N, Rep, Brassicae, Legume, Grass ) %>%
+  summarise(
+    Stem.Biomass.g = sum(Stem.Biomass.g),
+    Root.Biomass.g = sum(Root.Biomass.g),
+    Bulk.Root.g = sum(Bulk.Root.g),
+    Total.Root.g = sum(Total.Root.g)
+  )
+
+df  
+
 
 # process to make n species column, summarize at pot level, make treatment a factor.
+
 df$Grass<-as.numeric(df$Grass)
 df$Legume<-as.numeric(df$Legume)
 df$Brassicae<-as.numeric(df$Brassicae)
+df<-df%>% ungroup() 
 df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
 df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+df
 
-# add block info 
+# added nitrogen column 
+df <- df %>%
+  mutate(Nitrogen_label = if_else(N == 1, "Nitrogen +", "Nitrogen -"))
+
 # add block info
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-block <- read_excel("metadata_experiment_planning.xlsx")
+block <- read_excel("metadata_blockinfo.xlsx")
 head(block)  
 df<-left_join(df, block)
 head(df)
@@ -53,15 +70,15 @@ p1<-df  %>% filter(n_species!="NA") %>%
   geom_jitter(aes(shape=Nitrogen_label), size=.7, width=.1)+
   
   geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=IBM) +
-  scale_fill_manual(values = IBM)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position = "none",
         plot.title = element_text(hjust = 0, size=12))+
   labs(title = "A",
        x="",
        y="Root biomass (g)")+
-  scale_shape_manual(values = c(17, 16)) #
+  scale_shape_manual(values = c(17, 16)) 
 p1
 
 p2<-df  %>% filter(n_species!="NA") %>%
@@ -69,15 +86,15 @@ p2<-df  %>% filter(n_species!="NA") %>%
   geom_jitter(aes(shape=Nitrogen_label), size=.7, width=.1)+
   
   geom_boxplot(alpha=.7, outlier.shape = NA)+
-  scale_color_manual(values=IBM) +
-  scale_fill_manual(values = IBM)+
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
   theme_classic(base_size = 12)+
   theme(axis.text.x = element_text(angle=60, hjust=1),
         plot.title = element_text(hjust = 0, size=12),
         legend.position = "none")+
   labs(title = "B",
        x="",
-       y="shoot biomass (g)")+
+       y="Shoot biomass (g)")+
   scale_shape_manual(values = c(17, 16)) #
 p2
 require(gridExtra)
@@ -127,45 +144,6 @@ cld_results <- cld(emm_object, Letters = letters, adjust = "tukey")
 print(cld_results)
 
 
-
-
-
-# 
-# 
-# 
-# 
-# ###maybe cut this below>
-# # nitrogen -
-# dfN0<- df %>% filter(N==0)
-# m1<-aov(Root.Biomass.g ~ Treatment+block, data = dfN0)
-# summary(m1) 
-# 
-# emm_object <- emmeans(m1, specs = ~ Treatment)
-# # Perform all pairwise comparisons with Tukey adjustment
-# pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-# 
-# summary(pairwise_comparison)
-# cld_result <- cld(emm_object, 
-#                   adjust = "tukey", 
-#                   alpha = 0.05,
-#                   Letters = letters) 
-# print(cld_result)
-# 
-# #nitrogen +
-# dfN1<- df %>% filter(N==1)
-# m1<-aov(Root.Biomass.g ~ Treatment+block, data = dfN1)
-# summary(m1) 
-# # Perform all pairwise comparisons with Tukey adjustment
-# emm_object <- emmeans(m1, specs = ~ Treatment)
-# pairwise_comparison <- pairs(emm_object, adjust = "tukey") 
-# summary(pairwise_comparison)
-# 
-# cld_result <- cld(emm_object, 
-#                   adjust = "tukey", 
-#                   alpha = 0.05,
-#                   Letters = letters) 
-# print(cld_result)
-# 
 
 #########################prediction#############################
 # clear workspace and restart R
@@ -270,21 +248,47 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
 library(readxl)
 library(tidyverse)
 library(lubridate)
-#library(lme4)
-#library(nlme)
+
 
 #### import biomass data and process
-biomasspath <- "C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology"
-setwd(biomasspath)
-df <- read.csv("biomass_potlevel.csv", row.names = 1) # biomass data
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
+df <- read_excel("biomass_species.xlsx") # biomass data
+
+df<-df %>% group_by(Trt_ID, Treatment, N, Rep, Brassicae, Legume, Grass ) %>%
+  summarise(
+    Stem.Biomass.g = sum(Stem.Biomass.g),
+    Root.Biomass.g = sum(Root.Biomass.g),
+    Bulk.Root.g = sum(Bulk.Root.g),
+    Total.Root.g = sum(Total.Root.g)
+  )
+
+df  
+
 
 # process to make n species column, summarize at pot level, make treatment a factor.
+
 df$Grass<-as.numeric(df$Grass)
 df$Legume<-as.numeric(df$Legume)
 df$Brassicae<-as.numeric(df$Brassicae)
+df<-df%>% ungroup() 
 df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
-#df<-df %>% group_by(Trt_ID, Treatment, Rep, Brassicae, Legume, Grass, N, n_species ) %>% summarise(Root.Biomass = sum(Total.Root.g), Shoot.Biomass = sum(Stem.Biomass.g), )
-# rename cols
+df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
+df
+
+# added nitrogen column 
+df <- df %>%
+  mutate(Nitrogen_label = if_else(N == 1, "Nitrogen +", "Nitrogen -"))
+
+# add block info
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
+block <- read_excel("metadata_blockinfo.xlsx")
+head(block)  
+df<-left_join(df, block)
+head(df)
+
+
+
+
 # rename cols
 df$Shoot.Biomass<-df$Stem.Biomass.g
 df$Stem.Biomass.g=NULL
@@ -465,117 +469,30 @@ anova(m1)
 # load libraries and cols
 library(readxl)
 library(tidyverse)
-IBM <- c( #IBM colors
-  "navy", # dark royal blue L
-  "#648FFF", # french blue G
-  "#785EF0", # light purple B
-  "#DC267F", # magenta pink GB
-  "#FE6100", # bright orange LB
-  "#FFB000", # golden yellow LG
-  "#865338" # medium mocha brown LGB
-)
-mono_cols <- 
-  c( #IBM colors
-    "navy", # dark royal blue L
-    "#648FFF", # french blue G
-    "#785EF0" # light purple B
-  )
+
 # import data frame 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
 df <- read_excel("biomass_species.xlsx")
 
-# tidy data
+# check df
 head(df)
-
-# make plot
-ggplot(df, aes(fill=Species, y=Root.Biomass.g, x=Trt_ID)) + 
-  geom_bar(position="stack", stat="identity")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 # make total.root.species.g column
 total<-df %>% group_by(Trt_ID) %>%
   summarise(
-    Total.no.bulk = sum(Root.Biomass.g))
+    Total.withoutbulk = sum(Root.Biomass.g))
 
 # add col to df
 df<-left_join(df, total)
 
 # make percent col
 df<-df%>% mutate(
-  percent= (Root.Biomass.g/Total.no.bulk)*100)
-
-# make plot percent
-ggplot(df, aes(fill=Species, y=percent, x=Trt_ID)) + 
-  geom_bar(position="stack", stat="identity")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-
-#add unknown bulk to df
-
-bulk<-df %>%
-  dplyr::select(Treatment, N, Rep, Trt_ID,  Bulk.Root.g) %>%
-  group_by(Trt_ID, Treatment, N, Rep) %>%
-  summarise(
-    Root.Biomass.g= sum(Bulk.Root.g)) %>%
-  mutate(
-    Species="bulk",
-    Brassicae= 0,
-    Legume=  0,
-    Grass= 0
-  )
-
-
-df1 <- df %>% dplyr:: select( Treatment, N, Rep, Trt_ID, Species,  Brassicae, Legume, Grass, Root.Biomass.g )
-df1<-full_join(df1,bulk)
-
-#add total+bulk to df 
-
-total<-df %>%
-  dplyr::select(Trt_ID, Total.Root.g) %>%
-  group_by(Trt_ID) %>%
-  summarise(
-    Total.Root.g= sum(Total.Root.g))
-
-df1<-left_join(df1, total)
-
-# calculate percent
-df1<-df1 %>% mutate(
-  percent = Root.Biomass.g/Total.Root.g
-)
-
-df1$Species<- factor(df1$Species, levels= c("bulk", "legume", "grass", "brassica"))
-# make plot percent
-ggplot(df1, aes(fill=Species, y=percent, x=Trt_ID)) + 
-  geom_bar(position="stack", stat="identity")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-
-
-### bulk assigned to crops ####
-
-# import data frame 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df <- read_excel("biomass_species.xlsx")
-
-# tidy data
-head(df)
-
-# make plot
-ggplot(df, aes(fill=Species, y=Root.Biomass.g, x=Trt_ID)) + 
-  geom_bar(position="stack", stat="identity")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-
-# make total.root.species.g column
-total<-df %>% group_by(Trt_ID) %>%
-  summarise(
-    Total.withbulk = sum(Total.Root.g))
-
-# add col to df
-df<-left_join(df, total)
-
-# make percent col
-df<-df%>% mutate(
-  percent= (Total.Root.g/Total.withbulk)*100)
-
+  percent= (Root.Biomass.g/Total.withoutbulk)*100)
 df$Species<- factor(df$Species, levels= c("legume", "grass", "brassica"))
+
+# save data frame
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement")
+write.csv(df, "biomass_percent.csv")
 
 # make plot percent
 mono_cols <- 
@@ -587,16 +504,14 @@ mono_cols <-
 
 # recode name
 df1<-df%>% filter(Treatment!="B" & Treatment!="L" & Treatment!="G") 
-
 df1$label<-gsub("LGB", "" ,df1$Trt_ID)
 df1$label
 df1$label<-gsub("GB", "" ,df1$label)
 df1$label<-gsub("LG", "" ,df1$label)
 df1$label<-gsub("LB", "" ,df1$label)
+df$Species<- factor(df$Species, levels= c("legume", "grass", "brassica"))
 
-
-
-
+# make plot
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement")
 svg("percent.biomass.svg", width = 8, height =4.5 )
 df1%>%
@@ -610,5 +525,6 @@ df1%>%
        y="proportion dry biomass (g)")
 
 dev.off()
-write.csv(df, "percent.biomass.csv")
+
+
 

@@ -25,8 +25,7 @@ IBM <- c( #IBM colors
 
 ####### import data #####
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
-#setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto")
-fc <-read.csv("processed_flow_cyto.csv")
+fc <-read.csv("processed_flowcyto.csv")
 head(fc)
 
 #make dates be dates
@@ -45,37 +44,11 @@ fc$Date_Sorted   <- factor(fc$Date_Sorted)
 
 # add block info
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-block <- read_excel("metadata_experiment_planning.xlsx")
+block <- read_excel("metadata_blockinfo.xlsx")
 head(block)  
 fc<-left_join(fc, block)
 fc
 fc<-fc  %>%   filter(Treatment!="Soil")
-
-######we need normalize by the day/rep ###
-#for soil samples -- they were run on the same day
-## there were 4 samples from June 15 that were negative
-## 3 soil samples and 1 brassicae. These values we didn't adjust left them as raw values
-# think i should probably use a link logit model to this in the future, however back transforming the effect size can be tricky.
-#linear model to get coefs to adjusted see binomial model script for binomcial model.
-#m1<-lm(data=df, BONCAT_freq~Treatment + Date_sorted + Rep + Block)
-#plot(m1)
-#coef(m1)
-
-# not adjusted plot:
-#df%>% 
-#  ggplot(aes(x=Date_sorted, y=BONCAT_freq)) +
-#  geom_jitter(width = .2, size=1 )+
-#  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-#  theme_bw(base_size = 18, )+
-#  theme(axis.text.x = element_text(angle=60, hjust=1))
-
-# adjusted plot
-#df%>% 
-#  ggplot(aes(x=Date_sorted, y=BONCAT_freq_adj)) +
-#  geom_jitter(width = .2, size=1 )+
-#  geom_boxplot(alpha=.5, fill = "grey", outlier.shape = NA)+
-#  theme_bw(base_size = 18, )+
-#  theme(axis.text.x = element_text(angle=60, hjust=1))
 
 
 ###### percent active ###########
@@ -171,10 +144,10 @@ p2
 
 
 require(gridExtra)
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
-#svg("activity.svg", width=8, height=4)
-#grid.arrange(p1, p2, ncol=2)
-#dev.off()
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
+svg("activity.svg", width=8, height=4)
+grid.arrange(p1, p2, ncol=2)
+dev.off()
 
 
 ######stats number of cells############
@@ -265,8 +238,8 @@ p1
 ###################predicting microbial activity with biomass ##############
 
 # restart R for package conflicts
-#rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
+rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(tidyverse)
@@ -276,7 +249,7 @@ library(lubridate)
 
 # load data
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
-fc <-read.csv("processed_flow_cyto.csv")
+fc <-read.csv("processed_flowcyto.csv")
 fc$Date_Sorted<-mdy(fc$Date_Sorted)
 
 # filter out day were pos ctl didn't work
@@ -289,13 +262,13 @@ fc$Date_Sorted   <- factor(fc$Date_Sorted)
 
 # add block info
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-block <- read_excel("metadata_experiment_planning.xlsx")
+block <- read_excel("metadata_blockinfo.xlsx")
 fc<-left_join(fc, block)
 fc<-fc  %>%   filter(Treatment!="Soil")
 
 # load biomass info
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-biomass<-read.csv("percent.biomass.csv")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
+biomass<-read.csv("biomass_percent.csv")
 # only n+ 
 biomass<-biomass %>% filter(N==1)
 biomass
@@ -592,14 +565,14 @@ dev.off()
 # stats #####
 # linear model  active cells
 #GB
-df1<-df%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
 m1<-lm(data= df1, active_cel_per_g~Treatment)
 summary(m1)
 m<-summary(m1)
 m$coefficients
 
 #LB
-df1<-df%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
 m1<-lm(data= df1, active_cel_per_g~Treatment)
 summary(m1)
 m<-summary(m1)
@@ -607,15 +580,14 @@ m$coefficients
 
 
 #LG
-df1<-df%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
 m1<-lm(data= df1, active_cel_per_g~Treatment)
-summary(m1)
 summary(m1)
 m<-summary(m1)
 m$coefficients
 
 #LGB
-df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
 m1<-lm(data= df1, active_cel_per_g~Treatment)
 summary(m1)
 
@@ -623,24 +595,24 @@ summary(m1)
 library(MASS)
 
 #GB
-df1<-df%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
 m1<- glm.nb(active_cel_per_g ~ Treatment, data = df1)
 anova(m1)
 
 
 #LB
-df1<-df%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
 m1<- glm.nb(active_cel_per_g ~ Treatment, data = df1)
 anova(m1)
 
 #LG
-df1<-df%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
 m1<- glm.nb(active_cel_per_g ~ Treatment, data = df1)
 anova(m1)
 
 
 #LGB
-df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
 m1<- glm.nb(active_cel_per_g ~ Treatment, data = df1)
 anova(m1)
 
@@ -649,7 +621,7 @@ anova(m1)
 
 #binomial model with percent data##
 #GB
-df1<-df%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
 prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
@@ -658,7 +630,7 @@ m1<-glm(data= df1, y~Treatment, family = binomial)
 summary(m1)
 
 #LB
-df1<-df%>% filter(Treatment=="LB" | Treatment=="LB.predict")
+df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
 prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
@@ -667,7 +639,7 @@ m1<-glm(data= df1, y~Treatment, family = binomial)
 summary(m1)
 
 #LG
-df1<-df%>% filter(Treatment=="LG" | Treatment=="LG.predict")
+df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
 prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
@@ -677,7 +649,7 @@ summary(m1)
 
 
 #LGB
-df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
+df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
 prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
