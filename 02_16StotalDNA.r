@@ -58,7 +58,7 @@ setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Bur
 
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.csv("metadat2.csv", header = T, row.names = 1)
+metadat<-read.csv("metadata16S.csv", header = T, row.names = 1)
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns

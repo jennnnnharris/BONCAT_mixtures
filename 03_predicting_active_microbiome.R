@@ -46,11 +46,12 @@ tax_table<-tax_table(ps)
 #load libraries
 library(readxl)
 library(tidyverse)
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-biomass<-read.csv("percent.biomass.csv")
+# load biomass info
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
+biomass<-read.csv("biomass_percent.csv")
 # only n+ 
 biomass<-biomass %>% filter(N==1)
-
+biomass 
 
 # LG
 # filter for L community

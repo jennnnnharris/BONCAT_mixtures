@@ -25,7 +25,7 @@ library(compositions)
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
 taxon <- read.csv("all/taxonomy.csv", header=T)
 asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.csv("metadat2.csv", header = T, row.names = 1)
+metadat<-read.csv("metadata16S.csv", header = T, row.names = 1)
 
 # Transpose ASVS table #
 asvs[1:5,1:5]#taxa are columns
@@ -105,8 +105,9 @@ ps<-subset_samples(ps, N==1)
 ps
 
 # import biomass data  #
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-biomass<-read.csv("percent.biomass.csv")
+# load biomass info
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
+biomass<-read.csv("biomass_percent.csv")
 # filter for only n+ and required columns
 biomass<-biomass %>% filter(N==1) %>% select(-Total.Root.g, -Total.withbulk, -Stem.Biomass.g, -Root.Biomass.g, -Bulk.Root.g)
 
