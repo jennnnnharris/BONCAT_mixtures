@@ -107,7 +107,7 @@ ps
 ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
 ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 ps1
-# 1845 taxa
+
 # subset metadata
 metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL")
 #factor
@@ -431,7 +431,7 @@ dev.off()
 
 # rhizobium
 unique(df$Blast_ID)
-df %>% filter(Blast_ID=="Rhizobium sp.") %>%
+df %>% filter(Blast_ID=="Actinomycetes") %>%
   ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
   geom_boxplot(outliers=FALSE, alpha=.7)+
   #geom_jitter()+
@@ -449,26 +449,6 @@ df %>% filter(Blast_ID=="Rhizobium sp.") %>%
 
 
 
-
-# # flip cord
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
-svg(filename="active.taxa.tall.svg", height = 9.5, width = 4)
-df %>%filter(Blast_ID!="Actinomycetes") %>%
-  ggplot(aes(y=Treatment, x=percent_abundance, fill = Treatment))+
-  geom_boxplot(outliers=FALSE, alpha=.7)+
-  #geom_jitter()+
-  scale_fill_manual(values= IBM)+
-  theme_bw(base_size = 12) +
-  #facet_grid(~Blast_ID, scales="free", space="free")+
-  #facet_wrap(~Blast_ID, scales="free", ncol= 1)+
-  facet_wrap(~Blast_ID,  ncol= 1)+
-
-  theme(axis.text.x = element_text(angle=0, hjust=1),
-        plot.title = element_text(hjust = 0),
-        legend.position = "none")+
-  labs(title = "A       Active",
-       x = "", y = "Percent Abundance")
-dev.off()
 
 
 ##### stats DESEQ ASV level#####
@@ -579,12 +559,15 @@ dev.off()
   
   
   
-  ############# genus level ###########
+  ############# stats genus level ###########
   asvkp<-unique(top_spp$asv)
   
   #  filter for treatments
-  ps1<-subset_samples(ps,  N=="1" )
+  #  Constrained ordination
+  ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="CTL" & N=="1")
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  ps1
+
   # add one
   Workshop_OTU <-otu_table(ps1)+1
   Workshop_metadat <- sample_data(ps1)
@@ -605,7 +588,7 @@ dev.off()
   
   ## important taxanomy info ##
   setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
-  taxinfo<-read.csv("taxonomy_keytaxa.csv")
+  taxinfo<-read.csv("taxonomy_keytaxa_active.csv")
   taxinfo<-taxinfo %>% select(asv, Genus_blast)
   taxinfo
   
@@ -642,11 +625,8 @@ dev.off()
   alpha = 0.01
   sigtab = res[which(res$padj < alpha), ]
   sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
-  sigtab$model_term = "intercept"  
-  # add to table
-  table<-sigtab
-  table
-  
+  # nothing significant for "intercept"  
+
   # effect of L*G * B
   resultsNames(diagdds)
   res <- results(diagdds, name = "Legume1.Brassicae1.Grass1")
@@ -654,11 +634,10 @@ dev.off()
   sigtab = res[which(res$padj < alpha), ]
   sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
   sigtab
-  sigtab #  three way interaction
-  sigtab$model_term = "L*G*B"  
+  # nothing significant for three way interaction "L*G*B"  
   # add to table
-  table<-rbind(table, sigtab)
-  table
+
+  
   
   # effect of L*B
   resultsNames(diagdds)
@@ -666,21 +645,23 @@ dev.off()
   sigtab = res[which(res$padj < alpha), ]
   sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
   sigtab 
-  sigtab$model_term = "L*B"  #  interaction
+  sigtab$model_term = "L*B"  # nothing sig for L*B interaction
   # add to table
-  table<-rbind(table, sigtab)
-  table
+  table<-sigtab
+
   
   # effect of L*G
   resultsNames(diagdds)
   res <- results(diagdds, name = "Legume1.Grass1")
+  res
   sigtab = res[which(res$padj < alpha), ]
   sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
   sigtab 
   sigtab$model_term = "L*G"  #  interaction
   # add to table
-  table<-rbind(table, sigtab)
+  table<-sigtab
   table
+
   
   # effect of G*B
   resultsNames(diagdds)
