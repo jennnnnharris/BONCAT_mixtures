@@ -30,8 +30,9 @@ legume_cols <- c( #IBM colors
 #biomass without prediction ####
 
 #### import biomass data and process #####
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
-df <- read_excel("biomass_species.xlsx") # biomass data
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+df <- read.csv("biomass_species.csv") # biomass data
+df
 
 df<-df %>% group_by(Trt_ID, Treatment, N, Rep, Brassicae, Legume, Grass ) %>%
   summarise(
@@ -59,8 +60,8 @@ df <- df %>%
   mutate(Nitrogen_label = if_else(N == 1, "Nitrogen +", "Nitrogen -"))
 
 # add block info
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-block <- read_excel("metadata_blockinfo.xlsx")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+block <- read.csv("metadata_blockinfo.csv")
 head(block)  
 df<-left_join(df, block)
 head(df)
@@ -251,8 +252,9 @@ library(lubridate)
 
 
 #### import biomass data and process
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
-df <- read_excel("biomass_species.xlsx") # biomass data
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+df <- read.csv("biomass_species.csv") # biomass data
+df
 
 df<-df %>% group_by(Trt_ID, Treatment, N, Rep, Brassicae, Legume, Grass ) %>%
   summarise(
@@ -280,9 +282,9 @@ df <- df %>%
   mutate(Nitrogen_label = if_else(N == 1, "Nitrogen +", "Nitrogen -"))
 
 # add block info
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-block <- read_excel("metadata_blockinfo.xlsx")
-head(block)  
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+block <- read.csv("metadata_blockinfo.csv")
+head(block)   
 df<-left_join(df, block)
 head(df)
 
@@ -471,8 +473,9 @@ library(readxl)
 library(tidyverse)
 
 # import data frame 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
-df <- read_excel("biomass_species.xlsx")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+df <- read.csv("biomass_species.csv") # biomass data
+df
 
 # check df
 head(df)

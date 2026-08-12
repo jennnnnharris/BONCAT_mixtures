@@ -54,11 +54,11 @@ myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
 
 #import data#
 # Set the working directory 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 
-taxon <- read.csv("all/taxonomy.csv", header=T)
-asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.csv("metadata16S.csv", header = T, row.names = 1)
+taxon <- read.csv("16S_taxonomy.csv", header=T)
+asvs <- read.table("16S_feature.table.tsv", sep="\t", header=T, row.names = 1)
+metadat<-read.csv("16S_metadata.csv", header = T, row.names = 1)
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns

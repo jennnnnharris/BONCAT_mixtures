@@ -10,13 +10,6 @@ rm(list=ls())
 library(tidyverse)
 library(vegan)
 library(phyloseq)
-#library(multcompView)
-#library(BiodiversityR)
-#ANCOM
-#BiocManager::install("ANCOMBC")
-#library(ANCOMBC)
-#BiocManager::install("microbiome")
-#install.packages("microbiome")
 library(microbiome)
 
 # set colors
@@ -35,11 +28,11 @@ IBM <- c( #IBM colors
 
 #####Import data active #####
 ## Set the working directory ###
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
-taxon <- read.csv("all/taxonomy.csv", header=T)
-asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.csv("metadat2.csv",  row.names = 2)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+
+taxon <- read.csv("16S_taxonomy.csv", header=T)
+asvs <- read.table("16S_feature.table.tsv", sep="\t", header=T, row.names = 1)
+metadat<-read.csv("16S_metadata.csv", header = T, row.names = 1)
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns
@@ -478,7 +471,7 @@ df %>%filter(Blast_ID!="Actinomycetes") %>%
 dev.off()
 
 
-##### stats DESEQ#####
+##### stats DESEQ ASV level#####
   library(phyloseq)
   library(DESeq2)
   library(ggplot2)
@@ -584,74 +577,158 @@ dev.off()
   
     
   
-## Treatment effects
   
   
-  #  DESeq2 
-  ds <- phyloseq_to_deseq2(ps.subset, ~ Legume)
-  diagdds <- DESeq(ds, test="Wald", fitType="local")
-  resultsNames(diagdds)
-  res <- results(diagdds)
-  # check results
-  alpha = 0.05
-  sigtab = res[which(res$padj < alpha), ]
-  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.subset)[rownames(sigtab), ], "matrix"))  
-  sigtab  
-  
-  
-  #  DESeq2 
-  ds <- phyloseq_to_deseq2(ps.subset, ~ Brassicae)
-  diagdds <- DESeq(ds, test="Wald", fitType="local")
-  resultsNames(diagdds)
-  res <- results(diagdds)
-  # check results
-  alpha = 0.05
-  sigtab = res[which(res$padj < alpha), ]
-  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.subset)[rownames(sigtab), ], "matrix"))  
-  sigtab  
-  
-  #  DESeq2 
-  ds <- phyloseq_to_deseq2(ps.subset, ~ Grass)
-  diagdds <- DESeq(ds, test="Wald", fitType="local")
-  resultsNames(diagdds)
-  res <- results(diagdds)
-  # check results
-  alpha = 0.05
-  sigtab = res[which(res$padj < alpha), ]
-  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.subset)[rownames(sigtab), ], "matrix"))  
-  sigtab  
-  
-    
-  ### pairwise contrasts 
-  # asv level ##
+  ############# genus level ###########
   asvkp<-unique(top_spp$asv)
   
-  #  Constrained ordination
-  ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="CTL" & Treatment!="Soil" )
+  #  filter for treatments
+  ps1<-subset_samples(ps,  N=="1" )
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  # add one
   Workshop_OTU <-otu_table(ps1)+1
   Workshop_metadat <- sample_data(ps1)
   Workshop_taxo <- tax_table(ps1) 
   ps.plusone <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
   ps.plusone
   
-  
-  
   # Focus only on specific genera
   ps.subset <- subset_taxa(ps.plusone, asv %in% asvkp)
   ps.subset
   
-  ds <- phyloseq_to_deseq2(ps.subset, ~ Treatment)
-  dds <- DESeq(ds)
+  # check 
+  otu_table(ps.subset)
+  sample_data(ps.subset)
+  tax_table(ps.subset)
+  
+  
+  
+  ## important taxanomy info ##
+  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+  taxinfo<-read.csv("taxonomy_keytaxa.csv")
+  taxinfo<-taxinfo %>% select(asv, Genus_blast)
+  taxinfo
+  
+  # add info to taxonomy table 
+  tax<-as.data.frame((tax_table(ps.subset)))
+  tax
+  tax<-left_join(tax, taxinfo)
+  
+  # clean up tax table 
+  row.names(tax)<-tax$asv
+  tax<-tax %>% select(-Confidence, - Species, -asv, -Genus, -Class, -Domain, -Family, -Order)
+  tax
+  tax_table(ps.subset) <- tax_table(as.matrix(tax))
+  
+  
+  # aggregate to level
+  ps.genus <- tax_glom(ps.subset, taxrank = "Genus_blast", NArm = TRUE)
+  
+  # Inspect the result
+  ps.genus
+  
+  # check 
+  otu_table(ps.genus)
+  tax_table(ps.genus)
+  taxa_names(ps.genus)
+  
+  
+  #  DESeq2 
+  ds <- phyloseq_to_deseq2(ps.genus, ~ Legume*Brassicae*Grass)
+  diagdds <- DESeq(ds, test="Wald", fitType="parametric")
   resultsNames(diagdds)
   res <- results(diagdds)
- 
-  design(dds) <- ~ group
-  dds <- DESeq(dds)
-  resultsNames(dds)
-  results(dds, contrast=c("Treatment", "B", "LGB"))
+  # check results intecept
+  alpha = 0.01
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab$model_term = "intercept"  
+  # add to table
+  table<-sigtab
+  table
   
-
+  # effect of L*G * B
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Legume1.Brassicae1.Grass1")
+  res
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab
+  sigtab #  three way interaction
+  sigtab$model_term = "L*G*B"  
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  # effect of L*B
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Legume1.Brassicae1")
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "L*B"  #  interaction
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  # effect of L*G
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Legume1.Grass1")
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "L*G"  #  interaction
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  # effect of G*B
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Brassicae1.Grass1")
+  res
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "G*B"  #  interaction
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  
+  # effect of G
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Grass_1_vs_0")
+  res
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "G"  #  effect
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  # effect of B
+  res <- results(diagdds, name = "Brassicae_1_vs_0")
+  # check
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "B"  #  effect
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  
+  # L effect
+  res <- results(diagdds, name = "Legume_1_vs_0")
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix")) 
+  sigtab$model_term = "L"  #  effect
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  
   
   
 #################Import data total ################
@@ -662,13 +739,13 @@ rm(list=ls())
 
 # 
 # # Load required libraries #
-# library(tidyverse)
-# library(vegan)
-# library(readxl)
-# library(lubridate)
-# library(phyloseq)
-# library(multcompView)
-# library(BiodiversityR)
+library(tidyverse)
+library(vegan)
+library(readxl)
+library(lubridate)
+library(phyloseq)
+library(multcompView)
+#library(BiodiversityR)
 
 # colors
 
@@ -685,11 +762,11 @@ IBM <- c( #IBM colors
 
 #import data#
 # Set the working directory 
-setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/")
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
-taxon <- read.csv("all/taxonomy.csv", header=T)
-asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.csv("metadat2.csv", row.names = 2)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+
+taxon <- read.csv("16S_taxonomy.csv", header=T)
+asvs <- read.table("16S_feature.table.tsv", sep="\t", header=T, row.names = 1)
+metadat<-read.csv("16S_metadata.csv", header = T, row.names = 1)
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns
@@ -750,7 +827,7 @@ ps<-subset_taxa(ps, Class!=" c__Chloroplast" )
 ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
-# 314K taxa and 84 samples when mitochondria removed. 
+# 220K taxa when chloroplast and mitochondria removed. 
 
 #total
 ps<-subset_samples(ps, Fraction=="Total")
@@ -908,97 +985,97 @@ ggplot() +
 ##add add abundance and taxon infoget
 asvkp<-unique(top_spp$asv)
 
-### figure without soil ##########
-
-# make df relative abundance
-df<-as.data.frame((otu_table(ps1)))
-df<-df/rowSums(df)*100
-df<- as.data.frame(t(df))
-df$asv<-row.names(df)
-df <- df[df$asv %in% asvkp, ]
-df$asv <-NULL
-
-# add treatment info
-df<-as.data.frame(t(df))
-metadat3<-metadat2 %>% select(Treatment, Trt_ID)
-df<-cbind(df, metadat3)
-df
-
-df<-df %>%
-  pivot_longer(cols = c(-Treatment, -Trt_ID) ,
-               names_to = "asv",
-               values_to = "percent_abundance")
-df
-# add phyla info
-tax<-as.data.frame((tax_table(ps1)))
-tax <- tax[tax$asv %in% asvkp, ]
-tax<-tax %>% group_by(Phyla, Order, Family, Genus, Species, asv) %>% summarise()
-tax
-tax<-tax %>% group_by(Phyla, Genus, asv) %>% summarise()
-tax
-tax$Blast_ID <- c("Arthrobacter sp. ",
-                  "Limnocylindria",
-                  "Limnocylindria",
-                  "Saccharimonadota",
-                  "Saccharimonadota",
-                  "Saccharimonadota",
-                  "Saccharimonadota",
-                  "Saccharimonadota",
-                  "Saccharimonadota",
-                  "Saccharimonadota",
-                  "Caulobacter sp.",
-                  "Caulobacter sp.",
-                  "Novosphingobium sp.",
-                  "Polaromonas sp.",
-                  "Rhizobium sp.",
-                  "Rhizobium sp.",
-                  "Nitrosocosmicus sp.",
-                  "Nitrosocosmicus sp.",
-                  "Nitrosocosmicus sp.",
-                  "Nitrosocosmicus sp."
-                  
-)
-tax
-df<-left_join(df, tax)
-df<-as.data.frame(df)
-df
-
-df$percent_abundance <- as.numeric(df$percent_abundance)
-df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-df
-
-df<-df %>% group_by(Phyla, Treatment, Trt_ID, Blast_ID) %>%
-  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
-df
-
-df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-
-
-#find outliers cutoff
-df1<-df%>% filter(Blast_ID=="Rhizobium") 
-summary(df1$percent_abundance)
-mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
-
-# remove outlier for easier plotting
-  # IBM colors
-  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
-  #svg(filename="total.taxa.svg", height = 4, width = 11)
-  df %>% filter(percent_abundance<10) %>%
-    ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
-    geom_boxplot(outliers=FALSE)+
-    geom_jitter()+
-    scale_fill_manual(values= IBM)+
-    theme_bw(base_size = 12) +
-    facet_grid(~Blast_ID, scales="free", space="free")+
-    theme(axis.text.x = element_text(angle=60, hjust=1),
-          plot.title = element_text(hjust = 0),
-          legend.position = "none")+
-    labs(title = "B       Total",
-         x = "", y = "Percent Abundance")
-  
-#  dev.off()
+# ### figure without soil ##########
+# 
+# # make df relative abundance
+# df<-as.data.frame((otu_table(ps1)))
+# df<-df/rowSums(df)*100
+# df<- as.data.frame(t(df))
+# df$asv<-row.names(df)
+# df <- df[df$asv %in% asvkp, ]
+# df$asv <-NULL
+# 
+# # add treatment info
+# df<-as.data.frame(t(df))
+# metadat3<-metadat2 %>% select(Treatment, Trt_ID)
+# df<-cbind(df, metadat3)
+# df
+# 
+# df<-df %>%
+#   pivot_longer(cols = c(-Treatment, -Trt_ID) ,
+#                names_to = "asv",
+#                values_to = "percent_abundance")
+# df
+# # add phyla info
+# tax<-as.data.frame((tax_table(ps1)))
+# tax <- tax[tax$asv %in% asvkp, ]
+# tax<-tax %>% group_by(Phyla, Order, Family, Genus, Species, asv) %>% summarise()
+# tax
+# tax<-tax %>% group_by(Phyla, Genus, asv) %>% summarise()
+# tax
+# tax$Blast_ID <- c("Arthrobacter sp. ",
+#                   "Limnocylindria",
+#                   "Limnocylindria",
+#                   "Saccharimonadota",
+#                   "Saccharimonadota",
+#                   "Saccharimonadota",
+#                   "Saccharimonadota",
+#                   "Saccharimonadota",
+#                   "Saccharimonadota",
+#                   "Saccharimonadota",
+#                   "Caulobacter sp.",
+#                   "Caulobacter sp.",
+#                   "Novosphingobium sp.",
+#                   "Polaromonas sp.",
+#                   "Rhizobium sp.",
+#                   "Rhizobium sp.",
+#                   "Nitrosocosmicus sp.",
+#                   "Nitrosocosmicus sp.",
+#                   "Nitrosocosmicus sp.",
+#                   "Nitrosocosmicus sp."
+#                   
+# )
+# tax
+# df<-left_join(df, tax)
+# df<-as.data.frame(df)
+# df
+# 
+# df$percent_abundance <- as.numeric(df$percent_abundance)
+# df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+# 
+# df
+# 
+# df<-df %>% group_by(Phyla, Treatment, Trt_ID, Blast_ID) %>%
+#   summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+# df
+# 
+# df$Treatment <- factor(df$Treatment, levels =c ("L", "G", "B", "GB", "LB", "LG", "LGB"))
+# 
+# 
+# 
+# #find outliers cutoff
+# df1<-df%>% filter(Blast_ID=="Rhizobium") 
+# summary(df1$percent_abundance)
+# mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
+# 
+# # remove outlier for easier plotting
+#   # IBM colors
+#   setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
+#   #svg(filename="total.taxa.svg", height = 4, width = 11)
+#   df %>% filter(percent_abundance<10) %>%
+#     ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
+#     geom_boxplot(outliers=FALSE)+
+#     geom_jitter()+
+#     scale_fill_manual(values= IBM)+
+#     theme_bw(base_size = 12) +
+#     facet_grid(~Blast_ID, scales="free", space="free")+
+#     theme(axis.text.x = element_text(angle=60, hjust=1),
+#           plot.title = element_text(hjust = 0),
+#           legend.position = "none")+
+#     labs(title = "B       Total",
+#          x = "", y = "Percent Abundance")
+#   
+# #  dev.off()
 
 #####figure with soil ######
   #  Constrained ordination
@@ -1187,7 +1264,7 @@ mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
     
     dev.off()
   
-# stats ########
+# stats ASV level ########
   library(phyloseq)
   library(DESeq2)
   library(ggplot2)
@@ -1196,17 +1273,13 @@ mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
   asvkp<-unique(top_spp$asv)
   
   #  filter for treatments
-  #  Constrained ordination
-  
+
   ps1<-subset_samples(ps,  N=="1" )
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
   Workshop_OTU <-otu_table(ps1)+1
   Workshop_metadat <- sample_data(ps1)
+
   
-  # Workshop_metadat$Grass
-  # Workshop_metadat$Legume
-  # Workshop_metadat$Brassicae
-  # Workshop_metadat$Treatment
   Workshop_taxo <- tax_table(ps1) 
   ps.plusone <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
   ps.plusone
@@ -1331,4 +1404,163 @@ mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
   sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.subset)[rownames(sigtab), ], "matrix"))  
   sigtab  
   
-#### pairwise effect
+
+  
+  #### stats genus level ########
+  
+   
+  # get asvs level ##
+  asvkp<-unique(top_spp$asv)
+  
+  #  filter for treatments
+  ps1<-subset_samples(ps,  N=="1" )
+  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  # add one
+  Workshop_OTU <-otu_table(ps1)+1
+  Workshop_metadat <- sample_data(ps1)
+  Workshop_taxo <- tax_table(ps1) 
+  ps.plusone <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
+  ps.plusone
+  
+  # Focus only on specific genera
+  ps.subset <- subset_taxa(ps.plusone, asv %in% asvkp)
+  ps.subset
+  
+  # check 
+  otu_table(ps.subset)
+  sample_data(ps.subset)
+  tax_table(ps.subset)
+  
+ 
+  
+  ## important taxanomy info ##
+  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+  taxinfo<-read.csv("taxonomy_keytaxa.csv")
+  taxinfo<-taxinfo %>% select(asv, Genus_blast)
+  taxinfo
+  
+   # add info to taxonomy table 
+  tax<-as.data.frame((tax_table(ps.subset)))
+  tax
+  tax<-left_join(tax, taxinfo)
+  
+  # clean up tax table 
+  row.names(tax)<-tax$asv
+  tax<-tax %>% select(-Confidence, - Species, -asv, -Genus, -Class, -Domain, -Family, -Order)
+  tax
+  tax_table(ps.subset) <- tax_table(as.matrix(tax))
+
+  
+  # aggregate to level
+  ps.genus <- tax_glom(ps.subset, taxrank = "Genus_blast", NArm = TRUE)
+  
+  # Inspect the result
+  ps.genus
+  
+  # check 
+  otu_table(ps.genus)
+  tax_table(ps.genus)
+  taxa_names(ps.genus)
+  
+
+  #  DESeq2 
+  ds <- phyloseq_to_deseq2(ps.genus, ~ Legume*Brassicae*Grass)
+  diagdds <- DESeq(ds, test="Wald", fitType="parametric")
+  resultsNames(diagdds)
+  res <- results(diagdds)
+  # check results intecept
+  alpha = 0.01
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab$model_term = "intercept"  
+  # add to table
+  table<-sigtab
+  table
+  
+  # effect of L*G * B
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Legume1.Brassicae1.Grass1")
+  res
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab
+  sigtab #  three way interaction
+  sigtab$model_term = "L*G*B"  
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  # effect of L*B
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Legume1.Brassicae1")
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "L*B"  #  interaction
+    # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  # effect of L*G
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Legume1.Grass1")
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "L*G"  #  interaction
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  # effect of G*B
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Brassicae1.Grass1")
+  res
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "G*B"  #  interaction
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  
+  # effect of G
+  resultsNames(diagdds)
+  res <- results(diagdds, name = "Grass_1_vs_0")
+  res
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "G"  #  effect
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  # effect of B
+  res <- results(diagdds, name = "Brassicae_1_vs_0")
+  # check
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix"))  
+  sigtab 
+  sigtab$model_term = "B"  #  effect
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  
+  # L effect
+  res <- results(diagdds, name = "Legume_1_vs_0")
+  sigtab = res[which(res$padj < alpha), ]
+  sigtab = cbind(as(sigtab, "data.frame"), as(tax_table(ps.genus)[rownames(sigtab), ], "matrix")) 
+  sigtab$model_term = "L"  #  effect
+  # add to table
+  table<-rbind(table, sigtab)
+  table
+  
+  
+  
+  
+  
+  
+  

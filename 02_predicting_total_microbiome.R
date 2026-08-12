@@ -22,11 +22,12 @@ library(compositions)
 
 
 #import data ###############
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing")
-taxon <- read.csv("all/taxonomy.csv", header=T)
-asvs <- read.table("all/feature.table.tsv", sep="\t", header=T, row.names = 1)
-metadat<-read.csv("metadata16S.csv", header = T, row.names = 1)
-
+# Set the working directory 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+#import data
+taxon <- read.csv("16S_taxonomy.csv", header=T)
+asvs <- read.table("16S_feature.table.tsv", sep="\t", header=T, row.names = 1)
+metadat<-read.csv("16S_metadata.csv", header = T, row.names = 1)
 # Transpose ASVS table #
 asvs[1:5,1:5]#taxa are columns
 asvs<-t(asvs)
@@ -374,9 +375,9 @@ write.csv(tax_table, "total.taxonomy.csv")
 
 
 ##### import predicted #####
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
-taxon <- read.csv("total.taxonomy.csv", row.names = 1)
-asvs <- read.csv("total.feature.table.csv", row.names = 1)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+taxon <- read.csv("total.taxonomy_predicted16S.csv", row.names = 1)
+asvs <- read.csv("total.feature.table_predicted16S.csv", row.names = 1)
 metadat<-read.csv("total.metadata_predicted16S.csv", header = T)
 
 ## Transpose ASVS table ##
@@ -409,7 +410,6 @@ Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev 
 ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
-# 1604 taxa when rarefied 
 
 
 ##### remove soil

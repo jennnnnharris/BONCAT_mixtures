@@ -24,7 +24,63 @@ IBM <- c( #IBM colors
   "#865338" # medium mocha brown
 )
 
-##############predicting microbial community #############
+##############import 16S data #############
+# Set the working directory 
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+
+taxon <- read.csv("16S_taxonomy.csv", header=T)
+asvs <- read.table("16S_feature.table.tsv", sep="\t", header=T, row.names = 1)
+metadat<-read.csv("16S_metadata.csv", header = T, row.names = 1)
+
+## Transpose ASVS table ##
+asvs[1:5,1:5]#taxa are columns
+asvs<-t(asvs)
+
+## order metadata
+metadat<-as.data.frame(metadat[order(metadat$SampleID),])
+row.names(metadat) <- metadat$SampleID
+metadat
+
+####filter for just flow cyto samples #
+asvs<-asvs[which(metadat$Fraction!="Total"),]
+metadat<-metadat[which(metadat$Fraction!="Total"),]
+dim(metadat)
+metadat$Legume   <- factor(metadat$Legume)
+metadat$Brassicae   <- factor(metadat$Brassicae)
+metadat$Grass   <- factor(metadat$Grass)
+
+metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
+metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
+
+#make taxon matrix row names OTUs
+#taxon[1:5,1:5]
+row.names(taxon) <- taxon$asv
+
+#get min number of reads in a sample
+min.s<-min(rowSums(asvs))
+
+### Rarefy to obtain even numbers of reads by sample ###
+set.seed(336)
+asvs.r<-rrarefy(asvs, min.s)
+
+# import it phyloseq
+Workshop_OTU <- otu_table(as.matrix(asvs.r), taxa_are_rows = FALSE)
+Workshop_metadat <- sample_data(metadat)
+Workshop_taxo <- tax_table(as.matrix(taxon)) # this taxon file is from the prev phyloseq object length = 14833
+ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
+ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+ps
+# 110K taxa when rarefied 
+
+
+###remove plant contamination  ##
+# Select unassigned Asvs that the only in the the roots and nodules
+ps<-subset_taxa(ps, Class!="c__Chloroplast" )
+ps<-subset_taxa(ps, Class!=" c__Chloroplast" )
+ps<-subset_taxa(ps, Family!= " f__Mitochondria" )
+ps<-prune_taxa(taxa_sums(ps) > 0, ps)
+ps
+# 110K taxa 
 
 # filter ps object only abundant taxa and active 
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
@@ -41,13 +97,13 @@ ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps # 1804 taxa
 tax_table<-tax_table(ps)
 
-# import biomass data 
+# import biomass data  ##########
 
 #load libraries
 library(readxl)
 library(tidyverse)
 # load biomass info
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 biomass<-read.csv("biomass_percent.csv")
 # only n+ 
 biomass<-biomass %>% filter(N==1)
@@ -348,11 +404,11 @@ write.csv(tax_table, "taxonomy.csv")
 
 ##### import predicted #####
 ## Set the working directory ###
-#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
-taxon <- read.csv("taxonomy.csv", row.names = 1)
-asvs <- read.csv("feature.table.csv", row.names = 1)
-metadat<-read.csv("metadata_predicted16S.csv", header = T)
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+taxon <- read.csv("active.taxonomy_predicted16S.csv", row.names = 1)
+asvs <- read.csv("active.feature.table_predicted16S.csv", row.names = 1)
+metadat<-read.csv("active.metadata_predicted16S.csv", header = T)
+
 
 ## Transpose ASVS table ##
 asvs[1:5,1:5]#taxa are columns

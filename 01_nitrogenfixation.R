@@ -21,8 +21,7 @@ legume_cols <- c( #IBM colors
 
 # calculate nitrogen from fixation #############
 
-
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Nfix")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 df <- read.csv("raw_nitrogen_fixation.csv", header=T, stringsAsFactors = F) # fix data
 
 
@@ -147,8 +146,9 @@ head(df.leg)
   
 
 # add block info
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data")
-block <- read_excel("metadata_blockinfo.xlsx")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+block <- read.csv("metadata_blockinfo.csv")
+
 head(block)  
 df.leg<-left_join(df.leg, block)
   

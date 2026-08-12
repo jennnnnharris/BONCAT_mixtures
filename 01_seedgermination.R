@@ -15,7 +15,7 @@ IBM <- c( #IBM colors
 )
 
 # load data 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/seedgermination")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 df <- read.csv("weedseedgermination.csv", row.names = 1 )
 head(df)
 
@@ -169,7 +169,9 @@ get.expect<-function(df, sp1, sp2, trait, sp3) {
 ######expections weed seed########
 library(tidyverse)
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/plant_physiology")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+block <- read.csv("metadata_blockinfo.csv")
+head(block)  
 df<-read.csv("weed_seed_decay.csv", row.names = 1)
 head(df)
 df<-df %>% filter(Treatment!="S")
