@@ -141,7 +141,7 @@ species_scores <- species_scores %>%
   mutate(dist = sqrt(CAP1^2 + CAP2^2)) %>%
   arrange(desc(dist))
 
-# Select the top 10 species
+# Select the top 20 species
 top_spp <- head(species_scores, 20)
 top_spp
 
