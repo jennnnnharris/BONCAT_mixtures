@@ -24,7 +24,7 @@ IBM <- c( #IBM colors
 
 
 ####### import data #####
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
 fc <-read.csv("processed_flowcyto.csv")
 head(fc)
 
@@ -34,7 +34,7 @@ fc$Date_Sorted<-mdy(fc$Date_Sorted)
 # remove outliers
 # filter out day were pos ctl didn't work
 fc <- filter(fc, Trt_ID!="B+N6")
-fc<-filter(fc, Date_Sorted != "2023-05-25")
+#fc<-filter(fc, Date_Sorted != "2023-05-25")
 head(fc)
 
 # make treatment and day factors

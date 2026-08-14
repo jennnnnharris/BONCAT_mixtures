@@ -54,7 +54,7 @@ myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
 
 #import data#
 # Set the working directory 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 
 taxon <- read.csv("16S_taxonomy.csv", header=T)
 asvs <- read.table("16S_feature.table.tsv", sep="\t", header=T, row.names = 1)
@@ -486,7 +486,7 @@ ps
 #1778 asvs
 
 
-####### 4. CAP model L * G *B #######
+####### 4. CAP model L * G *B Nitrogen + #######
 
 # subset data
 # nitrogen + only
@@ -508,6 +508,7 @@ cap_result <- capscale(dist_matrix ~ Legume*Grass*Brassicae+block,
 
 anova.cca(cap_result, by="terms")
 
+####### 4. CAP model L * G *B Nitrogen - #######
 
 
 
