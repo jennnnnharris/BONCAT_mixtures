@@ -33,9 +33,10 @@ asvs[1:5,1:5]#taxa are columns
 asvs<-t(asvs)
 
 # order metadata #
-metadat<-as.data.frame(metadat[order(metadat$SampleID),])
+metadat
+metadat<-as.data.frame(metadat[order(row.names(metadat)),])
+
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-row.names(metadat) <- metadat$SampleID
 metadat$N   <- factor(metadat$N)
 metadat$Legume   <- factor(metadat$Legume)
 metadat$Brassicae   <- factor(metadat$Brassicae)
@@ -106,8 +107,6 @@ ps<-subset_samples(ps, N==1)
 ps
 
 # import biomass data  #
-# load biomass info
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/biomass")
 biomass<-read.csv("biomass_percent.csv")
 # filter for only n+ and required columns
 biomass<-biomass %>% filter(N==1) %>% select(-Total.Root.g, -Total.withbulk, -Stem.Biomass.g, -Root.Biomass.g, -Bulk.Root.g)
@@ -365,12 +364,11 @@ otus<-rbind(df, df1)
 otus<-t(otus)
 row.names(otus)
 colnames(otus)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
-write.csv(otus, "total.feature.table.csv")
+write.csv(otus, "total.feature.table_predicted16S.csv")
 
 #taxon
 tax_table<-as.data.frame(tax_table(ps))
-write.csv(tax_table, "total.taxonomy.csv")
+write.csv(tax_table, "total.taxonomy_predicted16S.csv.csv")
 
 
 
@@ -428,122 +426,6 @@ metadat$Treatment   <- factor(metadat$Treatment, levels= c("L", "G", "B", "GB", 
 otus.bray<-vegdist(otu_table(ps), method = "bray")
 
 
-###PCOA ##########
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(15-1), eig=TRUE)
-
-# Store coordinates for first two axes in new variable #
-otus.p <- otus.pcoa$points[,1:2]
-
-colnames(otus.p) <- c("PC1", "PC2")
-
-# Calculate % variance explained by each axis #
-otus.eig<-otus.pcoa$eig
-perc.exp<-otus.eig/(sum(otus.eig))*100
-pe1<-round(perc.exp[1],2)
-pe2<-round(perc.exp[2],2)
-pe2
-
-#calculate total variance explained by each principal component
-perc.exp<-otus.eig/(sum(otus.eig))*100
-#scree plot 
-plot(otus.pcoa$eig)
-
-# load colors 
-IBM <- c( #IBM colors
-  "navy", # dark royal blue
-  "#648FFF", # french blue
-  "#785EF0", # light purple
-  "#DC267F", # magenta pink 
-  "#FE6100", # bright orange
-  "#FFB000", # golden yellow
-  "#865338" # medium mocha brown
-)
-
-# PCoA 
-par(adj=.5)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="",
-         xlab=paste("PCoA1 (",pe1,"% var. explained)"),
-         ylab=paste("PCoA2 (",pe2,"% var. explained)"))
-par(adj = 0)
-#title(main= "E")
-par(adj=.5)
-points(otus.p, 
-       col= IBM[as.factor(metadat$Treatment)],
-       pch= c(16,8)[as.factor(metadat$Measurement)],
-       
-       lwd=2,cex=1.2,
-       bg=IBM[as.factor(metadat$Treatment)],)
-
-legend("bottomright", legend=c("measured", "predicted"  ),
-       pch=c(16,8 ),
-       cex=1,
-       title = "",     bty = "o")
-
-
-# permanova
-#adonis2(otus.bray ~ Treatment, data = metadat2)
-#adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
-
-
-#### CAP ##### 
-
-# Run the CAP (db-RDA) analysis
-# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(otus.bray ~ Treatment,
-                       data = metadat2,
-                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
-
-anova.cca(cap_result, by="terms")
-
-smry <- summary(cap_result)
-smry
-sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
-sc_si
-
-# Extract the model's adjusted R2
-RsquareAdj(cap_result)$adj.r.squared
-
-# percent varience of total varience on RDA 1 and RDA 2
-perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
-perc
-
-### 4. plot 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/")
-svg("cap.total.predicted.svg", width = 6 , height = 6)
-
-#windows(6,6)
-par(cex.lab = 1.8) # make all fonts in graphs little bigger
-ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-         xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
-         ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
-par(adj = 0)
-#title(main= "E")
-par(adj=.5)
-points(sc_si, 
-       col= IBM[metadat2$Treatment],
-       pch= c(16,8)[as.factor(metadat2$Measurement)],
-       lwd=1,cex=2,
-       bg=IBM[metadat2$Treatment])
-ordiellipse(sc_si, metadat2$Treatment,
-            kind = "ehull", conf=0.95, label=F,
-            draw = "polygon",
-            border = 0,
-            col= IBM,
-            alpha = 40,
-            cex=2)
- # legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
- #        fill= IBM,
- #        cex=1,
- #        bty = "n")
-legend("topright", legend=c("measured", "predicted"  ),
-       pch=c(16,8 ),
-       cex=1.8,
-      bty = "o")
-
-dev.off()
-
-
 
 
 ########## Aitchison distance PLOT  #####
@@ -594,7 +476,7 @@ perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
 # save
 # plot
 #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predicted_total")
-#svg("total_PCA.svg",  width=6, height=6)
+#svg("total_predicted_PCA.svg",  width=6, height=6)
 
 par(adj=.5)
 ordiplot(pca1, choices=c(1,2),
@@ -617,133 +499,72 @@ legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
         cex=1,
         bty = "o")
  
-dev.off() 
+#dev.off() 
  
-
-
-
-
-######pairwise adonis test
-# seperatated out by treatment
-#GB
-ps1 <-subset_samples(ps,  Treatment=="GB")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# 1745 taxa
-# subset metadata
-metadat2<-filter(metadat, Treatment=="GB")
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
-# permanova
-adonis2(otus.bray ~ Measurement, data = metadat2)
-
-
-#LB
-ps1 <-subset_samples(ps, Treatment=="LB")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# subset metadata
-metadat2<-filter(metadat, Treatment=="LB")
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
-# permanova
-adonis2(otus.bray ~ Measurement, data = metadat2)
-
-
-
-
-#LG
-ps1 <-subset_samples(ps, Treatment=="LG")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# subset metadata
-metadat2<-filter(metadat, Treatment=="LG")
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
-# permanova
-adonis2(otus.bray ~ Measurement, data = metadat2)
-
-
-#LGB
-ps1 <-subset_samples(ps, Treatment=="LGB")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# subset metadata
-metadat2<-filter(metadat, Treatment=="LGB")
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
-# permanova
-adonis2(otus.bray ~ Measurement, data = metadat2)
-
-
-
-# pairwise distance between predicted and measured bray Curtis ##############
-ps1 <-subset_samples(ps, Fraction=="Total" & Treatment!="Soil" & n_species!="1" &Rep!="2" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil", n_species!="1", Rep!="2"  ) %>%
-  select(Treatment, Measurement)
-
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-dist_mat<-as.matrix(otus.bray) 
-dist_mat
-key <-cbind(metadat2, dist_mat)
-
-
-# Define the Mapping
-# We create a lookup table that links the Measured Sample ID to its Prediction ID
-# Note: Ensure the order in 'measured_ids' matches the N1, N3, N4... order
-mapping <- data.frame(
-  Treatment = c(rep("GB", 5), rep("LB", 5), rep("LG", 5), rep("LGB", 5)),
-  Prediction_ID = c(
-    paste0("predict_GB_N", c(1,3,4,5,6)),
-    paste0("predict_LB_N", c(1,3,4,5,6)),
-    paste0("predict_LG_N", c(1,3,4,5,6)),
-    paste0("predict_LGB_N", c(1,3,4,5,6))
-  ),
-  Measured_ID = c(
-    "T_DNA_13_S130", "T_DNA_41_S90", "T_DNA_56_S168", "T_DNA_71_S159", "T_DNA_85_S139", # GB
-    "T_DNA_12_S119", "T_DNA_42_S101", "T_DNA_57_S92", "T_DNA_72_S170", "T_DNA_86_S150", # LB
-    "T_DNA_11_S108", "T_DNA_43_S112", "T_DNA_58_S103", "T_DNA_73_S94", "T_DNA_87_S161", # LG
-    "T_DNA_14_S141",  "T_DNA_44_S123", "T_DNA_59_S114", "T_DNA_74_S105", "T_DNA_88_S172"  # LGB
-  )
-)
-
-mapping
-dist_mat
-# Extract the Distances
-# We loop through the mapping and pull the specific intersection from the matrix
-mapping$BC_Distance <- mapply(function(p, m) dist_mat[p, m], 
-                              mapping$Prediction_ID, 
-                              mapping$Measured_ID)
-
-head(mapping)
-# Statistical Comparison
-# Test if the prediction error (distance) differs by treatment
-fit <- aov(BC_Distance ~ Treatment, data = mapping)
-summary(fit)
-
-kruskal.test(BC_Distance ~ Treatment, data = mapping)
-
-# 5. Visualization
-ggplot(mapping, aes(x = Treatment, y = BC_Distance, fill = Treatment)) +
-  geom_boxplot(alpha = 0.7) +
-  geom_point(position = position_jitter(width = 0.1)) +
-  labs(title = "Within-Pair Prediction Accuracy",
-       y = "Bray-Curtis Distance (Measured vs. Predicted)",
-       x = "Treatment") +
-  theme_bw()
+# 
+# 
+# 
+# 
+# ######pairwise adonis test
+# # seperatated out by treatment
+# #GB
+# ps1 <-subset_samples(ps,  Treatment=="GB")
+# ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+# ps1
+# # 1745 taxa
+# # subset metadata
+# metadat2<-filter(metadat, Treatment=="GB")
+# # Calculate Bray-Curtis distance between samples
+# otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# # Perform PCoA analysis of BC distances #
+# otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
+# # permanova
+# adonis2(otus.bray ~ Measurement, data = metadat2)
+# 
+# 
+# #LB
+# ps1 <-subset_samples(ps, Treatment=="LB")
+# ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+# ps1
+# # subset metadata
+# metadat2<-filter(metadat, Treatment=="LB")
+# # Calculate Bray-Curtis distance between samples
+# otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# # Perform PCoA analysis of BC distances #
+# otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
+# # permanova
+# adonis2(otus.bray ~ Measurement, data = metadat2)
+# 
+# 
+# 
+# 
+# #LG
+# ps1 <-subset_samples(ps, Treatment=="LG")
+# ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+# ps1
+# # subset metadata
+# metadat2<-filter(metadat, Treatment=="LG")
+# # Calculate Bray-Curtis distance between samples
+# otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# # Perform PCoA analysis of BC distances #
+# otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
+# # permanova
+# adonis2(otus.bray ~ Measurement, data = metadat2)
+# 
+# 
+# #LGB
+# ps1 <-subset_samples(ps, Treatment=="LGB")
+# ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+# ps1
+# # subset metadata
+# metadat2<-filter(metadat, Treatment=="LGB")
+# # Calculate Bray-Curtis distance between samples
+# otus.bray<-vegdist(otu_table(ps1), method = "bray")
+# # Perform PCoA analysis of BC distances #
+# otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
+# # permanova
+# adonis2(otus.bray ~ Measurement, data = metadat2)
+# 
 
 
  ###scalar projection GB #####
@@ -807,21 +628,22 @@ GB_index
 mix_data<-cbind(GB_index, mix_data)
 metadat3<-metadat2 %>% filter(Treatment=="GB") 
 mix_data<-cbind(metadat3, mix_data)
+mix_data$rep <- rep(c("1","3", "4", "5", "6"), 2)
  
 
 # # plot raw -1 to 1
-#  ggplot(mix_data, aes(x = Measurement, y = GB_index, fill = Measurement)) +
-#    geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-#    scale_fill_manual(values = c("#DC267F", "grey70"))+
-#    geom_jitter(width = 0.1, size = 2) +
-#    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-#    annotate("text", x = 0.5, y = -1, label = "Pure G", hjust = 0) +
-#    annotate("text", x = 0.5, y = 1, label = "Pure B", hjust = 0) +
-#    labs(title = "Mixture Composition Along G-to-B Axis",
-#         y = "Projection Index (G → B)",
-#         x = "Treatment") +
-#    theme_minimal()+
-#    coord_flip()
+ ggplot(mix_data, aes(x = Measurement, y = GB_index, fill = Measurement)) +
+   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+   scale_fill_manual(values = c("#DC267F", "grey70"))+
+   geom_jitter(width = 0.1, size = 2) +
+   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+   annotate("text", x = 0.5, y = -1, label = "Pure G", hjust = 0) +
+   annotate("text", x = 0.5, y = 1, label = "Pure B", hjust = 0) +
+   labs(title = "Mixture Composition Along G-to-B Axis",
+        y = "Projection Index (G → B)",
+        x = "Treatment") +
+   theme_minimal()+
+   coord_flip()
 ### plot with predicted as zero ###
  # subtract each rep 
  mix_data<-mix_data %>% select(GB_index, Treatment, Measurement)
@@ -849,15 +671,21 @@ ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
 
  
 #stats #############
-
 mix_data
 
-# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
-t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "two.sided")
 
-# Print results
-print(t_test_result)
- 
+mix_data$rep <- rep(c("1","3", "4", "5", "6"), 2)
+# run anova
+a1<-aov(GB_index ~ Measurement+rep, data = mix_data)
+summary(a1)
+
+# paired test 
+p<-mix_data$GB_index[which(mix_data$Measurement=="predicted")]
+m<-mix_data$GB_index[which(mix_data$Measurement!="predicted")]
+paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
+
+
+
  
  ###scalar projection LB #####
  
@@ -914,8 +742,8 @@ print(t_test_result)
  mix_data
  
  # plot
- setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predicted_total")
- svg("LB_total.svg",  width=4, height=1.5)
+ #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predicted_total")
+ #svg("LB_total.svg",  width=4, height=1.5)
  mix_data %>% filter(Measurement=="measured") %>%
    ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
    geom_boxplot(alpha = 0.6, outlier.shape = NA) +
@@ -930,20 +758,26 @@ print(t_test_result)
      coord_flip()+
      theme_minimal()+
      theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
-   dev.off()  
+   #dev.off()  
    
    
    # stats #############
    
-   mix_data
+   mix_data     
+   mix_data$rep <- rep(c("1","3", "4", "5", "6"), 2)
    
-   # Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
-   t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+   # run anova
+   a1<-aov(LB_index ~ Measurement+rep, data = mix_data)
+   summary(a1)
    
-   # Print results
-   print(t_test_result)
    
- 
+   # paired test 
+   p<-mix_data$LB_index[which(mix_data$Measurement=="predicted")]
+   m<-mix_data$LB_index[which(mix_data$Measurement!="predicted")]
+   paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
+   paired_test
+   
+   
  ###scalar projection LG #####
  
  # # clr matrix
@@ -1016,18 +850,23 @@ print(t_test_result)
    theme_minimal()+
    theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
  
- dev.off()  
+ #dev.off()  
  
  
- stats #############
+ ###stats #############
  
  mix_data
+ mix_data$rep <- rep(c("1","3", "4", "5", "6"), 2)
+ # run anova
+ a1<-aov(index ~ Measurement+rep, data = mix_data)
+ summary(a1)
  
- # Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
- t_test_result <- t.test(index ~ Measurement, data = mix_data, alternative = "two.sided")
+  # paired test 
+ p<-mix_data$index[which(mix_data$Measurement=="predicted")]
+ m<-mix_data$index[which(mix_data$Measurement!="predicted")]
+ paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
+ paired_test
  
- # Print results
- print(t_test_result)
  
  
  ######simple ordination three species ####

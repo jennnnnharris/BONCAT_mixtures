@@ -37,8 +37,8 @@ asvs[1:5,1:5]#taxa are columns
 asvs<-t(asvs)
 
 ## order metadata
-metadat<-as.data.frame(metadat[order(metadat$SampleID),])
-row.names(metadat) <- metadat$SampleID
+metadat
+metadat<-as.data.frame(metadat[order(row.names(metadat)),])
 metadat
 
 ####filter for just flow cyto samples #
@@ -110,8 +110,9 @@ biomass<-biomass %>% filter(N==1)
 biomass 
 
 # LG
-# filter for L community
+#filter for L community
 ps1<-subset_samples(ps , Treatment=="L")
+ps1
 #ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 df<-as.data.frame(otu_table(ps1))
 as.data.frame(sample_data(ps1))   # no rep 6
@@ -122,9 +123,11 @@ df$Pot_ID<-as.numeric(names[,2])
 df<-df %>% arrange(Pot_ID)
 df$Pot_ID
 df$Pot_ID=NULL
+dim(df)
+#df$Pot_ID=NULL
 # get biomass info and multiply by L biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% 
+sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="legume") %>% 
   filter(Rep!=6)# remove rep 6 
 vector<-sp1$percent/100
 data_frame_multiplied1 <- df %>%
@@ -134,8 +137,10 @@ data_frame_multiplied1 <- df %>%
       .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
     )
   )
+
 # filter for G community
 ps1<-subset_samples(ps , Treatment=="G" & Rep!="6")
+ ps1
 #ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
 df<-as.data.frame(otu_table(ps1))
 as.data.frame(sample_data(ps1))   # no rep 6 for L so we will skip for G
@@ -149,7 +154,7 @@ df$Pot_ID
 df$Pot_ID=NULL
 # get biomass info and multiply by G biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="grass") %>% arrange(Pot_ID) %>% 
+sp1<-biomass %>% filter(Treatment=="LG") %>% filter(Species=="grass") %>% 
   filter(Rep!=6)# remove rep 6 
 vector<-sp1$percent/100
 sp1
@@ -161,7 +166,8 @@ data_frame_multiplied2<- df %>%
     )
   )
 
-print(data_frame_multiplied2)
+dim(data_frame_multiplied2)
+dim(data_frame_multiplied1)
 # add together
 LG<-data_frame_multiplied1 + data_frame_multiplied2
 row.names(LG)<-c("predict_LG_N1", "predict_LG_N2", "predict_LG_N3", "predict_LG_N4", "predict_LG_N5")
@@ -188,7 +194,7 @@ df$Pot_ID
 df$Pot_ID=NULL
 # get biomass info and multiply by G biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="grass") %>% arrange(Pot_ID) %>% 
+sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="grass")  %>% 
   filter(Rep!=1)# remove rep 1
 vector<-sp1$percent/100
 vector
@@ -200,8 +206,8 @@ data_frame_multiplied1 <- df %>%
     )
   )
 
-print(data_frame_multiplied1)
-
+#print(data_frame_multiplied1)
+dim(data_frame_multiplied1)
 # filter for B community
 ps1<-subset_samples(ps , Treatment=="B" )
 df<-as.data.frame(otu_table(ps1))
@@ -216,7 +222,7 @@ df$Pot_ID
 df$Pot_ID=NULL
 # get biomass info and multiply by G biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>% 
+sp1<-biomass %>% filter(Treatment=="GB") %>% filter(Species=="brassica") %>% 
   filter(Rep!=1)# remove rep 1
 vector<-sp1$percent/100
 sp1
@@ -228,7 +234,7 @@ data_frame_multiplied2<- df %>%
       .fns = ~ .x * vector # The function to apply: multiply the current column (.x) by the vector
     )
   )
-print(data_frame_multiplied2)
+dim(data_frame_multiplied2)
 # add together
 GB<-data_frame_multiplied1 + data_frame_multiplied2
 row.names(GB)<-c("predict_GB_N2", "predict_GB_N3", "predict_GB_N4", "predict_GB_N5", "predict_GB_N6")
@@ -238,7 +244,9 @@ row.names(GB)<-c("predict_GB_N2", "predict_GB_N3", "predict_GB_N4", "predict_GB_
 
 # LB
 # filter for L community
+# for L in LB we have rep 2 , 3, 4 , 5
 ps1<-subset_samples(ps , Treatment=="L" & Rep!="1" & Rep!="6") # no rep 1 for brass so skip that one 
+ps1
 df<-as.data.frame(otu_table(ps1))
 as.data.frame(sample_data(ps1))   
 # arrange by rep
@@ -249,10 +257,11 @@ df$Pot_ID<-as.numeric(names[,2])
 df<-df %>% arrange(Pot_ID)
 df$Pot_ID
 df$Pot_ID=NULL
+df[1:5,1:5]
 # get biomass info and multiply by L biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% 
-  filter(Rep!=1 )# remove rep 1 a LB doesn't have a rep 5, so use 6 insteasd
+sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="legume")  %>% 
+  filter(Rep!=1 & Rep!="6")#
 sp1
 vector<-sp1$percent/100
 vector
@@ -275,10 +284,11 @@ df$Pot_ID<-as.numeric(names[,2])
 df<-df %>% arrange(Pot_ID)
 df$Pot_ID
 df$Pot_ID=NULL
+df[1:5, 1:5]
 # get biomass info and multiply by B biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>% 
-  filter(Rep!=1)# remove rep 1
+sp1<-biomass %>% filter(Treatment=="LB") %>% filter(Species=="brassica") %>% 
+  filter(Rep!=1& Rep!="6")# remove rep 1
 vector<-sp1$percent/100
 sp1
 vector
@@ -310,9 +320,10 @@ df$Pot_ID<-as.numeric(names[,2])
 df<-df %>% arrange(Pot_ID)
 df$Pot_ID
 df$Pot_ID=NULL
+df[1:5, 1:5]
 # get biomass info and multiply by L biomass
 head(biomass)
-sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="legume") %>% arrange(Pot_ID) %>% 
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="legume") %>% 
   filter(Rep!=1 & Rep!=6)# remove rep 1  and 6
 sp1
 vector<-sp1$percent/100
@@ -339,11 +350,11 @@ df$Pot_ID
 df$Pot_ID=NULL
 # get biomass info and multiply by B biomass
 #head(biomass)
-sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>% 
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica")  %>% 
   filter(Rep!=1 & Rep!=6)# remove rep 1 and 6
 vector<-sp1$percent/100
 #sp1
-#vector
+vector
 data_frame_multiplied2<- df %>%
   mutate(
     across(
@@ -367,7 +378,7 @@ df<-df %>% arrange(Pot_ID)
 df$Pot_ID=NULL
 # get biomass info and multiply by B biomass
 #head(biomass)
-sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica") %>% arrange(Pot_ID) %>% 
+sp1<-biomass %>% filter(Treatment=="LGB") %>% filter(Species=="brassica")  %>% 
   filter(Rep!=1 & Rep!=6)# remove rep 1
 vector<-sp1$percent/100
 #sp1
@@ -393,13 +404,13 @@ row.names(df1)
 df<-as.data.frame(otu_table(ps))
 otus<-rbind(df1, df)
 otus<-t(otus)
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/16S_sequencing/predicted")
-write.csv(otus, "feature.table.csv")
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+write.csv(otus, "active.feature.table._predicted16S.csv")
 
 
 #taxon
 tax_table<-as.data.frame(tax_table(ps))
-write.csv(tax_table, "taxonomy.csv")
+write.csv(tax_table, "active.taxonomy_predicted16S.csv")
 
 
 ##### import predicted #####
@@ -440,198 +451,6 @@ ps <- phyloseq(Workshop_taxo, Workshop_OTU,Workshop_metadat )
 ps<-prune_taxa(taxa_sums(ps) > 0, ps)
 ps
 # 1804 taxa when rarefied 
-
-
-##### predicted plot #####
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# 1745 taxa
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment!="Soil" & Treatment!="CTL" )
-#factor
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-#metadat2$Fraction   <- factor(metadat2$Fraction)
-
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(15-1), eig=TRUE)
-# Store coordinates for first two axes in new variable #
-otus.p <- otus.pcoa$points[,1:2]
-colnames(otus.p) <- c("PC1", "PC2")
-
-# Calculate % variance explained by each axis #
-otus.eig<-otus.pcoa$eig
-perc.exp<-otus.eig/(sum(otus.eig))*100
-pe1<-round(perc.exp[1],2)
-pe2<-round(perc.exp[2],2)
-pe2
-
-#calculate total variance explained by each principal component
-perc.exp<-otus.eig/(sum(otus.eig))*100
-#scree plot 
-plot(otus.pcoa$eig)
-
-
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
-#svg("pcoa.predicted1.svg", height = 4, width = 4)
-par(adj=.5)
-ordiplot(otus.pcoa,choices=c(1,2), type="none", main="",
-         xlab=paste("PCoA1 (",pe1,"% var. explained)"),
-         ylab=paste("PCoA2 (",pe2,"% var. explained)"))
-par(adj = 0)
-title(main= "E")
-par(adj=.5)
-points(otus.p, 
-       col= IBM[as.factor(metadat2$Treatment)],
-       pch= c(16,8)[as.factor(metadat2$Measurement)],
-       
-       lwd=2,cex=1.2,
-       bg=IBM[as.factor(metadat2$Treatment)],)
-# ordiellipse(otus.pcoa, as.factor(metadat2$Measurement),  
-#             kind = "ehull", conf=0.95, label=T, 
-#             draw = "polygon",
-#             border = 0,
-#             col= IBM,
-#             alpha = 50,
-#             cex=1.5)
-legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-        fill= IBM,
-        cex=.5,
-        bty = "n")
-legend("bottomright", legend=c("measured", "predicted"  ),
-       pch=c(16,8 ),
-       cex=.5,
-       title = "",     bty = "o")
-
-#dev.off()
-# permanova
-adonis2(otus.bray ~ Treatment, data = metadat2)
-adonis2(otus.bray ~ Treatment+Measurement+Treatment*Measurement, data = metadat2, by="terms")
-
-
-### pairwise adonis test #####
-# seperatated out by treatment
-#GB
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="GB")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# 1745 taxa
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment=="GB")
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
-
-# permanova
-adonis2(otus.bray ~ Measurement, data = metadat2)
-
-
-#LB
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="LB")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# 1745 taxa
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LB")
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(3-1), eig=TRUE)
-# permanova
-adonis2(otus.bray ~ Measurement, data = metadat2)
-
-
-
-#LG
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="LG")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# 1745 taxa
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LG")
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(5-1), eig=TRUE)
-# permanova
-adonis2(otus.bray ~ Measurement, data = metadat2) # marginal
-
-
-
-#LGB
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment=="LGB")
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-# 1745 taxa
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Active" & Treatment=="LGB")
-# Calculate Bray-Curtis distance between samples
-otus.bray<-vegdist(otu_table(ps1), method = "bray")
-# Perform PCoA analysis of BC distances #
-otus.pcoa <- cmdscale(otus.bray, k=(5-1), eig=TRUE)
-# permanova
-adonis2(otus.bray ~ Measurement, data = metadat2) # significantly different
-
-#### CAP ##### 
-
-# Run the CAP (db-RDA) analysis
-# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
-cap_result <- capscale(otus.bray ~ (Treatment+Measurement)^2,
-                       data = metadat2,
-                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
-
-anova.cca(cap_result, by="terms")
-
-smry <- summary(cap_result)
-smry
-sc_si <- scores(cap_result, display="sites", choices=c(1,2), scaling=1)
-sc_si
-
-# Extract the model's adjusted R2
-RsquareAdj(cap_result)$adj.r.squared
-
-# percent varience of total varience on RDA 1 and RDA 2
-perc <- round(100*(summary(cap_result)$cont$importance[2, 1:2]), 2)
-perc
-
-### 4. plot 
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAPactive")
-#setwd("C:/Users/Jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_CAP_active")
-#svg("cap.active.svg", width = 5 , height = 5)
-#windows(6,6)
-par(cex.lab = 1.1) # make all fonts in graphs little bigger
-ordiplot(cap_result, choices=c(1,2), scaling =1, type="none",
-         main="", cex = 1.2,
-         xlab=paste("CAP 1 (",round(perc[1],1),"% variance explained)"),
-         ylab=paste("CAP 2 (",round(perc[2],2),"% variance explained)"))
-par(adj = 0)
-title(main= "E")
-par(adj=.5)
-points(sc_si, 
-       col= IBM[metadat2$Treatment],
-       pch= c(16,8)[as.factor(metadat2$Measurement)],
-       lwd=1,cex=2,
-       bg=IBM[metadat2$Treatment])
-ordiellipse(sc_si, metadat2$Treatment,
-            kind = "ehull", conf=0.95, label=F,
-            draw = "polygon",
-            border = 0,
-            col= IBM,
-            alpha = 40,
-            cex=1)
- legend("topright", legend=c("L", "G", "B", "GB", "LB", "LG", "LGB"),
-        fill= IBM,
-        cex=.5,
-        bty = "n")
-legend("bottomleft", legend=c("measured", "predicted"  ),
-       pch=c(16,8 ),
-       cex=.5,
-       title = "",     bty = "o")
-
-#dev.off()
 
 
 ########## Aitchison distance PLOT  #####
@@ -679,8 +498,8 @@ perc2 <- paste0("PC2 (", round(var_explained[2], 2), "%)")
 
 # save 
 # plot
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predicted_active")
-svg("active_PCA.svg",  width=6, height=6)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_predicted_active")
+#svg("active_PCA.svg",  width=6, height=6)
 par(adj=.5)
 ordiplot(pca1, choices=c(1,2),
          type="none",
@@ -702,7 +521,7 @@ legend("bottomright", legend=c("measured", "expected"  ),
        cex=1,
        bty = "o")
 
-dev.off()
+#dev.off()
 
 
 ###scalar projection GB #####
@@ -723,10 +542,11 @@ clr_data<-as.matrix(clr_data)
 clr_data[1:5, 1:5]
 
 # # add metadata
-# key <-cbind(metadat2, clr_data)
-# key[1:5, 1:5]
+key <-cbind(metadat2, clr_data)
+key[1:5, 1:5]
 
-
++
+   coord_flip()
 # 1. Calculate the centroids (mean vector) for your baseline monocultures
 # (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
 centroid_G <- colMeans(clr_data[ which(metadat2$Treatment=="G"), ])
@@ -779,8 +599,7 @@ mix_data
    labs(title = "Mixture Composition Along G-to-B Axis",
         y = "Projection Index (G → B)",
         x = "Treatment") +
-   theme_minimal()+
-   coord_flip()
+   theme_minimal()
 ### plot with predicted as zero ###
 # subtract each rep 
 mix_data<-mix_data %>% select(GB_index, Treatment, Measurement, Rep) %>% filter(Rep!="1")
@@ -789,8 +608,8 @@ P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
 mix_data$diff_predict <- mix_data$GB_index-P 
 
 # plot
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
-svg("GB_active.svg",  width=4, height=1.5)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+#svg("GB_active.svg",  width=4, height=1.5)
 mix_data %>% filter(Measurement=="measured") %>%
   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
@@ -805,18 +624,22 @@ mix_data %>% filter(Measurement=="measured") %>%
   coord_flip()+
   theme_minimal()+
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
-dev.off()  
+#dev.off()  
 
 # stats #############
 
+
 mix_data
+mix_data$rep <- rep(c("1","2", "3", "4", "5"), 2)
+# run anova
+a1<-aov(GB_index ~ Measurement+rep, data = mix_data)
+summary(a1)
 
-# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
-t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "two.sided")
-
-# Print results
-print(t_test_result)
-
+# paired test 
+p<-mix_data$index[which(mix_data$Measurement=="predicted")]
+m<-mix_data$index[which(mix_data$Measurement!="predicted")]
+paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
+paired_test
 
 
 ###scalar projection LB #####
@@ -907,14 +730,18 @@ mix_data %>% filter(Measurement=="measured") %>%
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
 #dev.off()  
 
-
+###stats ###
 mix_data
+mix_data$rep <- rep(c("2","3", "4", "5"), 2)
+# run anova
+a1<-aov(LB_index ~ Measurement+rep, data = mix_data)
+summary(a1)
 
-# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
-t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
-
-# Print results
-print(t_test_result)
+# paired test 
+p<-mix_data$index[which(mix_data$Measurement=="predicted")]
+m<-mix_data$index[which(mix_data$Measurement!="predicted")]
+paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
+paired_test
 
 
 
@@ -994,12 +821,19 @@ mix_data %>% filter(Measurement=="measured") %>%
 
 #dev.off()  
 
+##stats
+mix_data
+mix_data$rep <- rep(c("1", "2","3", "4", "5"), 2)
+# run anova
+a1<-aov(index ~ Measurement+rep, data = mix_data)
+summary(a1)
 
-# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
-t_test_result <- t.test(index ~ Measurement, data = mix_data, alternative = "two.sided")
+# paired test 
+p<-mix_data$index[which(mix_data$Measurement=="predicted")]
+m<-mix_data$index[which(mix_data$Measurement!="predicted")]
+paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
+paired_test
 
-# Print results
-print(t_test_result)
 
 
 ######simple ordination three species ####

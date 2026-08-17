@@ -54,7 +54,7 @@ myshapes2 <- c(21 , 12, 24,1, 15 , 22, 23 )
 
 #import data#
 # Set the working directory 
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 
 taxon <- read.csv("16S_taxonomy.csv", header=T)
 asvs <- read.table("16S_feature.table.tsv", sep="\t", header=T, row.names = 1)
@@ -65,9 +65,10 @@ asvs[1:5,1:5]#taxa are columns
 asvs<-t(asvs)
 
 # order metadata
-metadat<-as.data.frame(metadat[order(metadat$SampleID),])
+metadat
+metadat<-as.data.frame(metadat[order(row.names(metadat)),])
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-row.names(metadat) <- metadat$SampleID
+
 metadat$N   <- factor(metadat$N)
 metadat$Legume   <- factor(metadat$Legume)
 metadat$Brassicae   <- factor(metadat$Brassicae)
@@ -509,7 +510,25 @@ cap_result <- capscale(dist_matrix ~ Legume*Grass*Brassicae+block,
 anova.cca(cap_result, by="terms")
 
 ####### 4. CAP model L * G *B Nitrogen - #######
+# subset data
+# nitrogen + only
+ps1 <-subset_samples(ps, Treatment !="Soil" & N=="0" )
+ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+ps1
+# subset metadata
+metadat2<-filter(metadat, Fraction=="Total" & Treatment!="Soil"  & N=="0")
+metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+head(metadat2)
+# 1. Calculate the distance matrix (e.g., Bray-Curtis)
+dist_matrix<-vegdist(otu_table(ps1), method = "bray")
 
+# 2. Run the CAP (db-RDA) analysis
+# Formula: distance_matrix ~ environmental_variable_1 + environmental_variable_2
+cap_result <- capscale(dist_matrix ~ Legume*Grass*Brassicae+block,
+                       data = metadat2,
+                       add = TRUE) # 'add = TRUE' handles negative eigenvalues from PCoA
+
+anova.cca(cap_result, by="terms")
 
 
 ####### 5. CAP model Treatment* Nitrogen ##################

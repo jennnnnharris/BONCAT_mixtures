@@ -3,8 +3,8 @@
 # last edited: July 2026
 # author: Jennifer Harris
 
-rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
+rstudioapi::restartSession(clean = TRUE)
 
 #load libraries 
 library(readxl)
@@ -24,7 +24,7 @@ IBM <- c( #IBM colors
 
 
 ####### import data #####
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/flow_cyto/")
 fc <-read.csv("processed_flowcyto.csv")
 head(fc)
 
@@ -239,7 +239,6 @@ p1
 
 # restart R for package conflicts
 rm(list=ls())
-rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(tidyverse)
@@ -498,7 +497,7 @@ LGB
 # combine
 predict<-rbind(GB, LG, LB, LGB)
 df<-full_join(fc, predict)
-
+head(df)
 
 
 mycols <- c( #IBM colors
@@ -557,66 +556,106 @@ labs(title = "B",
 
 p2
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
-svg("activity.predict.svg", width=10, height=5)
-grid.arrange(p1, p2, ncol=2)
-dev.off()
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
+#svg("activity.predict.svg", width=10, height=5)
+grid.arrange(p1, p2, ncol=2)#dev.off()
 
 # stats #####
-# linear model  active cells
-#GB
-df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
-m1<-lm(data= df1, active_cel_per_g~Treatment)
-summary(m1)
-m<-summary(m1)
-m$coefficients
+# # linear model  active cells
+# #GB
+# df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
+# m1<-lm(data= df1, active_cel_per_g~Treatment)
+# summary(m1)
+# m<-summary(m1)
+# m$coefficients
+# 
+# #LB
+# df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
+# m1<-lm(data= df1, active_cel_per_g~Treatment)
+# summary(m1)
+# m<-summary(m1)
+# m$coefficients
+# 
+# 
+# #LG
+# df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
+# m1<-lm(data= df1, active_cel_per_g~Treatment)
+# summary(m1)
+# m<-summary(m1)
+# m$coefficients
+# 
+# #LGB
+# df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
+# m1<-lm(data= df1, active_cel_per_g~Treatment)
+# summary(m1)
 
-#LB
-df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
-m1<-lm(data= df1, active_cel_per_g~Treatment)
-summary(m1)
-m<-summary(m1)
-m$coefficients
-
-
-#LG
-df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
-m1<-lm(data= df1, active_cel_per_g~Treatment)
-summary(m1)
-m<-summary(m1)
-m$coefficients
-
-#LGB
-df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
-m1<-lm(data= df1, active_cel_per_g~Treatment)
-summary(m1)
 
 # beta regression for active cells #
+df$Treatment<-as.character(df$Treatment)
 library(MASS)
 
-#GB
-df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
-m1<- glm.nb(active_cel_per_g ~ Treatment, data = df1)
-anova(m1)
 
+#GB
+df
+df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
+df1
+m1<- glm.nb(active_cel_per_g ~ Treatment+Rep, data = df1)
+anova(m1)
+summary(m1)
 
 #LB
 df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
-m1<- glm.nb(active_cel_per_g ~ Treatment, data = df1)
+m1<- glm.nb(active_cel_per_g ~ Treatment+Rep, data = df1)
 anova(m1)
 
 #LG
 df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
-m1<- glm.nb(active_cel_per_g ~ Treatment, data = df1)
+m1<- glm.nb(active_cel_per_g ~ Treatment+Rep, data = df1)
 anova(m1)
 
 
 #LGB
 df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
-m1<- glm.nb(active_cel_per_g ~ Treatment, data = df1)
+m1<- glm.nb(active_cel_per_g ~ Treatment+Rep, data = df1)
 anova(m1)
 
 
+# extract table
+library(dplyr)
+library(purrr)
+library(MASS)
+library(broom)
+# Vector of treatment groups to test
+treatments <- c("GB", "LB", "LG", "LGB")
+
+# 1. Extract Model Coefficients (Estimate, Std. Error, z-value, p-value)
+coefficients_table <- map_dfr(treatments, function(trt) {
+  df_sub <- df %>% 
+    filter(Treatment %in% c(trt, paste0(trt, "_expectation")))
+  
+  model <- glm.nb(active_cel_per_g ~ Treatment + Rep, data = df_sub)
+  
+  tidy(model) %>%
+    mutate(Comparison = trt, .before = 1)
+})
+
+# 2. Extract ANOVA / Deviance Test Results (Likelihood Ratio / Deviance Table)
+anova_table <- map_dfr(treatments, function(trt) {
+  df_sub <- df %>% 
+    filter(Treatment %in% c(trt, paste0(trt, "_expectation")))
+  
+  model <- glm.nb(active_cel_per_g ~ Treatment + Rep, data = df_sub)
+  
+  anova(model) %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(var = "Term") %>%
+    mutate(Comparison = trt, .before = 1)
+})
+
+# View results
+coefficients_table %>% filter(term!="Rep" & term!="(Intercept)")
+print(coefficients_table)
+print(anova_table)
 
 
 #binomial model with percent data##
@@ -626,7 +665,7 @@ prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
 y<-cbind(prop$success, prop$n_failures)
-m1<-glm(data= df1, y~Treatment, family = binomial)
+m1<-glm(data= df1, y~Treatment+Rep, family = binomial)
 summary(m1)
 
 #LB
@@ -635,7 +674,7 @@ prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
 y<-cbind(prop$success, prop$n_failures)
-m1<-glm(data= df1, y~Treatment, family = binomial)
+m1<-glm(data= df1, y~Treatment+Rep, family = binomial)
 summary(m1)
 
 #LG
@@ -644,7 +683,7 @@ prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
 y<-cbind(prop$success, prop$n_failures)
-m1<-glm(data= df1, y~Treatment, family = binomial)
+m1<-glm(data= df1, y~Treatment+Rep, family = binomial)
 summary(m1)
 
 
@@ -654,7 +693,7 @@ prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
 y<-cbind(prop$success, prop$n_failures)
-m1<-glm(data= df1, y~Treatment, family = binomial)
+m1<-glm(data= df1, y~Treatment+Rep, family = binomial)
 summary(m1)
 
 
