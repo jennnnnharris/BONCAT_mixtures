@@ -4,7 +4,7 @@
 
 # clear workspace and restart R
 rm(list=ls())
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(readxl)
@@ -27,7 +27,7 @@ legume_cols <- c( #IBM colors
   "#865338" # medium mocha brown LGB
 )
 
-#biomass without prediction ####
+#biomass without prediction 
 
 #### import biomass data and process #####
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
@@ -315,7 +315,8 @@ LG<-get.shoot.predict(df, "L", "G")
 LGB<-get.shoot.predict(df, "L", "G", "B")  
 Shoot.Biomass<- round(as.numeric(c(GB, LB, LG, LGB)), 2)
 Shoot.Biomass
-Treatment<-c(rep("GB_expectation", n_groups(df)), rep("LB_expectation", n_groups(df)), rep("LG_expectation", n_groups(df)), rep("LGB_expectation", n_groups(df)) )
+Treatment<-c(rep("GB_expected", n_groups(df)), rep("LB_expected", n_groups(df)),
+             rep("LG_expected", n_groups(df)), rep("LGB_expected", n_groups(df)) )
 Treatment
 predict <- as.data.frame(cbind(Treatment, Shoot.Biomass))
 predict$Shoot.Biomass<-as.numeric(predict$Shoot.Biomass)
@@ -341,8 +342,8 @@ predict$Nitrogen_label<-rep(rep(c("Nitrogen +", "Nitrogen -"), each=6), 4)
 
 df1<-full_join(df, predict) 
 df1<-df1 %>% ungroup()
-df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB_expectation", "GB", "LB_expectation",  "LB",   "LG_expectation", "LG", 
-                             "LGB_expectation"   , "LGB" ))
+df1$Treatment<-factor(df1$Treatment, levels = c("L", "G", "B", "GB_expected", "GB", "LB_expected",  "LB",   "LG_expected", "LG", 
+                             "LGB_expected"   , "LGB" ))
 
 #### plot predictions from monocultures for biomass
 

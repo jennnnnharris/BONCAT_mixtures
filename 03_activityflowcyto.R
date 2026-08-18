@@ -319,7 +319,7 @@ print(data_frame_multiplied2)
 # add together
 LG<-data_frame_multiplied1 + data_frame_multiplied2
 LG$Trt_ID<-c("predict_LG+N1", "predict_LG+N2", "predict_LG+N3", "predict_LG+N4", "predict_LG+N5", "predict_LG+N6" )
-LG$Treatment<-c("LG_expectation", "LG_expectation", "LG_expectation", "LG_expectation", "LG_expectation", "LG_expectation" )
+LG$Treatment<-c("LG_expected", "LG_expected", "LG_expected", "LG_expected", "LG_expected", "LG_expected" )
 LG$Rep <- c(1, 2, 3, 4, 5, 6 )
 LG
 
@@ -368,7 +368,7 @@ print(data_frame_multiplied2)
 # add together
 LB<-data_frame_multiplied1 + data_frame_multiplied2
 LB$Trt_ID<-c("predict_LB+N1", "predict_LB+N2", "predict_LB+N3", "predict_LB+N4" )
-LB$Treatment<-c("LB_expectation", "LB_expectation", "LB_expectation", "LB_expectation")
+LB$Treatment<-c("LB_expected", "LB_expected", "LB_expected", "LB_expected")
 LB$Rep <- c(1, 2, 3, 4 )
 LB
 
@@ -417,7 +417,7 @@ print(data_frame_multiplied2)
 # add together
 GB<-data_frame_multiplied1 + data_frame_multiplied2
 GB$Trt_ID<-c("predict_GB+N1", "predict_GB+N2", "predict_GB+N3", "predict_GB+N5" )
-GB$Treatment<-c("GB_expectation", "GB_expectation", "GB_expectation", "GB_expectation" )
+GB$Treatment<-c("GB_expected", "GB_expected", "GB_expected", "GB_expected" )
 GB$Rep <- c(1, 2, 3, 5)
 GB
 
@@ -489,7 +489,7 @@ print(data_frame_multiplied2)
 # add together
 LGB<-data_frame_multiplied0 + data_frame_multiplied1 + data_frame_multiplied2
 LGB$Trt_ID<-c("predict_LGB+N1", "predict_LGB+N2", "predict_LGB+N3", "predict_LGB+N4")
-LGB$Treatment<-c("LGB_expectation", "LGB_expectation", "LGB_expectation", "LGB_expectation")
+LGB$Treatment<-c("LGB_expected", "LGB_expected", "LGB_expected", "LGB_expected")
 LGB$Rep <- c(1, 2, 3, 4)
 LGB
 
@@ -520,8 +520,8 @@ df<-df %>% filter(Treatment!="Soil")
 
 unique(df$Treatment)
 
-df$Treatment<-factor(df$Treatment, levels = c("L", "G", "B", "GB_expectation", "GB","LB_expectation", "LB",  "LG_expectation",  "LG", 
-                                              "LGB_expectation" , "LGB"  ))
+df$Treatment<-factor(df$Treatment, levels = c("L", "G", "B", "GB_expected", "GB","LB_expected", "LB",  "LG_expected",  "LG", 
+                                              "LGB_expected" , "LGB"  ))
 
 df
 # plot
@@ -556,21 +556,22 @@ labs(title = "B",
 
 p2
 require(gridExtra)
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
-#svg("activity.predict.svg", width=10, height=5)
-grid.arrange(p1, p2, ncol=2)#dev.off()
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
+svg("activity.predict.svg", width=10, height=5)
+grid.arrange(p1, p2, ncol=2)
+dev.off()
 
 # stats #####
 # # linear model  active cells
 # #GB
-# df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
+# df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expected")
 # m1<-lm(data= df1, active_cel_per_g~Treatment)
 # summary(m1)
 # m<-summary(m1)
 # m$coefficients
 # 
 # #LB
-# df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
+# df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expected")
 # m1<-lm(data= df1, active_cel_per_g~Treatment)
 # summary(m1)
 # m<-summary(m1)
@@ -578,14 +579,14 @@ grid.arrange(p1, p2, ncol=2)#dev.off()
 # 
 # 
 # #LG
-# df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
+# df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expected")
 # m1<-lm(data= df1, active_cel_per_g~Treatment)
 # summary(m1)
 # m<-summary(m1)
 # m$coefficients
 # 
 # #LGB
-# df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
+# df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expected")
 # m1<-lm(data= df1, active_cel_per_g~Treatment)
 # summary(m1)
 
@@ -597,25 +598,25 @@ library(MASS)
 
 #GB
 df
-df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
+df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expected")
 df1
 m1<- glm.nb(active_cel_per_g ~ Treatment+Rep, data = df1)
 anova(m1)
 summary(m1)
 
 #LB
-df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
+df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expected")
 m1<- glm.nb(active_cel_per_g ~ Treatment+Rep, data = df1)
 anova(m1)
 
 #LG
-df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
+df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expected")
 m1<- glm.nb(active_cel_per_g ~ Treatment+Rep, data = df1)
 anova(m1)
 
 
 #LGB
-df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
+df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expected")
 m1<- glm.nb(active_cel_per_g ~ Treatment+Rep, data = df1)
 anova(m1)
 
@@ -631,7 +632,7 @@ treatments <- c("GB", "LB", "LG", "LGB")
 # 1. Extract Model Coefficients (Estimate, Std. Error, z-value, p-value)
 coefficients_table <- map_dfr(treatments, function(trt) {
   df_sub <- df %>% 
-    filter(Treatment %in% c(trt, paste0(trt, "_expectation")))
+    filter(Treatment %in% c(trt, paste0(trt, "_expected")))
   
   model <- glm.nb(active_cel_per_g ~ Treatment + Rep, data = df_sub)
   
@@ -642,7 +643,7 @@ coefficients_table <- map_dfr(treatments, function(trt) {
 # 2. Extract ANOVA / Deviance Test Results (Likelihood Ratio / Deviance Table)
 anova_table <- map_dfr(treatments, function(trt) {
   df_sub <- df %>% 
-    filter(Treatment %in% c(trt, paste0(trt, "_expectation")))
+    filter(Treatment %in% c(trt, paste0(trt, "_expected")))
   
   model <- glm.nb(active_cel_per_g ~ Treatment + Rep, data = df_sub)
   
@@ -660,7 +661,7 @@ print(anova_table)
 
 #binomial model with percent data##
 #GB
-df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expectation")
+df1<-df%>% filter(Treatment=="GB" | Treatment=="GB_expected")
 prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
@@ -669,7 +670,7 @@ m1<-glm(data= df1, y~Treatment+Rep, family = binomial)
 summary(m1)
 
 #LB
-df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expectation")
+df1<-df%>% filter(Treatment=="LB" | Treatment=="LB_expected")
 prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
@@ -678,7 +679,7 @@ m1<-glm(data= df1, y~Treatment+Rep, family = binomial)
 summary(m1)
 
 #LG
-df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expectation")
+df1<-df%>% filter(Treatment=="LG" | Treatment=="LG_expected")
 prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
@@ -688,7 +689,7 @@ summary(m1)
 
 
 #LGB
-df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expectation")
+df1<-df%>% filter(Treatment=="LGB" | Treatment=="LGB_expected")
 prop<-df1 %>%
   mutate(success = round(boncat_freq, 0)) %>%
   mutate(n_failures =  100-success)
