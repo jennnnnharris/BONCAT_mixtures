@@ -57,22 +57,7 @@ metadat <- metadat %>% filter(Fraction=="Total" )
 
 #get min number of reads in a sample
 min.s<-min(rowSums(asvs))
-# observe number of species
-S <- specnumber(asvs)
 
-# check library saturation with rare curve
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/rarefaction")
-svg("total_rarecurve.svg",  width=6, height=6)
-rarecurve(asvs, step = 1000, col = "blue", xlab = "Sample Size", ylab = "Species Richness")
-abline(v = min.s, lty = 2)
-dev.off()
-
-### plot rarefied species to observed species
-S <- specnumber(asvs) # observed number of species
-min.s<-min(rowSums(asvs))
-Srare <- rarefy(asvs, min.s) # rarefied number of species
-plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
-abline(0, 1)
 
 ### Rarefy to obtain even numbers of reads by sample ###
 set.seed(336)

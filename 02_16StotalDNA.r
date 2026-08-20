@@ -23,7 +23,7 @@ rm(list=ls())
 # Load required libraries #
 library(tidyverse)
 library(vegan)
-library(readxl)
+#library(readxl)
 library(lubridate)
 library(phyloseq)
 library(multcompView)
@@ -68,16 +68,14 @@ asvs<-t(asvs)
 metadat
 metadat<-as.data.frame(metadat[order(row.names(metadat)),])
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
-
 metadat$N   <- factor(metadat$N)
 metadat$Legume   <- factor(metadat$Legume)
 metadat$Brassicae   <- factor(metadat$Brassicae)
 metadat$Grass   <- factor(metadat$Grass)
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes absent", "Legumes present"))
 head(metadat)
+asvs[1:5,1:5]
 
-
-head(asvs)
 #T_DNA_23_S153 has really few reads so I am omitting it.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
 
@@ -90,10 +88,31 @@ asvs <-asvs[which(metadat$Fraction=="Total" ),]
 metadat <- metadat %>% filter(Fraction=="Total" )
 
 
+### check rarefaction curves to see if sequencing depth is sufficient ###
 #get min number of reads in a sample
+#min.s<-min(rowSums(asvs))
+# observe number of species
+#S <- specnumber(asvs)
+
+# check library saturation with rare curve
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/rarefaction")
+#svg("total_rarecurve.svg",  width=10, height=10)
+#rarecurve(asvs, step = 1000, col = "blue", xlab = "Sample Size", ylab = "Species Richness")
+#abline(v = min.s, lty = 2)
+#dev.off()
+
+### plot rarefied species to observed species
+S <- specnumber(asvs) # observed number of species
 min.s<-min(rowSums(asvs))
+Srare <- rarefy(asvs, min.s) # rarefied number of species
+#svg("total_rarefiedvs_observed.svg",  width=10, height=10)
+plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
+abline(0, 1)
+#dev.off()
+
 
 ### Rarefy to obtain even numbers of reads by sample ###
+min.s<-min(rowSums(asvs))
 set.seed(336)
 asvs<-rrarefy(asvs, min.s)
 
@@ -156,7 +175,7 @@ p1<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 12)+
   labs(title = "A",
        x="",
-       y= "Total DNA Shannon diversity")
+       y= "Shannon diversity")
   #annotate("text", x=1.5, y=8, label="*")
 p1
 p2<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
@@ -166,7 +185,7 @@ p2<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 12)+
   labs(title = "B",
        x="",
-       y= "Total DNA ASV richness")
+       y= "ASV richness")
 
 p2
 p3<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
@@ -176,172 +195,53 @@ p3<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") %>%
   theme_classic(base_size = 12)+
   labs(title = "C",
        x="",
-       y= "Total DNA Pilou's Eveness")
-  #annotate("text", x=1.5, y=5500, label="*")
+       y= "Pilou's Eveness")
 p3
 require(gridExtra)
 windows(8, 3.5)
 grid.arrange(p1, p2, p3, ncol=3)
 
 
-# shannon diversity
-rich<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil")
-N1<-rich %>% filter(N==1)
-N0 <- rich %>% filter(N==0)
+# diversity by treatment #
 
-# nitrogen +  
-lab<-as.character(N1$Treatment)
-lab<- gsub("LGB", "A", lab)
-lab <- gsub("LG", "A", lab)
-lab <- gsub("LB", "A", lab)
-lab <- gsub("GB", "A", lab)
-lab <- gsub("L", "A", lab) 
-lab <- gsub("G", "A", lab) 
-lab <- gsub("B", "A", lab) 
-lab
-
-
-N1$Nitrogen_label<-as.factor(N1$Nitrogen_label)
-p1<-N1%>%  
-  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
-  geom_boxplot(alpha=.5, outlier.shape = NA) +
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
-  theme_classic(base_size = 16)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0),legend.position="none",
-        plot.subtitle = element_text(hjust = 0.5))+
-  geom_text(y=7.89, label = lab, size=5)+
-  labs(title = "E",
-       subtitle = "Nitrogen +",
-       x="",
-       y= "Total DNA Shannon Diversity")+
-  scale_shape_manual(values = c(17, 16))+
-  ylim(6.6, 8)
-p1
-# nitrogen - shannon 
-#  L  G    B   GB   LB   LG  LGB    
-# "c" "ab"  "a" "ab" "ab" "ab" "bc" 
-lab<-as.character(N0$Treatment)
-lab<- gsub("LGB", "XC", lab)
-lab <- gsub("LG", "AX", lab)
-lab <- gsub("LB", "AX", lab)
-lab <- gsub("GB", "AX", lab)
-lab
-lab <- gsub("L", "C", lab) 
-lab <- gsub("G", "AX", lab) 
-lab <- gsub("X", "B", lab) 
-lab
-
-
-N0$Nitrogen_label<-as.factor(N0$Nitrogen_label)
-p2<-N0%>%  
-  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
-  geom_boxplot(alpha=.5, outlier.shape = NA) +
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
-  theme_classic(base_size = 16)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0),legend.position="none",
-        plot.subtitle = element_text(hjust = 0.5))+
-  geom_text(y=7.89, label = lab, size=5)+
-  labs(title = "F",
-       subtitle = "Nitrogen -",
-       x="",
-       y= "Total DNA Shannon Diversity")+
-  scale_shape_manual(values = c(17, 16))+
-  ylim(6.6, 8)
-
-p2
-grid.arrange(p1, p2, ncol=2)
-
-
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPtotal")
-svg(file="diversity.svg",width = 8, height=4)
-require(gridExtra)
-#windows(10,4)
-grid.arrange(p1, p2, ncol=2)
-dev.off()
-
-
-
-
-
-# OBSERVED ASVS
-rich<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil")
-N1<-rich %>% filter(N==1)
-N0 <- rich %>% filter(N==0)
-
-N1$Nitrogen_label<-as.factor(N1$Nitrogen_label)
-p1<-N1%>%  
-  ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
-  geom_boxplot(alpha=.5, outlier.shape = NA) +
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
-  theme_classic(base_size = 12)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0),legend.position="none",
-        plot.subtitle = element_text(hjust = 0.5))+
-  #geom_text(y=7.89, label = lab, size=5)+
-  labs(title = "A",
-       subtitle = "Nitrogen +",
-       x="",
-       y= "Total DNA ASV richness")+
-  scale_shape_manual(values = c(17, 16))+
-  ylim(2500, 5500)
-p1
-
-# nitrogen minus OBSERVED ASV
-# L   G    B   GB   LB   LG  LGB   
-#"b" "ab"  "a"  "a" "ab"  "a" "ab"  
-lab<-as.character(N0$Treatment)
-lab<- gsub("LGB", "AX", lab)
-lab <- gsub("LG", "A", lab)
-lab <- gsub("LB", "AX", lab)
-lab <- gsub("GB", "A", lab)
-lab <- gsub("L", "X", lab) 
-lab <- gsub("G", "AX", lab) 
-lab <- gsub("B", "A", lab) 
-lab <- gsub("X", "B", lab) 
-
-N0$Nitrogen_label<-as.factor(N0$Nitrogen_label)
-p2<-N0%>%  
-  ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
-  geom_boxplot(alpha=.5, outlier.shape = NA) +
-  scale_color_manual(values=mycols) +
-  scale_fill_manual(values = mycols)+
-  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
-  theme_classic(base_size = 12)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0),legend.position="none",
-        plot.subtitle = element_text(hjust = 0.5))+
-  geom_text(y=5300, label = lab, size=4)+
-  labs(title = "B",
-       subtitle = "Nitrogen -",
-       x="",
-       y= "Total DNA  ASV Richness")+
-  scale_shape_manual(values = c(17, 16))+
-  ylim(2500, 5500)
-p2
-
-# EVENESSS
+rich<-rich%>%  filter(Fraction=="Total") %>% filter(Treatment!="Soil") #filter
 rich$Nitrogen_label<-as.factor(rich$Nitrogen_label)
-# L  G    B   GB   LB   LG  LGB    
-#"b" "a"  "a" "ab" "ab" "ab" "ab"  
 
-lab<-as.character(rich$Treatment)
-lab<- gsub("LGB", "AX", lab)
-lab <- gsub("LG", "AX", lab)
-lab <- gsub("LB", "AX", lab)
-lab <- gsub("GB", "AX", lab)
-lab <- gsub("L", "X", lab) 
-lab <- gsub("G", "A", lab) 
-lab <- gsub("B", "A", lab) 
-lab <- gsub("X", "B", lab) 
-lab
+# shannon diversity
+
+p1<-rich%>%  
+  ggplot(aes(x=Treatment, y=Shannon,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
+  theme_classic(base_size = 12)+
+  theme(plot.title = element_text(hjust = 0),legend.position="none",
+        plot.subtitle = element_text(hjust = 0.5))+
+  labs(title = "D",
+       x="",
+       y= "ASV richness")+
+  scale_shape_manual(values = c(17, 16))
+
+p1
+
+#  OBSERVED ASV
+p2<-rich%>%  
+  ggplot(aes(x=Treatment, y=Observed,  fill=Treatment))+
+  geom_boxplot(alpha=.5, outlier.shape = NA) +
+  scale_color_manual(values=mycols) +
+  scale_fill_manual(values = mycols)+
+  geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
+  theme_classic(base_size = 12)+
+  theme(plot.title = element_text(hjust = 0),legend.position="none",
+        plot.subtitle = element_text(hjust = 0.5))+
+  labs(title = "E",
+       x="",
+       y= "ASV Richness")+
+  scale_shape_manual(values = c(17, 16))+
+  ylim(2500, 5500)
+p2
+
 
 p3<-rich%>%  
   ggplot(aes(x=Treatment, y=evenness,  fill=Treatment))+
@@ -350,21 +250,15 @@ p3<-rich%>%
   scale_fill_manual(values = mycols)+
   geom_jitter(aes(shape=Nitrogen_label), size=1.5, width=.1)+
   theme_classic(base_size = 12)+
-  theme(axis.text.x = element_text(angle=60, hjust=1),
-        plot.title = element_text(hjust = 0),
-        plot.subtitle = element_text(hjust = 0.5),
-        legend.position = "none")+
-  geom_text(y=.945, label = lab, size=4)+
-  labs(title = "C",
-       subtitle = "Evenness",
+  theme(plot.title = element_text(hjust = 0),legend.position="none",
+        plot.subtitle = element_text(hjust = 0.5))+
+  labs(title = "F",
        x="",
-       y= " Pilou's Evenness")+
-  scale_shape_manual(values = c(17, 16))+
-  ylim(.85, .95)
+       y= "Pilou's Evenness")+
+  scale_shape_manual(values = c(17, 16))
+p3
 
-  p3
 
-windows(8,3.5)
 grid.arrange(p1, p2, p3, ncol=3)
 
 

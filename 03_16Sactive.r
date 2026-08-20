@@ -67,7 +67,6 @@ dim(metadat)
 metadat$Legume   <- factor(metadat$Legume)
 metadat$Brassicae   <- factor(metadat$Brassicae)
 metadat$Grass   <- factor(metadat$Grass)
-
 metadat$Treatment   <- factor(metadat$Treatment, levels= c("Soil", "L", "G", "B", "GB", "LB", "LG", "LGB"))
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes present", "Legumes absent"))
 
@@ -77,6 +76,28 @@ row.names(taxon) <- taxon$asv
 
 #get min number of reads in a sample
 min.s<-min(rowSums(asvs))
+
+### check rarefaction curves to see if sequencing depth is sufficient ###
+# observe number of species
+S <- specnumber(asvs)
+
+# check library saturation with rare curve
+# this commented out because it takes a long time to run
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/rarefaction")
+#svg("active_rarecurve.svg",  width=10, height=10)
+#rarecurve(asvs, step = 1000, col = "blue", xlab = "Sample Size", ylab = "Species Richness")
+#abline(v = min.s, lty = 2)
+#dev.off()
+
+### plot rarefied species to observed species
+S <- specnumber(asvs) # observed number of species
+min.s<-min(rowSums(asvs))
+Srare <- rarefy(asvs, min.s) # rarefied number of species
+svg("active_rarefiedvs_observed.svg",  width=10, height=10)
+plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
+abline(0, 1)
+dev.off()
+
 
 ### Rarefy to obtain even numbers of reads by sample ###
 set.seed(336)
@@ -111,10 +132,10 @@ ps
 # 
 
 #remove asvs with a mean of less than 5
-mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
-keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
-ps<-prune_taxa(keep, ps)
-ps
+#mean.reads <- rowSums(t(otu_table(ps)))/nsamples(ps)
+#keep<-row.names(t(otu_table(ps))[ mean.reads > 5, ])
+#ps<-prune_taxa(keep, ps)
+#ps
 
 ####DIVERSITY ####
 
@@ -288,7 +309,7 @@ summary(anova1)
 
 
 
-# remove rare taxa ############ 
+######################## remove rare taxa ############ 
   ps<-prune_taxa(taxa_sums(ps) > 0, ps)
   ps
   
