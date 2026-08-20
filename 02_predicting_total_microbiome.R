@@ -1089,19 +1089,21 @@ clr_data
  mix_data <- clr_data[which(metadat2$Treatment=="LGB"), ]
  mix_data[1:5, 1:5]
  dim(mix_data)
+ mix_data[1:5,1:5]
  
- 
- # Create a function to project a sample vector onto the G->B axis  symmetric [-1, +1] axis
+ # Create a function to project a sample vector onto the G->B axix [0, +1] axis
  project_to_axis <- function(sample_vector, start_centroid, axis_vector, axis_len_sq) {
    sample_adj <- sample_vector - start_centroid
    dot_product <- sum(sample_adj * axis_vector)
    
    # Calculate 0 to 1 index
    original_index <- dot_product / axis_len_sq
-   
-   # Rescale to -1 to +1
-   #symmetric_index <- (2 * original_index) - 1
+      
    return(original_index)
+   # Rescale to -1 to +1
+   # symmetric_index <- (2 * original_index) - 1
+   # return(symmetric_index)
+ 
  }
  
  # row, start, v, length
@@ -1117,6 +1119,7 @@ clr_data
    project_to_axis(row, centroid_B, v3, v3_length_sq)
  })
  
+ LG_index
  # add metadata
  mix_data<-cbind(LG_index, mix_data)
  mix_data<-cbind(GB_index, mix_data)
@@ -1126,33 +1129,8 @@ clr_data
   mix_data<-mix_data %>% select(LG_index, GB_index, BL_index, Treatment, Rep, Measurement)
 mix_data
  
- #### plot with predicted as zero ###
- # # subtract each rep #
- # P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
- # mix_data$adj_GBindex <- mix_data$GB_index-P 
- # mix_data
- # P<-rep(mix_data$LG_index[which(mix_data$Measurement == "predicted")],2)
- # mix_data$adj_LGindex <- mix_data$LG_index-P 
- # mix_data
- # P<-rep(mix_data$BL_index[which(mix_data$Measurement == "predicted")],2)
- # mix_data$adj_BLindex <- mix_data$BL_index-P 
- mix_data
-  
- #stats #
  
- mix_data
- 
- # Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
- t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "two.sided")
-  print(t_test_result)
- 
-  t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
-  print(t_test_result)
- 
- t_test_result <- t.test(LG_index ~ Measurement, data = mix_data, alternative = "two.sided")
- print(t_test_result)
- 
- 
+# plot
  library(ggplot2)
  library(ggtern)
  
@@ -1162,21 +1140,39 @@ mix_data
  # will find the x, y, and z coordinate data (T1A, T1B, and T1C)
  # Then you tell ggtern what kind of geometry to use to display the data, in this case "geom_point"
 
-
+ custom_breaks <- seq(0, 1, by = 0.25)
+ 
  p4<-ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measurement, shape = factor(Rep))) +
+   scale_T_continuous(breaks = custom_breaks, labels = custom_breaks) +
+   scale_L_continuous(breaks = custom_breaks, labels = custom_breaks) +
+   scale_R_continuous(breaks = custom_breaks, labels = custom_breaks)+
    geom_point(size=2)+
-   theme_minimal()+
+   theme_minimal(base_size = 12)+
    scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expectation"))+
    scale_shape_manual(values=c(8, 15, 17, 19, 9), name="Rep")+
    xlab("L")  +                  
    ylab("G") +
    zlab("B")   
 
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+ p4
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
 svg("LGB_total.svg", width=4, height=4) 
  p4  
  dev.off()
+
  
+ ###
+ # stats 
+ mix_data
  
+ # Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+ t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+ print(t_test_result)
+ 
+ t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+ print(t_test_result)
+ 
+ t_test_result <- t.test(LG_index ~ Measurement, data = mix_data, alternative = "two.sided")
+ print(t_test_result)
  
  

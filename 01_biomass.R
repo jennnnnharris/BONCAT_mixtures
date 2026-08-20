@@ -7,7 +7,6 @@ rm(list=ls())
 #rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
-library(readxl)
 library(tidyverse)
 library(lubridate)
 
@@ -51,7 +50,7 @@ df$Grass<-as.numeric(df$Grass)
 df$Legume<-as.numeric(df$Legume)
 df$Brassicae<-as.numeric(df$Brassicae)
 df<-df%>% ungroup() 
-df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
+#df$n_species<- df %>% select(c(Brassicae, Legume, Grass )) %>% rowSums()
 df$Treatment   <- factor(df$Treatment, levels= c( "L", "G", "B", "GB", "LB", "LG", "LGB"))
 df
 
@@ -66,7 +65,7 @@ head(block)
 df<-left_join(df, block)
 head(df)
 
-p1<-df  %>% filter(n_species!="NA") %>%
+p1<-df  %>% filter(Treatment=="soil") %>%
   ggplot(aes(x=Treatment, y=Root.Biomass.g, fill = Treatment)) +
   geom_jitter(aes(shape=Nitrogen_label), size=.7, width=.1)+
   
@@ -82,7 +81,7 @@ p1<-df  %>% filter(n_species!="NA") %>%
   scale_shape_manual(values = c(17, 16)) 
 p1
 
-p2<-df  %>% filter(n_species!="NA") %>%
+p2<-df  %>% filter(Treatment=="soil") %>%
   ggplot(aes(x=Treatment, y=Stem.Biomass.g, fill = Treatment)) +
   geom_jitter(aes(shape=Nitrogen_label), size=.7, width=.1)+
   
@@ -103,27 +102,34 @@ grid.arrange(p1, p2, ncol=2)
 
 
 # load stats libraries
-library(multcomp)
-library(emmeans)
-library(lme4)
-library(lmerTest)
-library(car)
+# library(multcomp)
+# library(emmeans)
+# library(lme4)
+# library(lmerTest)
+# library(car)
 
 ####### shoot biomass overall model
+
+
 # 1. Fit your ANOVA model
 # Note: Since 'block' is an additive block factor, don't include it in emmeans specs
 m1 <- aov(Stem.Biomass.g ~ Treatment * N + block, data = df)
 summary(m1) # difference between treatments and nitrogen interaction
 
+# 2. check for normality and homogeneity of variance
+ks.test(df$Stem.Biomass.g, "pnorm", mean = mean(df$Stem.Biomass.g), sd = sd(df$Stem.Biomass.g))
+qqnorm(residuals(m1))
+qqline(residuals(m1), col = "red") # Adds reference line
+
 # 2. Get estimated marginal means grouped by Nitrogen level
-emm_object <- emmeans(m1, ~ Treatment | N)
+emm_object <- emmeans::emmeans(m1, ~ Treatment | N)
 
 # 3. Perform pairwise comparisons within each Nitrogen level
 pairwise_comparison <- pairs(emm_object, adjust = "tukey")
 summary(pairwise_comparison)
 
 # Requires multcomp / multcompView packages
-cld_results <- cld(emm_object, Letters = letters, adjust = "tukey")
+cld_results <- multcomp::cld(emm_object, Letters = letters, adjust = "tukey")
 print(cld_results)
 
 
@@ -131,17 +137,21 @@ print(cld_results)
 ######root biomass overall model 
 m1<-aov(Root.Biomass.g ~ Treatment*N+block, data = df)
 summary(m1) # difference between treatments and nitrogen interaction block is sig
+# 2. check for normality and homogeneity of variance
+ks.test(df$Root.Biomass.g, "pnorm", mean = mean(df$Root.Biomass.g), sd = sd(df$Root.Biomass.g))
+qqnorm(residuals(m1))
+qqline(residuals(m1), col = "red") # Adds reference line
 
 
 # 2. Get estimated marginal means grouped by Nitrogen level
-emm_object <- emmeans(m1, ~ Treatment | N)
+emm_object <- emmeans::emmeans(m1, ~ Treatment | N)
 
 # 3. Perform pairwise comparisons within each Nitrogen level
 pairwise_comparison <- pairs(emm_object, adjust = "tukey")
 summary(pairwise_comparison)
 
 # Requires multcomp / multcompView packages
-cld_results <- cld(emm_object, Letters = letters, adjust = "tukey")
+cld_results <- multcomp::cld(emm_object, Letters = letters, adjust = "tukey")
 print(cld_results)
 
 
@@ -149,7 +159,7 @@ print(cld_results)
 #########################prediction#############################
 # clear workspace and restart R
 rm(list=ls())
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 
 #load libraries
 library(readxl)
@@ -245,12 +255,6 @@ get.root.predict<-function(df, sp1, sp2, sp3) {
 
 #####predictions from monocultures for biomass #######
 
-#load libraries
-library(readxl)
-library(tidyverse)
-library(lubridate)
-
-
 #### import biomass data and process
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 df <- read.csv("biomass_species.csv") # biomass data
@@ -337,6 +341,10 @@ predict
 # add N
 dim(predict)
 predict$Nitrogen_label<-rep(rep(c("Nitrogen +", "Nitrogen -"), each=6), 4)
+# add rep
+predict$Rep<-  rep(1:6,8)
+
+
 
 ## add to df
 
@@ -408,57 +416,60 @@ p2
 # put the plots together
 
 require(gridExtra)
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/")
-svg("biomasspredict.svg", height = 7, width = 4.5)
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/")
+#svg("biomasspredict.svg", height = 7, width = 4.5)
 grid.arrange(p1, p2, ncol=1)
-dev.off()
+#dev.off()
 
 
 ######### anova#####
 # shoots
+df1$Treatment
 #GB
 #filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB_expected")
 df2
-m1<- lm(Shoot.Biomass~ Treatment*Nitrogen_label, data=df2)
+m1<- lm(Shoot.Biomass~ Rep+Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
+
+
 #LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Shoot.Biomass~ Treatment*Nitrogen_label, data=df2)
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB_expected")
+m1<- lm(Shoot.Biomass~ Rep+Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 #LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Shoot.Biomass~ Treatment*Nitrogen_label, data=df2)
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG_expected")
+m1<- lm(Shoot.Biomass~ Rep+Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 #LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Shoot.Biomass~ Treatment*Nitrogen_label, data=df2)
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB_expected")
+m1<- lm(Shoot.Biomass~ Rep+Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 ############ root biomass ###
 #GB
 #filter
-df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB.predict")
-m1<- lm(Root.Biomass~ Treatment*Nitrogen_label, data=df2)
+df2<-df1%>% filter(Treatment=="GB" | Treatment=="GB_expected")
+m1<- lm(Root.Biomass~ Rep+Treatment*Nitrogen_label, data=df2)
 summary(m1)
 anova(m1)
 
 #LB
-df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB.predict")
-m1<- lm(Root.Biomass~ Treatment*Nitrogen_label, data=df2)
+df2<-df1%>% filter(Treatment=="LB" | Treatment=="LB_expected")
+m1<- lm(Root.Biomass~ Rep+Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 #LG
-df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG.predict")
-m1<- lm(Root.Biomass~ Treatment*Nitrogen_label, data=df2)
+df2<-df1%>% filter(Treatment=="LG" | Treatment=="LG_expected")
+m1<- lm(Root.Biomass~ Rep+Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 #LGB
-df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB.predict")
-m1<- lm(Root.Biomass~ Treatment*Nitrogen_label, data=df2)
+df2<-df1%>% filter(Treatment=="LGB" | Treatment=="LGB_expected")
+m1<- lm(Root.Biomass~ Rep+Treatment*Nitrogen_label, data=df2)
 anova(m1)
 
 
