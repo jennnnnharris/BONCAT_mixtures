@@ -43,7 +43,7 @@ metadat$Brassicae   <- factor(metadat$Brassicae)
 metadat$Grass   <- factor(metadat$Grass)
 metadat$Legume_label <- factor(metadat$Legume_label, levels= c("Legumes absent", "Legumes present"))
 head(metadat)
-head(asvs)
+asvs[1:5,1:5]
 
 #T_DNA_23_S153 is omitted. It had few reads (13,000) and low DNA concentration.
 asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
@@ -51,14 +51,28 @@ asvs<-asvs[which(row.names(asvs)!= "T_DNA_23_S153"),]
 # get avg number of reads in seq run 
 mean(rowSums(asvs))
 
-
 # select only total dna
 asvs <-asvs[which(metadat$Fraction=="Total" ),] 
 metadat <- metadat %>% filter(Fraction=="Total" )
 
-
 #get min number of reads in a sample
 min.s<-min(rowSums(asvs))
+# observe number of species
+S <- specnumber(asvs)
+
+# check library saturation with rare curve
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/rarefaction")
+svg("total_rarecurve.svg",  width=6, height=6)
+rarecurve(asvs, step = 1000, col = "blue", xlab = "Sample Size", ylab = "Species Richness")
+abline(v = min.s, lty = 2)
+dev.off()
+
+### plot rarefied species to observed species
+S <- specnumber(asvs) # observed number of species
+min.s<-min(rowSums(asvs))
+Srare <- rarefy(asvs, min.s) # rarefied number of species
+plot(S, Srare, xlab = "Observed No. of Species", ylab = "Rarefied No. of Species")
+abline(0, 1)
 
 ### Rarefy to obtain even numbers of reads by sample ###
 set.seed(336)

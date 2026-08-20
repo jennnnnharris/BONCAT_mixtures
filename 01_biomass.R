@@ -101,13 +101,6 @@ require(gridExtra)
 grid.arrange(p1, p2, ncol=2)
 
 
-# load stats libraries
-# library(multcomp)
-# library(emmeans)
-# library(lme4)
-# library(lmerTest)
-# library(car)
-
 ####### shoot biomass overall model
 
 
@@ -527,19 +520,18 @@ df1$label<-gsub("LB", "" ,df1$label)
 df$Species<- factor(df$Species, levels= c("legume", "grass", "brassica"))
 
 # make plot
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement")
-svg("percent.biomass.svg", width = 8, height =4.5 )
+#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/supplement")
+#svg("percent.biomass.svg", width = 8, height =4.5 )
 df1%>%
   ggplot(aes(fill=Species, y=percent, x=label)) + 
   theme_bw(base_size = 12)+
   geom_bar(position="stack", stat="identity")+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+
   scale_fill_manual(values=mono_cols)+
   facet_grid(~Treatment, space="free", scales="free")+
   labs(x= "Sample",
        y="proportion dry biomass (g)")
 
-dev.off()
+#dev.off()
 
 
 
