@@ -372,7 +372,7 @@ write.csv(tax_table, "total.taxonomy_predicted16S.csv.csv")
 
 
 ##### import predicted #####
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 taxon <- read.csv("total.taxonomy_predicted16S.csv", row.names = 1)
 asvs <- read.csv("total.feature.table_predicted16S.csv", row.names = 1)
 metadat<-read.csv("total.metadata_predicted16S.csv", header = T)
@@ -1147,15 +1147,15 @@ mix_data
    scale_R_continuous(breaks = custom_breaks, labels = custom_breaks)+
    geom_point(size=2)+
    theme_minimal(base_size = 12)+
-   scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expectation"))+
+   scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expected"))+
    scale_shape_manual(values=c(8, 15, 17, 19, 9), name="Rep")+
    xlab("L")  +                  
    ylab("G") +
    zlab("B")   
 
  p4
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures")
-svg("LGB_total.svg", width=4, height=4) 
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_03total")
+svg("LGB_total_bigger.svg", width=5, height=5) 
  p4  
  dev.off()
 

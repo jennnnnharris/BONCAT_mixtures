@@ -415,7 +415,7 @@ write.csv(tax_table, "active.taxonomy_predicted16S.csv")
 
 ##### import predicted #####
 ## Set the working directory ###
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 taxon <- read.csv("active.taxonomy_predicted16S.csv", row.names = 1)
 asvs <- read.csv("active.feature.table_predicted16S.csv", row.names = 1)
 metadat<-read.csv("active.metadata_predicted16S.csv", header = T)
@@ -989,7 +989,13 @@ library(ggtern)
 # Then you tell ggtern what kind of geometry to use to display the data, in this case "geom_point"
 
 
+ custom_breaks <- seq(0, 1, by = 0.25)
+
 p4<-ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measurement, shape = factor(Rep))) +
+  scale_T_continuous(breaks = custom_breaks, labels = custom_breaks) +
+  scale_L_continuous(breaks = custom_breaks, labels = custom_breaks) +
+  scale_R_continuous(breaks = custom_breaks, labels = custom_breaks)+
+  
   geom_point(size=2)+
   theme_minimal()+
   scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expectation"))+
@@ -1002,8 +1008,8 @@ p4<-ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measu
 p4
 
 
-setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
-svg("LGB_active.svg", width=4, height=4) 
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
+svg("LGB_activebigger.svg", width=5, height=5) 
 p4  
 dev.off()
 
