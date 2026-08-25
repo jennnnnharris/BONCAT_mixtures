@@ -372,7 +372,7 @@ write.csv(tax_table, "total.taxonomy_predicted16S.csv.csv")
 
 
 ##### import predicted #####
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 taxon <- read.csv("total.taxonomy_predicted16S.csv", row.names = 1)
 asvs <- read.csv("total.feature.table_predicted16S.csv", row.names = 1)
 metadat<-read.csv("total.metadata_predicted16S.csv", header = T)
@@ -678,13 +678,6 @@ mix_data$rep <- rep(c("1","3", "4", "5", "6"), 2)
 a1<-aov(GB_index ~ Measurement+rep, data = mix_data)
 summary(a1)
 
-# paired test 
-p<-mix_data$GB_index[which(mix_data$Measurement=="predicted")]
-m<-mix_data$GB_index[which(mix_data$Measurement!="predicted")]
-paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
-
-
-
  
  ###scalar projection LB #####
  
@@ -769,13 +762,7 @@ paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
    a1<-aov(LB_index ~ Measurement+rep, data = mix_data)
    summary(a1)
    
-   
-   # paired test 
-   p<-mix_data$LB_index[which(mix_data$Measurement=="predicted")]
-   m<-mix_data$LB_index[which(mix_data$Measurement!="predicted")]
-   paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
-   paired_test
-   
+
    
  ###scalar projection LG #####
  
@@ -1154,10 +1141,10 @@ mix_data
    zlab("B")   
 
  p4
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_03total")
-svg("LGB_total_bigger.svg", width=5, height=5) 
- p4  
- dev.off()
+#setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_03total")
+#svg("LGB_total_bigger.svg", width=5, height=5) 
+# p4  
+# dev.off()
 
  
  ###
@@ -1165,13 +1152,17 @@ svg("LGB_total_bigger.svg", width=5, height=5)
  mix_data
  
  # Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
- t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "two.sided")
- print(t_test_result)
+ mix_data
  
- t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
- print(t_test_result)
+ # run anova
+ a1<-aov(GB_index ~ Measurement+Rep, data = mix_data)
+ summary(a1)
  
- t_test_result <- t.test(LG_index ~ Measurement, data = mix_data, alternative = "two.sided")
- print(t_test_result)
+ # run anova
+ a1<-aov(BL_index ~ Measurement+Rep, data = mix_data)
+ summary(a1)
  
+ # run anova
+ a1<-aov(LG_index ~ Measurement+Rep, data = mix_data)
+ summary(a1)
  

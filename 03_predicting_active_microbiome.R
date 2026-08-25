@@ -415,7 +415,7 @@ write.csv(tax_table, "active.taxonomy_predicted16S.csv")
 
 ##### import predicted #####
 ## Set the working directory ###
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
 taxon <- read.csv("active.taxonomy_predicted16S.csv", row.names = 1)
 asvs <- read.csv("active.feature.table_predicted16S.csv", row.names = 1)
 metadat<-read.csv("active.metadata_predicted16S.csv", header = T)
@@ -525,113 +525,113 @@ legend("bottomright", legend=c("measured", "expected"  ),
 
 
 ###scalar projection GB #####
-
-# clr matrix
-ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil"  )
-ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
-ps1
-
-# subset metadata
-metadat2<-filter(metadat, Fraction=="Active"  & Treatment!="Soil") %>%
-  select(Treatment, Measurement, Rep)
-metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
-
-# CLR transform
-clr_data <- clr(otu_table(ps1)+1)
-clr_data<-as.matrix(clr_data)
-clr_data[1:5, 1:5]
-
-# # add metadata
-key <-cbind(metadat2, clr_data)
-key[1:5, 1:5]
-
-# 1. Calculate the centroids (mean vector) for your baseline monocultures
-# (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
-centroid_G <- colMeans(clr_data[ which(metadat2$Treatment=="G"), ])
-centroid_B <- colMeans(clr_data[which(metadat2$Treatment=="B"), ])
-
-# 2. Define the axis vector from G to B
-v <- centroid_B - centroid_G
-v_length_sq <- sum(v^2)
-
-
-# 3.  Create a function to project a sample vector onto the G->B axis  symmetric [-1, +1] axis
-project_to_axis <- function(sample_vector, start_centroid, axis_vector, axis_len_sq) {
-  sample_adj <- sample_vector - start_centroid
-  dot_product <- sum(sample_adj * axis_vector)
   
-  # Calculate 0 to 1 index
-  original_index <- dot_product / axis_len_sq
+  # clr matrix
+  ps1 <-subset_samples(ps, Fraction=="Active" & Treatment!="Soil"  )
+  ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
+  ps1
   
-  # Rescale to -1 to +1
-  symmetric_index <- (2 * original_index) - 1
-  return(symmetric_index)
-}
-# 4. Apply this to your target samples (GB observed and GB predicted)
-# Let's say you target a data frame of your mixtures
-mix_data <- clr_data[which(metadat2$Treatment=="GB"), ]
-mix_data[1:5, 1:5]
-dim(mix_data)
+  # subset metadata
+  metadat2<-filter(metadat, Fraction=="Active"  & Treatment!="Soil") %>%
+    select(Treatment, Measurement, Rep)
+  metadat2$Treatment   <- factor(metadat2$Treatment, levels= c("L", "G", "B", "GB", "LB", "LG", "LGB"))
+  
+  # CLR transform
+  clr_data <- clr(otu_table(ps1)+1)
+  clr_data<-as.matrix(clr_data)
+  clr_data[1:5, 1:5]
+  
+  # # add metadata
+  key <-cbind(metadat2, clr_data)
+  key[1:5, 1:5]
+  
+  # 1. Calculate the centroids (mean vector) for your baseline monocultures
+  # (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
+  centroid_G <- colMeans(clr_data[ which(metadat2$Treatment=="G"), ])
+  centroid_B <- colMeans(clr_data[which(metadat2$Treatment=="B"), ])
+  
+  # 2. Define the axis vector from G to B
+  v <- centroid_B - centroid_G
+  v_length_sq <- sum(v^2)
+  
+  
+  # 3.  Create a function to project a sample vector onto the G->B axis  symmetric [-1, +1] axis
+  project_to_axis <- function(sample_vector, start_centroid, axis_vector, axis_len_sq) {
+    sample_adj <- sample_vector - start_centroid
+    dot_product <- sum(sample_adj * axis_vector)
+    
+    # Calculate 0 to 1 index
+    original_index <- dot_product / axis_len_sq
+    
+    # Rescale to -1 to +1
+    symmetric_index <- (2 * original_index) - 1
+    return(symmetric_index)
+  }
+  # 4. Apply this to your target samples (GB observed and GB predicted)
+  # Let's say you target a data frame of your mixtures
+  mix_data <- clr_data[which(metadat2$Treatment=="GB"), ]
+  mix_data[1:5, 1:5]
+  dim(mix_data)
+  
+  
+  
+  # Calculate the index for each row
+  GB_index <- apply(mix_data, 1, function(row) {
+    project_to_axis(row, centroid_G, v, v_length_sq)
+  })
+  
+  GB_index  
+  mix_data<-cbind(GB_index, mix_data)
+  metadat3<-metadat2 %>% filter(Treatment=="GB") 
+  mix_data<-cbind(metadat3, mix_data)
+  mix_data
+  
+  # # plot raw -1 to 1
+   ggplot(mix_data, aes(x = Measurement, y = GB_index, fill = Measurement)) +
+     geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+     scale_fill_manual(values = c("#DC267F", "grey70"))+
+     geom_jitter(width = 0.1, size = 2) +
+     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+     annotate("text", x = 0.5, y = -1, label = "G", hjust = 0) +
+     annotate("text", x = 0.5, y = 1, label = "B", hjust = 0) +
+     labs(title = "Mixture Composition Along G-to-B Axis",
+          y = "Projection Index (G → B)",
+          x = "Treatment") +
+     coord_flip()+
+     theme_minimal()
+  ### plot with predicted as zero ###
+  # subtract each rep 
+  mix_data<-mix_data %>% select(GB_index, Treatment, Measurement, Rep) %>% filter(Rep!="1")
+  mix_data
+  P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
+  mix_data$diff_predict <- mix_data$GB_index-P 
+  
+  # plot
+  #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
+  #svg("GB_active.svg",  width=4, height=1.5)
+  mix_data %>% filter(Measurement=="measured") %>%
+    ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
+    geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+    geom_jitter(width = 0.1, size = 2) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+    annotate("text", x = 0.7, y = -1, label = "G", hjust = 0) +
+    annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
+    labs(title = " ",
+         y = "Projection Index (G → B)",
+         x = "Mixture") +
+    scale_fill_manual(values = c("#DC267F", "grey70"))+
+    coord_flip()+
+    theme_minimal()+
+    theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+  #dev.off()  
+  
+  # stats #############
+  
 
-
-
-# Calculate the index for each row
-GB_index <- apply(mix_data, 1, function(row) {
-  project_to_axis(row, centroid_G, v, v_length_sq)
-})
-
-GB_index  
-mix_data<-cbind(GB_index, mix_data)
-metadat3<-metadat2 %>% filter(Treatment=="GB") 
-mix_data<-cbind(metadat3, mix_data)
 mix_data
 
-# # plot raw -1 to 1
- ggplot(mix_data, aes(x = Measurement, y = GB_index, fill = Measurement)) +
-   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-   scale_fill_manual(values = c("#DC267F", "grey70"))+
-   geom_jitter(width = 0.1, size = 2) +
-   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-   annotate("text", x = 0.5, y = -1, label = "G", hjust = 0) +
-   annotate("text", x = 0.5, y = 1, label = "B", hjust = 0) +
-   labs(title = "Mixture Composition Along G-to-B Axis",
-        y = "Projection Index (G → B)",
-        x = "Treatment") +
-   coord_flip()+
-   theme_minimal()
-### plot with predicted as zero ###
-# subtract each rep 
-mix_data<-mix_data %>% select(GB_index, Treatment, Measurement, Rep) %>% filter(Rep!="1")
-mix_data
-P<-rep(mix_data$GB_index[which(mix_data$Measurement == "predicted")],2)
-mix_data$diff_predict <- mix_data$GB_index-P 
-
-# plot
-#setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
-#svg("GB_active.svg",  width=4, height=1.5)
-mix_data %>% filter(Measurement=="measured") %>%
-  ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
-  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-  geom_jitter(width = 0.1, size = 2) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-  annotate("text", x = 0.7, y = -1, label = "G", hjust = 0) +
-  annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
-  labs(title = " ",
-       y = "Projection Index (G → B)",
-       x = "Mixture") +
-  scale_fill_manual(values = c("#DC267F", "grey70"))+
-  coord_flip()+
-  theme_minimal()+
-  theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
-#dev.off()  
-
-# stats #############
-
-
-mix_data
-mix_data$rep <- rep(c("1","2", "3", "4", "5"), 2)
 # run anova
-a1<-aov(GB_index ~ Measurement+rep, data = mix_data)
+a1<-aov(GB_index ~ Measurement+Rep, data = mix_data)
 summary(a1)
 
 ###scalar projection LB #####
@@ -724,16 +724,11 @@ mix_data %>% filter(Measurement=="measured") %>%
 
 ###stats ###
 mix_data
-mix_data$rep <- rep(c("2","3", "4", "5"), 2)
+
 # run anova
-a1<-aov(LB_index ~ Measurement+rep, data = mix_data)
+a1<-aov(LB_index ~ Measurement+Rep, data = mix_data)
 summary(a1)
 
-# paired test 
-p<-mix_data$index[which(mix_data$Measurement=="predicted")]
-m<-mix_data$index[which(mix_data$Measurement!="predicted")]
-paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
-paired_test
 
 
 
@@ -815,16 +810,10 @@ mix_data %>% filter(Measurement=="measured") %>%
 
 ##stats
 mix_data
-mix_data$rep <- rep(c("1", "2","3", "4", "5"), 2)
-# run anova
-a1<-aov(index ~ Measurement+rep, data = mix_data)
-summary(a1)
 
-# paired test 
-p<-mix_data$index[which(mix_data$Measurement=="predicted")]
-m<-mix_data$index[which(mix_data$Measurement!="predicted")]
-paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
-paired_test
+# run anova
+a1<-aov(index ~ Measurement+Rep, data = mix_data)
+summary(a1)
 
 
 
@@ -999,12 +988,26 @@ p4<-ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measu
 
 p4
 
+# save plot
+#setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
+#svg("LGB_activebigger.svg", width=5, height=5) 
+#p4  
+#dev.off()
 
-setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
-svg("LGB_activebigger.svg", width=5, height=5) 
-p4  
-dev.off()
+# stats ###
 
 
 
+mix_data
 
+# run anova
+a1<-aov(GB_index ~ Measurement+Rep, data = mix_data)
+summary(a1)
+
+# run anova
+a1<-aov(BL_index ~ Measurement+Rep, data = mix_data)
+summary(a1)
+
+# run anova
+a1<-aov(LG_index ~ Measurement+Rep, data = mix_data)
+summary(a1)
