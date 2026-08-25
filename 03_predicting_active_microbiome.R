@@ -998,8 +998,8 @@ p4<-ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measu
   
   geom_point(size=2)+
   theme_minimal()+
-  scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expectation"))+
-  scale_shape_manual(values=c(8, 15, 17, 19, 9, 18), name="Rep")+
+  scale_color_manual(values = c( "#865338", "grey70"), labels=c("measured", "expectated"))+
+  scale_shape_manual(values=c(8, 15, 17, 19, 9, 21), name="Rep")+
   xlab("L")  +                  
   ylab("G") +
   zlab("B")   
@@ -1013,6 +1013,33 @@ svg("LGB_activebigger.svg", width=5, height=5)
 p4  
 dev.off()
 
+
+###
+# stats 
+mix_data
+
+
+mix_data
+
+# run anova
+a1<-aov(GB_index ~ Measurement+Rep, data = mix_data)
+summary(a1)
+
+# paired test 
+p<-mix_data$index[which(mix_data$Measurement=="predicted")]
+m<-mix_data$index[which(mix_data$Measurement!="predicted")]
+paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
+paired_test
+
+# Run an independent t-test (Welch's t-test is default, which handles unequal variance safely)
+t_test_result <- t.test(GB_index ~ Measurement, data = mix_data, alternative = "paired")
+print(t_test_result)
+
+t_test_result <- t.test(LB_index ~ Measurement, data = mix_data, alternative = "two.sided")
+print(t_test_result)
+
+t_test_result <- t.test(LG_index ~ Measurement, data = mix_data, alternative = "two.sided")
+print(t_test_result)
 
 
 
