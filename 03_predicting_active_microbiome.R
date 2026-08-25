@@ -405,7 +405,7 @@ df<-as.data.frame(otu_table(ps))
 otus<-rbind(df1, df)
 otus<-t(otus)
 #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Data/Data_for_upload")
-write.csv(otus, "active.feature.table._predicted16S.csv")
+write.csv(otus, "active.feature.table_predicted16S.csv")
 
 
 #taxon
@@ -545,8 +545,6 @@ clr_data[1:5, 1:5]
 key <-cbind(metadat2, clr_data)
 key[1:5, 1:5]
 
-+
-   coord_flip()
 # 1. Calculate the centroids (mean vector) for your baseline monocultures
 # (Assuming 'clr_matrix' contains only your numeric CLR-transformed columns)
 centroid_G <- colMeans(clr_data[ which(metadat2$Treatment=="G"), ])
@@ -599,6 +597,7 @@ mix_data
    labs(title = "Mixture Composition Along G-to-B Axis",
         y = "Projection Index (G → B)",
         x = "Treatment") +
+   coord_flip()+
    theme_minimal()
 ### plot with predicted as zero ###
 # subtract each rep 
@@ -634,13 +633,6 @@ mix_data$rep <- rep(c("1","2", "3", "4", "5"), 2)
 # run anova
 a1<-aov(GB_index ~ Measurement+rep, data = mix_data)
 summary(a1)
-
-# paired test 
-p<-mix_data$index[which(mix_data$Measurement=="predicted")]
-m<-mix_data$index[which(mix_data$Measurement!="predicted")]
-paired_test<-t.test(p,m, paired = TRUE, data = mix_data)
-paired_test
-
 
 ###scalar projection LB #####
 
