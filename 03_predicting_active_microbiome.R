@@ -609,7 +609,7 @@ legend("bottomright", legend=c("measured", "expected"  ),
   # plot
   #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
   #svg("GB_active.svg",  width=4, height=1.5)
-  mix_data %>% filter(Measurement=="measured") %>%
+ p1<- mix_data %>% filter(Measurement=="measured") %>%
     ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
     geom_boxplot(alpha = 0.6, outlier.shape = NA) +
     geom_jitter(width = 0.1, size = 2) +
@@ -618,12 +618,13 @@ legend("bottomright", legend=c("measured", "expected"  ),
     annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
     labs(title = " ",
          y = "Projection Index (G → B)",
-         x = "Mixture") +
+         x = "") +
     scale_fill_manual(values = c("#DC267F", "grey70"))+
     coord_flip()+
-    theme_minimal()+
+   theme_minimal(base_size = 14)+
     theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
   #dev.off()  
+ p1
   
   # stats #############
   
@@ -706,7 +707,7 @@ mix_data
 # plot
 #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
 #svg("LB_active.svg",  width=4, height=1.5)
-mix_data %>% filter(Measurement=="measured") %>%
+p2<- mix_data %>% filter(Measurement=="measured") %>%
   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
   geom_jitter(width = 0.1, size = 2) +
@@ -715,11 +716,12 @@ mix_data %>% filter(Measurement=="measured") %>%
   annotate("text", x = 0.7, y = 1, label = "B", hjust = 0) +
   labs(title = "",
        y = "Projection Index (L → B)",
-       x = "Mixture") +
+       x = "") +
   scale_fill_manual(values = c("#FE6100", "grey70"))+
   coord_flip()+
-  theme_minimal()+
+  theme_minimal(base_size = 14)+
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
+p2
 #dev.off()  
 
 ###stats ###
@@ -791,7 +793,7 @@ mix_data
 
 #setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_index")
 #svg("LG_active.svg", width=4, height=1.5)
-mix_data %>% filter(Measurement=="measured") %>%
+p3<-mix_data %>% filter(Measurement=="measured") %>%
   ggplot(aes(x = Treatment, y = diff_predict, fill = Measurement)) +
   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
   geom_jitter(width = 0.1, size = 2) +
@@ -800,21 +802,30 @@ mix_data %>% filter(Measurement=="measured") %>%
   annotate("text", x = 0.7, y = 1, label = "G", hjust = 0) +
   labs(title = "",
        y = "Projection Index (L → G)",
-       x = "Mixture") +
+       x = "") +
   scale_fill_manual(values = c("#FFB000", "grey70"))+
   coord_flip()+
-  theme_minimal()+
+  theme_minimal(base_size = 14)+
   theme(legend.position = "none", plot.title = element_text(hjust = 0.5))
 
 #dev.off()  
 
 ##stats
 mix_data
-
 # run anova
 a1<-aov(index ~ Measurement+Rep, data = mix_data)
 summary(a1)
 
+
+##overall figures
+require(gridExtra)
+grid.arrange(p1, p2,p3, ncol=1)
+
+
+setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
+svg("predict_index.svg", width=4.5, height=5)
+grid.arrange(p1, p2,p3, ncol=1)
+dev.off()
 
 
 ######simple ordination three species ####
@@ -988,11 +999,11 @@ p4<-ggtern(data=mix_data, aes(x=LG_index, y=GB_index, z=BL_index, colour = Measu
 
 p4
 
-# save plot
-#setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
-#svg("LGB_activebigger.svg", width=5, height=5) 
-#p4  
-#dev.off()
+#save plot
+setwd("C:/Users/jenn/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
+svg("LGB_active.svg", width=4, height=4)
+p4
+dev.off()
 
 # stats ###
 
