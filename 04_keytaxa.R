@@ -1079,6 +1079,7 @@ asvkp<-unique(top_spp$asv)
   df$asv<-row.names(df)
   df <- df[df$asv %in% asvkp, ]
   df$asv <-NULL
+  df 
   
   # add treatment info
   df<-as.data.frame(t(df))
@@ -1139,9 +1140,9 @@ asvkp<-unique(top_spp$asv)
 
   
   #find outliers cutoff
-  df1<-df%>% filter(Blast_ID=="Rhizobium") 
-  summary(df1$percent_abundance)
-  mean(df1$percent_abundance) + 3*sd(df1$percent_abundance)
+  df2<-df%>% filter(Blast_ID=="Rhizobium") 
+  summary(df2$percent_abundance)
+  mean(df2$percent_abundance) + 3*sd(df2$percent_abundance)
   
   # set colors
   
@@ -1159,24 +1160,21 @@ asvkp<-unique(top_spp$asv)
   
   ### order by abundance
   # 1. Calculate column sums
-  df 
-  total_abundance <- colSums(df1)
+  df1<-df %>% group_by(Blast_ID)
+  total_abundance<-summarise(df1, sum_abundance = sum(percent_abundance))
+  
   
   # 2. Sort names based on those sums (decreasing = TRUE for most to least)
-  ordered_names <- names(sort(total_abundance, decreasing = TRUE))
+  total_abundance<-total_abundance[order(total_abundance$sum_abundance, decreasing = TRUE), ]
   
-  # 3. Reorder the columns of your data frame
-  df_ordered <- df[, ordered_names]
-  library(forcats)
+  ordered_names <- total_abundance$Blast_ID
   
-  # Reorder Blast_ID based on the SUM of percent_abundance across all samples
-  df <- df %>%
-    mutate(Blast_ID = fct_reorder(Blast_ID, percent_abundance, .fun = sum, .desc = TRUE))
-  df$Blast_ID
+  df$Blast_ID<-factor(df$Blast_ID, levels = ordered_names)
+  
   # remove outlier for easier plotting
   # IBM colors
   setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
-  svg(filename="total.taxa.svg", height = 4, width = 11.5)
+  svg(filename="total.taxa.svg", height = 4, width = 10)
   df %>% filter(percent_abundance<10) %>%
     ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
     geom_boxplot(outliers=FALSE, alpha=0.7)+
@@ -1189,61 +1187,15 @@ asvkp<-unique(top_spp$asv)
     theme(axis.text.x = element_text(angle=60, hjust=1),
           plot.title = element_text(hjust = 0),
           legend.position = "none")+
-    labs(title = "B       Total",
+    labs(title = "       Total",
          x = "", y = "Percent Abundance")
   
     dev.off()
+
     
-    # just rhizobium 
-    df %>% filter(percent_abundance<10) %>%
-      filter(Blast_ID=="Rhizobium sp.") %>%
-      ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
-      geom_boxplot(outliers=FALSE, alpha=0.7)+
-      #geom_jitter()+
-      scale_fill_manual(values= IBM)+
-      theme_bw(base_size = 11) +
-      facet_wrap(~Blast_ID,  nrow= 1)+
-      theme(axis.text.x = element_text(angle=60, hjust=1),
-            plot.title = element_text(hjust = 0),
-            legend.position = "none")+
-      labs(title = "       Total",
-           x = "", y = "Percent Abundance")
+
     
-    # just nitrocosmicus
-    df %>% filter(percent_abundance<10) %>%
-      filter(Blast_ID=="Polaromonas sp.") %>%
-      ggplot(aes(x=Treatment, y=percent_abundance, fill = Treatment))+
-      geom_boxplot(outliers=FALSE, alpha=0.7)+
-      #geom_jitter()+
-      scale_fill_manual(values= IBM)+
-      theme_bw(base_size = 11) +
-      facet_wrap(~Blast_ID,  nrow= 1)+
-      theme(axis.text.x = element_text(angle=60, hjust=1),
-            plot.title = element_text(hjust = 0),
-            legend.position = "none")+
-      labs(title = "       Total",
-           x = "", y = "Percent Abundance")
-    
-    
-    # cord flip
-    setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_taxa")
-    svg(filename="total.taxa.tall.svg", height = 11, width = 4)
-    df %>% filter(percent_abundance<10) %>%
-      ggplot(aes(x=percent_abundance, y=Treatment, fill = Treatment))+
-      geom_boxplot(outliers=FALSE, alpha=0.7)+
-      #geom_jitter()+
-      scale_fill_manual(values= IBM)+
-      theme_bw(base_size = 11) +
-      # facet_grid(~Blast_ID)+
-      #facet_wrap(~Blast_ID, scales="free", nrow= 1)+
-      facet_wrap(~Blast_ID,  ncol= 1)+
-      theme(axis.text.x = element_text(angle=60, hjust=1),
-            plot.title = element_text(hjust = 0),
-            legend.position = "none")+
-      labs(title = "B       Total",
-           x = "", y = "Percent Abundance")
-    
-    dev.off()
+   
   
 # stats ASV level ########
   library(phyloseq)
