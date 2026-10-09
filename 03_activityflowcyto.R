@@ -4,7 +4,7 @@
 # author: Jennifer Harris
 
 rm(list=ls())
-rstudioapi::restartSession(clean = TRUE)
+#rstudioapi::restartSession(clean = TRUE)
 
 #load libraries 
 library(readxl)
@@ -523,7 +523,6 @@ unique(df$Treatment)
 df$Treatment<-factor(df$Treatment, levels = c("L", "G", "B", "GB_expected", "GB","LB_expected", "LB",  "LG_expected",  "LG", 
                                               "LGB_expected" , "LGB"  ))
 
-df
 # plot
 p1<-df  %>% 
   ggplot(aes(x=Treatment, y=active_cel_per_g, fill = Treatment)) +
@@ -533,7 +532,7 @@ p1<-df  %>%
   scale_fill_manual(values = mycols)+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
-  labs(title = "A",
+  labs(title = "",
        x="",
        y="active cells/g rhizosphere")
   #geom_text(y=.25, label =label , nudge_x = -.8, size=8)
@@ -549,7 +548,7 @@ p2<-df  %>%
   scale_fill_manual(values = mycols)+
   theme_classic(base_size = 14)+
   theme(axis.text.x = element_text(angle=60, hjust=1), legend.position="none")+
-labs(title = "B",
+labs(title = "",
      x="",
      y=" active cells (%)")
 #geom_text(y=.25, label =label , nudge_x = -.8, size=8)
@@ -557,7 +556,7 @@ labs(title = "B",
 p2
 require(gridExtra)
 setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
-svg("activity.predict.svg", width=10, height=5)
+svg("activity.predict.svg", width=9, height=4.5)
 grid.arrange(p1, p2, ncol=2)
 dev.off()
 

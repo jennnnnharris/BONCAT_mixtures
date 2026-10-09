@@ -11,9 +11,9 @@
 ### Initial Setup ###
 
 ### Clear workspace ###
-
-#rstudioapi::restartSession(clean = TRUE)
 rm(list=ls())
+rstudioapi::restartSession(clean = TRUE)
+
 
 
 ## Load required libraries ##
@@ -399,7 +399,7 @@ summary(anova1)
   
   #dev.off()
 
-  ##### CAP inactive ##################
+##### CAP inactive ##################
   #  Constrained ordination
   ps1 <-subset_samples(ps, Fraction=="Inactive" & Treatment!="Soil" & Treatment!="CTL")
   ps1<-prune_taxa(taxa_sums(ps1) > 0, ps1)
@@ -474,7 +474,7 @@ summary(anova1)
   
   
   
-  ###########  CAP inactive Perform all Pairwise Comparisons  ###############
+###########  CAP inactive Perform all Pairwise Comparisons  ###############
   # The function will iterate through all pairs of the 'Habitat' factor
   library(BiodiversityR)
   pairwise_results <- multiconstrained(
@@ -583,8 +583,8 @@ summary(anova1)
   
   ### 4. plot 
   
-  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/")
-  svg("cap.active.svg", width = 6 , height = 6)
+  setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
+  svg("cap.active.svg", width = 4.5 , height = 4.5)
   #windows(6,6)
   par(cex.lab = 1.2) # make all fonts in graphs little bigger
   ordiplot(cap_result, choices=c(1,2), scaling =2, type="none",
@@ -664,7 +664,7 @@ summary(anova1)
      Group2 = str_split_i(rownames(pairwise_results), "vs. ", 2),
      Pseudo_F = pairwise_results[, "F"],
      Raw_P = raw_pvalues,
-     p_value = round(adjusted_pvalues,4)
+     p_value = round(adjusted_pvalues,3)
    )
    print(table)
    
@@ -692,14 +692,15 @@ summary(anova1)
      theme(axis.text.x = element_text(angle = 45, hjust = 1))
    
    
-   setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/Fig_CAPactive")
+   setwd("C:/Users/harri/The Pennsylvania State University/Burghardt, Liana T - Burghardt Lab Shared Folder/Projects/BONCAT-MicrobialActivity/BONCAT_mixtures/Figures/fig_04active")
    pdf("Pval_active.pdf",  width=3.5, height=2.5)
    p_recol_covercrop
    dev.off() 
    
    
    
-   
+  
+    
   # 1. Create an empty plot frame (type = "n")
   plot(cap_result, type = "n", scaling = 2)
   points(cap_result, display = "sites", pch = 16)
